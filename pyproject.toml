@@ -1,0 +1,60 @@
+[project]
+name = "SMS_BP_adv"
+
+dynamic = ["version"]
+
+description = "Single Molecule Simulations and Microscopy Simulations developed for the Weber Lab by Baljyot Singh Parmar"
+
+readme = "README.md"
+
+requires-python = ">=3.10"
+
+
+keywords = ["SMS"]
+
+authors = [
+  { name = "Baljyot Singh Parmar", email = "baljyotparmar@hotmail.com" },
+]
+
+maintainers = [
+  { name = "Baljyot Singh Parmar", email = "baljyotparmar@hotmail.com" },
+]
+
+dependencies = [
+  "numpy>=1.21.2",
+  "matplotlib>=3.6.0",
+  "scipy>=1.7.1",
+  "scikit-image>=0.18.3",
+  "typer>=0.12.5",
+  "jsonschema>=4.23.0",
+  "mkdocstrings-python>=1.12.1",
+  "pydantic>=2.9.2",
+]
+
+[project.urls]
+Documentation = "https://joemans3.github.io/SMS_BP/"
+"Source code" = "https://github.com/joemans3/SMS_BP"
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+
+[tool.uv]
+dev-dependencies = [
+  "mkdocs-material==9.5.40",
+  "pymdown-extensions>=10.11",
+  "pyright>=1.1.384",
+  "pytest>=8.3.3",
+  "ruff>=0.6.9",
+]
+
+[tool.uv.sources]
+sms-bp-adv = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/SMS_BP_adv/__init__.py"
+

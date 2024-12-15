@@ -1,0 +1,59 @@
+{
+    "version":"0.1",
+    "length_unit":"um",
+    "space_unit":"pixel",
+    "time_unit":"ms",
+    "intensity_unit":"AUD",
+    "diffusion_unit":"um^2/s",
+    "Cell_Parameters":{
+        "cell_space":[[30,50],[20,70]],
+        "cell_axial_radius":1,
+        "number_of_cells":1
+    },
+    "Track_Parameters":{
+        "num_tracks":1,
+        "track_type":"fbm",
+        "track_length_mean":200,
+        "track_distribution":"constant",
+        "diffusion_coefficient":[0.004,1],
+        "diffusion_track_amount":[
+            0.5,0.5
+        ],
+        "hurst_exponent":[0.5],
+        "hurst_track_amount":[
+            1.0
+        ],
+        "allow_transition_probability":true,
+        "transition_matrix_time_step":20,
+        "diffusion_transition_matrix":[[0.992,0.008],[0.0273,0.9727]],
+        "hurst_transition_matrix":[[0.1]],
+        "state_probability_diffusion":[0.5,0.5],
+        "state_probability_hurst":[1]
+    },
+    "Global_Parameters":{
+        "field_of_view_dim":[80,80],
+        "frame_count":500,
+        "exposure_time":100,
+        "interval_time":0,
+        "oversample_motion_time":20,
+        "pixel_size":0.13,
+        "axial_detection_range":0.4,
+        "base_noise":140,
+        "point_intensity":200,
+        "psf_sigma":0.13,
+        "axial_function":"exponential"
+    },
+    "Condensate_Parameters":{
+        "initial_centers":[[40,30,0],[40,40,0]],
+        "initial_scale": [2,2],
+        "diffusion_coefficient": [0,0],
+        "hurst_exponent": [0.2,0.2], 
+        "density_dif":1000
+    },
+    "Output_Parameters":{
+        "output_path":"<YOUR-PATH-HERE-CAN-BE-ABSOLUTE-OR-RELATIVE>",
+        "output_name":"Cell_Movie_Test_001",
+        "subsegment_type": "mean",
+        "subsegment_number": 5
+    }
+}

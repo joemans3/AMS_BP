@@ -10,6 +10,7 @@ Classes:
 - Track_generator: A class to generate tracks of foci movements in a cell space with or without transitions.
 """
 
+import random
 from typing import Union, overload
 
 import numpy as np
@@ -238,7 +239,9 @@ class Track_generator:
         xyz = np.stack((x, y, z), axis=-1)
         # make the times starting from the starting time
         track_times = np.arange(
-            start_time, track_length + start_time, self.oversample_motion_time
+            start_time,
+            track_length * self.oversample_motion_time,
+            self.oversample_motion_time,
         )
         # add back the initial position to the track
         track_xyz = xyz + initials
@@ -274,7 +277,9 @@ class Track_generator:
         """
         # make the times starting from the starting time
         track_times = np.arange(
-            start_time, track_length + start_time, self.oversample_motion_time
+            start_time,
+            track_length * self.oversample_motion_time,
+            self.oversample_motion_time,
         )
         # make the track x,y,z from the initial positions
         track_xyz = np.tile(initials, (len(track_times), 1))
@@ -344,3 +349,193 @@ class Track_generator:
         int: time in ms
         """
         return int((frame * (self.exposure_time + self.interval_time)))
+
+
+def _initialize_points_per_time(total_time: int, oversample_motion_time: int) -> dict:
+    """Initialize empty points per time dictionary.
+
+    Returns
+    -------
+    dict
+        Empty dictionary with keys for each time point
+    """
+    return {
+        str(i): []
+        for i in np.arange(
+            0, total_time + oversample_motion_time, oversample_motion_time
+        )
+    }
+
+
+def _update_points_per_time(points_per_time: dict, track: dict) -> None:
+    """Update points per time dictionary with new track data.
+
+    Parameters
+    ----------
+    points_per_time : dict
+        Dictionary to update
+    track : dict
+        Track data to add
+    """
+    for frame, position in zip(track["frames"], track["xy"]):
+        points_per_time[str(frame)].append(position)
+
+
+def _generate_constant_tracks(
+    track_generator: Track_generator,
+    track_lengths: list | np.ndarray | int,
+    initial_positions: np.ndarray,
+    starting_frames: int = 0,
+) -> tuple[dict, dict]:
+    """Generate tracks with constant parameters."""
+    if isinstance(track_lengths, int):
+        track_lengths = np.full(len(initial_positions), track_lengths)
+    if isinstance(starting_frames, int):
+        starting_frames = np.full(len(initial_positions), starting_frames)
+
+    tracks = {}
+    points_per_time = _initialize_points_per_time(
+        track_generator.total_time, track_generator.oversample_motion_time
+    )
+    for i in range(len(track_lengths)):
+        tracks[i] = track_generator.track_generation_constant(
+            track_length=track_lengths[i],
+            initials=initial_positions[i],
+            start_time=starting_frames[i],
+        )
+        _update_points_per_time(points_per_time, tracks[i])
+
+    return tracks, points_per_time
+
+
+def _generate_no_transition_tracks(
+    track_generator: Track_generator,
+    track_lengths: list | np.ndarray | int,
+    initial_positions: np.ndarray,
+    starting_frames: int,
+    diffusion_parameters: np.ndarray,
+    hurst_parameters: np.ndarray,
+) -> tuple[dict, dict]:
+    """Generate tracks without state transitions.
+
+    Parameters
+    ----------
+    track_generator : sf.Track_generator
+        Track generator instance
+    track_lengths : list | np.ndarray | int
+        Track lengths
+    initial_positions : np.ndarray
+        Initial positions
+    starting_frames : int
+        Starting frames
+    diffusion_parameters : np.ndarray
+        Diffusion parameters
+    hurst_parameters : np.ndarray
+        Hurst parameters
+
+    Returns
+    -------
+    tuple[dict, dict]
+        Tracks dictionary and points per time dictionary
+    """
+    if isinstance(track_lengths, int):
+        track_lengths = np.full(len(initial_positions), track_lengths)
+    if isinstance(starting_frames, int):
+        starting_frames = np.full(len(initial_positions), starting_frames)
+
+    tracks = {}
+    points_per_time = _initialize_points_per_time(
+        track_generator.total_time, track_generator.oversample_motion_time
+    )
+
+    for i in range(len(track_lengths)):
+        # Randomly select diffusion coefficient and hurst exponent indices
+        diff_idx = random.randint(0, len(diffusion_parameters) - 1)
+        hurst_idx = random.randint(0, len(hurst_parameters) - 1)
+
+        # Generate track with selected parameters
+        tracks[i] = track_generator.track_generation_no_transition(
+            track_length=track_lengths[i],
+            initials=initial_positions[i],
+            start_time=starting_frames[i],
+            diffusion_coefficient=diffusion_parameters[diff_idx],
+            hurst_exponent=hurst_parameters[hurst_idx],
+        )
+        _update_points_per_time(points_per_time, tracks[i])
+
+    return tracks, points_per_time
+
+
+def _generate_transition_tracks(
+    track_generator: Track_generator,
+    track_lengths: list | np.ndarray | int,
+    initial_positions: np.ndarray,
+    starting_frames: int,
+    diffusion_parameters: np.ndarray,
+    hurst_parameters: np.ndarray,
+    diffusion_transition_matrix: np.ndarray,
+    hurst_transition_matrix: np.ndarray,
+    diffusion_state_probability: np.ndarray,
+    hurst_state_probability: np.ndarray,
+) -> tuple[dict, dict]:
+    """Generate tracks with state transitions.
+
+    Parameters
+    ----------
+    track_generator : sf.Track_generator
+        Track generator instance
+    track_lengths : list | np.ndarray | int
+        Track lengths
+    initial_positions : np.ndarray
+        Initial positions
+    starting_frames : int
+        Starting frames
+    diffusion_parameters : np.ndarray
+        Diffusion parameters
+    hurst_parameters : np.ndarray
+        Hurst parameters
+    diffusion_transition_matrix : np.ndarray
+        Diffusion transition matrix
+    hurst_transition_matrix : np.ndarray
+        Hurst transition matrix
+    diffusion_state_probability : np.ndarray
+        Diffusion state probability
+    hurst_state_probability : np.ndarray
+        Hurst state probability
+
+    Returns
+    -------
+    tuple[dict, dict]
+        Tracks dictionary and points per time dictionary
+    """
+    if isinstance(track_lengths, int):
+        track_lengths = np.full(len(initial_positions), track_lengths)
+    if isinstance(starting_frames, int):
+        starting_frames = np.full(len(initial_positions), starting_frames)
+
+    tracks = {}
+    points_per_time = _initialize_points_per_time(
+        track_generator.total_time, track_generator.oversample_motion_time
+    )
+
+    for i in range(len(track_lengths)):
+        # Generate track with transitions
+        tracks[i] = track_generator.track_generation_with_transition(
+            diffusion_transition_matrix=diffusion_transition_matrix,
+            hurst_transition_matrix=hurst_transition_matrix,
+            diffusion_parameters=diffusion_parameters,
+            hurst_parameters=hurst_parameters,
+            diffusion_state_probability=diffusion_state_probability,
+            hurst_state_probability=hurst_state_probability,
+            track_length=track_lengths[i],
+            initials=initial_positions[i],
+            start_time=starting_frames[i],
+        )
+        _update_points_per_time(points_per_time, tracks[i])
+
+    return tracks, points_per_time
+
+
+def _convert_tracks_to_trajectory(tracks: dict) -> dict:
+    """Convert tracks to trajectory."""
+    return {i: tracks["xy"][j] for j, i in enumerate(tracks["frames"])}

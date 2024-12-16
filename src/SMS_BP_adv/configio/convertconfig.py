@@ -4,6 +4,17 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import tomli
 from pydantic import BaseModel
 
+from SMS_BP_adv.cells.base_cell import BaseCell
+from SMS_BP_adv.sim_microscopy import VirtualMicroscope
+
+from ..cells import RectangularCell
+from ..motion import Track_generator, create_condensate_dict
+from ..motion.track_gen import (
+    _convert_tracks_to_trajectory,
+    _generate_constant_tracks,
+    _generate_no_transition_tracks,
+    _generate_transition_tracks,
+)
 from ..optics.camera.detectors import CMOSDetector, Detector, EMCCDDetector
 from ..optics.camera.quantum_eff import QuantumEfficiency
 from ..optics.filters import (
@@ -15,11 +26,17 @@ from ..optics.filters import (
 )
 from ..optics.lasers.laser_profiles import (
     GaussianBeam,
+    HiLoBeam,
     LaserParameters,
     LaserProfile,
     WidefieldBeam,
 )
 from ..optics.psf.psf_engine import PSFEngine, PSFParameters
+from ..probabilityfuncs.markov_chain import change_prob_time
+from ..probabilityfuncs.probability_functions import (
+    generate_points_from_cls as gen_points,
+)
+from ..probabilityfuncs.probability_functions import multiple_top_hat_probability as tp
 from ..sample.flurophores.flurophore_schema import (
     Fluorophore,
     SpectralData,
@@ -27,6 +44,7 @@ from ..sample.flurophores.flurophore_schema import (
     StateTransition,
     StateType,
 )
+from ..sample.sim_sampleplane import SamplePlane, SampleSpace
 from .configmodels import (
     CellParameters,
     CondensateParameters,
@@ -69,15 +87,20 @@ def load_config(config_path: Union[str, Path]) -> Dict[str, Any]:
 
 
 class ConfigLoader:
-    def __init__(self, config_path: Union[str, Path]):
+    def __init__(self, config_path: Union[str, Path, dict]):
         # if exists, load config, otherwise raise error
-        if not Path(config_path).exists():
+        if isinstance(config_path, dict):
+            self.config = config_path
+        elif not Path(config_path).exists():
             print(f"Configuration file not found: {config_path}")
             self.config_path = None
         else:
             self.config_path = config_path
             self.config = load_config(config_path)
-            self.populate_dataclass_schema()
+
+    def _reload_config(self):
+        if self.config_path is not None:
+            self.config = load_config(config_path=self.config_path)
 
     def create_dataclass_schema(
         self, dataclass_schema: type[BaseModel], config: Dict[str, Any]
@@ -296,6 +319,12 @@ class ConfigLoader:
             return GaussianBeam(parameters)
         if laser_type == "widefield":
             return WidefieldBeam(parameters)
+        if laser_type == "hilo":
+            try:
+                params_config.get("inclination_angle")
+            except KeyError:
+                raise KeyError("HiLo needs inclination angle. Currently not provided")
+            return HiLoBeam(parameters, float(params_config["inclination_angle"]))
         else:
             raise ValueError(f"Unknown laser type: {laser_type}")
 
@@ -496,8 +525,12 @@ class ConfigLoader:
 
         return detector, quantum_efficiency
 
-    def get_configs(self) -> Dict[str, Any]:
+    def make_trajectories(self):
+        pass
+
+    def setup_microscope(self) -> VirtualMicroscope:
         # base config
+        self.populate_dataclass_schema()
         base_config = ConfigList(
             CellParameters=self.cell_params,
             MoleculeParameters=self.molecule_params,
@@ -517,14 +550,205 @@ class ConfigLoader:
         # detector config
         detector, qe = self.create_detector_from_config(self.config)
 
-        sim_config_dict = {
-            "config": base_config,
-            "fluorophore": fluorophore,
-            "psf": psf,
-            "psf_config": psf_config,
-            "lasers": lasers,
-            "filters": filters,
-            "detector": detector,
-            "qe": qe,
-        }
-        return sim_config_dict
+        # make cell
+        cell = make_cell(cell_params=base_config.CellParameters)
+
+        # make initial sample plane
+        sample_plane = make_sample(
+            global_params=base_config.GlobalParameters,
+            cell_params=base_config.CellParameters,
+        )
+
+        # make condensates_dict
+        condensates_dict = make_condensatedict(
+            condensate_params=base_config.CondensateParameters, cell=cell
+        )
+
+        # make sampling function
+        sampling_function = make_samplingfunction(
+            condensate_params=base_config.CondensateParameters, cell=cell
+        )
+
+        # create initial positions
+        initial_molecule_positions = gen_initial_positions(
+            molecule_params=base_config.MoleculeParameters,
+            cell=cell,
+            condensate_params=base_config.CondensateParameters,
+            sampling_function=sampling_function,
+        )
+
+        # create the track generator
+        track_generators = create_track_generator(
+            global_params=base_config.GlobalParameters, cell=cell
+        )
+
+        # get all the tracks
+        tracks, points_per_time = get_tracks(
+            molecule_params=base_config.MoleculeParameters,
+            global_params=base_config.GlobalParameters,
+            initial_positions=initial_molecule_positions,
+            track_generator=track_generators,
+        )
+
+        # add tracks to sample
+        sample_plane = add_tracks_to_sample(
+            tracks=tracks, sample_plane=sample_plane, fluorophore=fluorophore
+        )
+
+        vm = VirtualMicroscope(
+            camera=(detector, qe),
+            sample_plane=sample_plane,
+            lasers=lasers,
+            filterset=filters,
+            psf=psf,
+            config=base_config,
+        )
+        return vm
+
+
+def make_cell(cell_params) -> BaseCell:
+    # make cell
+    cell_origin = (cell_params.cell_space[0][0], cell_params.cell_space[1][0])
+    cell_dimensions = (
+        cell_params.cell_space[0][1] - cell_params.cell_space[0][0],
+        cell_params.cell_space[1][1] - cell_params.cell_space[1][0],
+        cell_params.cell_axial_radius * 2,
+    )
+    cell = RectangularCell(origin=cell_origin, dimensions=cell_dimensions)
+
+    return cell
+
+
+def make_sample(global_params, cell_params) -> SamplePlane:
+    sample_space = SampleSpace(
+        x_max=global_params.sample_plane_dim[0],
+        y_max=global_params.sample_plane_dim[1],
+        z_max=cell_params.cell_axial_radius,
+        z_min=-cell_params.cell_axial_radius,
+    )
+
+    # total time
+    totaltime = int(
+        global_params.frame_count
+        * (global_params.exposure_time + global_params.interval_time)
+    )
+    # initialize sample plane
+    sample_plane = SamplePlane(
+        sample_space=sample_space,
+        fov=(
+            (0, global_params.sample_plane_dim[0]),
+            (0, global_params.sample_plane_dim[1]),
+            (-cell_params.cell_axial_radius, cell_params.cell_axial_radius),
+        ),
+        oversample_motion_time=global_params.oversample_motion_time,
+        t_end=totaltime,
+    )
+    return sample_plane
+
+
+def make_condensatedict(condensate_params, cell) -> dict:
+    condensates_dict = create_condensate_dict(
+        initial_centers=condensate_params.initial_centers,
+        initial_scale=condensate_params.initial_scale,
+        diffusion_coefficient=condensate_params.diffusion_coefficient,
+        hurst_exponent=condensate_params.hurst_exponent,
+        cell=cell,
+    )
+    return condensates_dict
+
+
+def make_samplingfunction(condensate_params, cell) -> Callable:
+    sampling_function = tp(
+        num_subspace=len(condensate_params.initial_centers),
+        subspace_centers=condensate_params.initial_centers,
+        subspace_radius=condensate_params.initial_scale,
+        density_dif=condensate_params.density_dif,
+        cell=cell,
+    )
+    return sampling_function
+
+
+def gen_initial_positions(molecule_params, cell, condensate_params, sampling_function):
+    num_molecules = molecule_params.num_molecules
+    initial_positions = gen_points(
+        pdf=sampling_function,
+        total_points=num_molecules,
+        min_x=cell.origin[0],
+        max_x=cell.origin[0] + cell.dimensions[0],
+        min_y=cell.origin[1],
+        max_y=cell.origin[1] + cell.dimensions[1],
+        min_z=-cell.dimensions[2] / 2,
+        max_z=cell.dimensions[2] / 2,
+        density_dif=condensate_params.density_dif,
+    )
+    return initial_positions
+
+
+def create_track_generator(global_params, cell):
+    totaltime = int(
+        global_params.frame_count
+        * (global_params.exposure_time + global_params.interval_time)
+    )
+    # make track generator
+    track_generator = Track_generator(
+        cell=cell,
+        frame_count=totaltime / global_params.oversample_motion_time,
+        exposure_time=global_params.exposure_time,
+        interval_time=global_params.interval_time,
+        oversample_motion_time=global_params.oversample_motion_time,
+    )
+    return track_generator
+
+
+def get_tracks(molecule_params, global_params, initial_positions, track_generator):
+    totaltime = int(
+        global_params.frame_count
+        * (global_params.exposure_time + global_params.interval_time)
+    )
+    if molecule_params.track_type == "constant":
+        tracks, points_per_time = _generate_constant_tracks(
+            track_generator, totaltime, initial_positions, 0
+        )
+    elif molecule_params.allow_transition_probability:
+        tracks, points_per_time = _generate_transition_tracks(
+            track_generator=track_generator,
+            track_lengths=int(totaltime / global_params.oversample_motion_time),
+            initial_positions=initial_positions,
+            starting_frames=0,
+            diffusion_parameters=molecule_params.diffusion_coefficient,
+            hurst_parameters=molecule_params.hurst_exponent,
+            diffusion_transition_matrix=change_prob_time(
+                molecule_params.diffusion_transition_matrix,
+                molecule_params.transition_matrix_time_step,
+                global_params.oversample_motion_time,
+            ),
+            hurst_transition_matrix=change_prob_time(
+                molecule_params.hurst_transition_matrix,
+                molecule_params.transition_matrix_time_step,
+                global_params.oversample_motion_time,
+            ),
+            diffusion_state_probability=molecule_params.state_probability_diffusion,
+            hurst_state_probability=molecule_params.state_probability_hurst,
+        )
+    else:
+        tracks, points_per_time = _generate_no_transition_tracks(
+            track_generator=track_generator,
+            track_lengths=int(totaltime / global_params.oversample_motion_time),
+            initial_positions=initial_positions,
+            starting_frames=0,
+            diffusion_parameters=molecule_params.diffusion_coefficient,
+            hurst_parameters=molecule_params.hurst_exponent,
+        )
+
+    return tracks, points_per_time
+
+
+def add_tracks_to_sample(tracks, sample_plane, fluorophore):
+    for i, j in tracks.items():
+        sample_plane.add_object(
+            object_id=str(i),
+            position=j["xy"][0],
+            fluorophore=fluorophore,
+            trajectory=_convert_tracks_to_trajectory(j),
+        )
+    return sample_plane

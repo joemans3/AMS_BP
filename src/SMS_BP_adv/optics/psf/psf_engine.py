@@ -62,7 +62,7 @@ class PSFEngine:
         # Use 3x this radius to capture important features
         r_psf = 2 * r_airy
         # Convert to pixels (round up to odd number to maintain central pixel)
-        pixels_needed = int(np.ceil(2 * r_psf / self.params.pixel_size))
+        pixels_needed = int(np.ceil(r_psf / self.params.pixel_size))
         if pixels_needed % 2 == 0:
             pixels_needed += 1
 
@@ -70,35 +70,12 @@ class PSFEngine:
             # For 3D PSFs, ensure z_size is odd
             sigma_z = self._sigma_calc_z()
             pixels_needed_z = 2 * sigma_z
-            pixels_needed_z = int(np.ceil(2 * pixels_needed_z / z_size))
+            pixels_needed_z = int(np.ceil(pixels_needed_z / z_size))
             if pixels_needed_z % 2 == 0:
                 pixels_needed_z += 1
             return (pixels_needed_z, pixels_needed, pixels_needed)
 
         return (pixels_needed, pixels_needed)
-
-    def gaussian_psf_3d(self) -> np.ndarray:
-        """Generate 3D Gaussian approximation of PSF"""
-        z_size = self.params.z_step  # um  # Default z-size, can be made parameter
-        psf_size = self.calculate_psf_size(z_size)
-
-        x, y = self.generate_grid(psf_size[1:])
-        z = np.linspace(
-            -psf_size[0] * self.params.z_step,
-            psf_size[0] * self.params.z_step,
-            psf_size[0],
-        )
-
-        sigma_xy = self._sigma_calc_xy()
-        sigma_z = self._sigma_calc_z()
-
-        psf = np.zeros((len(z), *x.shape))
-        for i, z_val in enumerate(z):
-            psf[i] = np.exp(
-                -0.5
-                * ((x / sigma_xy) ** 2 + (y / sigma_xy) ** 2 + (z_val / sigma_z) ** 2)
-            )
-        return psf  # * self._gaussian_3d_normalization_A(sigma_z = sigma_z, sigma_x = sigma_xy, sigma_y = sigma_xy)
 
     @cache
     def gaussian_psf_z(self, z_val: float) -> np.ndarray:
@@ -108,8 +85,8 @@ class PSFEngine:
 
         x, y = self.generate_grid(psf_size)
 
-        sigma_xy = self._sigma_calc_xy()
-        sigma_z = self._sigma_calc_z()
+        sigma_xy = self._sigma_calc_xy() / 2.355
+        sigma_z = self._sigma_calc_z() / 2.355
 
         psf = np.exp(
             -0.5 * ((x / sigma_xy) ** 2 + (y / sigma_xy) ** 2 + (z_val / sigma_z) ** 2)
@@ -121,7 +98,7 @@ class PSFEngine:
         """Generate z=z_val Gaussian approximation of PSF with x=y=0
         returned normalized values"""
 
-        sigma_z = self._sigma_calc_z()
+        sigma_z = self._sigma_calc_z() / 2.355
 
         psf = np.exp(-0.5 * (z_val / sigma_z) ** 2)
         return psf

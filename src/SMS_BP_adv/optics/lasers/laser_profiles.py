@@ -237,6 +237,45 @@ class GaussianBeam(LaserProfile):
         z: np.ndarray | float,
         t: float,
     ) -> np.ndarray:
+        # Get time-dependent parameters
+        power = self.params.get_power(t)
+        pos = self.params.get_position(t)
+
+        # Shift coordinates based on current beam position
+        x_shifted = x - pos[0]
+        y_shifted = y - pos[1]
+        z_shifted = z - pos[2]
+
+        # Calculate beam parameters at z
+        w_z = self.get_beam_width(z_shifted)
+        # R_z = self.get_radius_of_curvature(z_shifted)
+
+        # Peak intensity at beam waist
+        I0 = 2 * power / (np.pi * (self.params.beam_width / 2) ** 2)
+
+        # Radial distance squared
+        r_squared = x_shifted**2 + y_shifted**2
+
+        # # Calculate z-dependent intensity with phase terms
+        # phase_terms = (
+        #     self.params.k * z_shifted
+        #     - self.get_gouy_phase(z_shifted)
+        #     + self.params.k * r_squared / (2 * R_z)
+        # )
+
+        # More accurate Gaussian intensity distribution
+        return (
+            I0 * (self.params.beam_width / w_z) ** 2 * np.exp(-2 * r_squared / w_z**2)
+            # * np.cos(phase_terms)
+        )
+
+    def calculate_intensity_(
+        self,
+        x: np.ndarray | float,
+        y: np.ndarray | float,
+        z: np.ndarray | float,
+        t: float,
+    ) -> np.ndarray:
         """
         Calculate the Gaussian beam intensity distribution.
 
@@ -268,7 +307,7 @@ class GaussianBeam(LaserProfile):
         w_z = self.get_beam_width(z_shifted)
 
         # Calculate peak intensity (z-dependent)
-        I0 = 2 * power / (np.pi * self.params.beam_width**2)
+        I0 = 2 * power / (np.pi * (self.params.beam_width / 2.0) ** 2)
         I0_z = I0 * (self.params.beam_width / w_z) ** 2
 
         # Calculate phase terms if needed
@@ -409,3 +448,246 @@ if __name__ == "__main__":
     print(f"Beam waist: {params.beam_width:.3f} µm")
     print(f"Rayleigh range: {params.rayleigh_range:.3f} µm")
     print(f"Diffraction limit: {params.diffraction_limited_width:.3f} µm")
+
+
+class HiLoBeam(LaserProfile):
+    """
+    Highly Inclined Laminated Optical (HiLo) illumination profile.
+
+    HiLo microscopy uses an oblique, tilted illumination angle to reduce
+    out-of-focus background while maintaining high contrast for thin specimens.
+    """
+
+    def __init__(self, params: LaserParameters, inclination_angle: float):
+        """
+        Initialize HiLo beam profile.
+
+        Args:
+            params: LaserParameters for the beam
+            inclination_angle: Angle of illumination from optical axis (in degrees)
+        """
+        super().__init__(params)
+
+        # Validate numerical aperture
+        if params.numerical_aperture is None:
+            raise ValueError(
+                "Numerical aperture must be specified for HiLo illumination"
+            )
+
+        # Convert angle to radians
+        self.inclination_angle = np.deg2rad(inclination_angle)
+
+        # Calculate effective illumination parameters
+        self.effective_na = min(
+            params.numerical_aperture,
+            params.refractive_index * np.sin(self.inclination_angle),
+        )
+
+        # Calculate illumination characteristics
+        wavelength_microns = params.wavelength / 1000.0
+        self.lateral_resolution = 0.61 * wavelength_microns / self.effective_na
+        self.axial_resolution = wavelength_microns / (2 * self.effective_na**2)
+
+        print(
+            f"HiLo Illumination - Inclination Angle: {np.rad2deg(self.inclination_angle):.2f}°"
+        )
+        print(f"Effective NA: {self.effective_na:.3f}")
+        print(f"Lateral Resolution: {self.lateral_resolution:.3f} µm")
+        print(f"Axial Resolution: {self.axial_resolution:.3f} µm")
+
+    def calculate_intensity(
+        self,
+        x: np.ndarray | float,
+        y: np.ndarray | float,
+        z: np.ndarray | float,
+        t: float,
+    ) -> np.ndarray:
+        """
+        Calculate the HiLo illumination intensity distribution.
+
+        Args:
+            x: X coordinates in microns (3D array)
+            y: Y coordinates in microns (3D array)
+            z: Z coordinates in microns (3D array)
+            t: Time in seconds
+
+        Returns:
+            3D array of intensities in W/µm²
+        """
+        # Get time-dependent parameters
+        power = self.params.get_power(t)
+        pos = self.params.get_position(t)
+
+        # Shift coordinates based on current beam position
+        x_shifted = x - pos[0]
+        y_shifted = y - pos[1]
+        z_shifted = z - pos[2]
+
+        # Calculate radial distance from optical axis
+        r = np.sqrt(x_shifted**2 + y_shifted**2)
+
+        # Base beam parameters
+        w0 = self.params.beam_width  # Beam waist
+        zR = self.params.rayleigh_range  # Rayleigh range
+
+        # Inclined illumination projection
+        # Modify z to account for tilted illumination
+        z_inclined = z_shifted * np.cos(self.inclination_angle)
+
+        # Calculate beam width at inclined z
+        w_z = w0 * np.sqrt(1 + (z_inclined / zR) ** 2)
+
+        # Peak intensity calculation
+        I0 = 2 * power / (np.pi * w0**2)
+
+        # Gaussian beam intensity with inclination
+        intensity = (
+            I0
+            * (w0 / w_z) ** 2  # Beam width scaling
+            * np.exp(-2 * r**2 / w_z**2)  # Gaussian radial profile
+        )
+
+        # Lamination effect: attenuate out-of-focus regions
+        lamination_factor = np.exp(-np.abs(z_shifted) / (2 * self.axial_resolution))
+
+        return intensity * lamination_factor
+
+
+class ConfocalBeam(LaserProfile):
+    """
+    Confocal microscopy beam profile with point scanning and pinhole characteristics.
+
+    Implements key optical principles of confocal microscopy:
+    - Point scanning illumination
+    - Pinhole-based rejection of out-of-focus light
+    - Depth-resolved imaging capabilities
+    """
+
+    def __init__(
+        self,
+        params: LaserParameters,
+        pinhole_diameter: float,  # Pinhole diameter in microns
+        scanning_mode: str = "point",  # 'point' or 'line'
+        line_orientation: str = "horizontal",  # 'horizontal' or 'vertical'
+    ):
+        """
+        Initialize Confocal beam profile.
+
+        Args:
+            params: LaserParameters for the beam
+            pinhole_diameter: Diameter of the detection pinhole in microns
+            scanning_mode: Scanning method ('point' or 'line')
+            line_orientation: Orientation for line scanning
+        """
+        super().__init__(params)
+
+        # Validate numerical aperture
+        if params.numerical_aperture is None:
+            raise ValueError(
+                "Numerical aperture must be specified for confocal microscopy"
+            )
+
+        # Pinhole and optical characteristics
+        self.pinhole_diameter = pinhole_diameter
+        self.scanning_mode = scanning_mode
+        self.line_orientation = line_orientation
+
+        # Calculate optical parameters
+        wavelength_microns = params.wavelength / 1000.0
+        na = params.numerical_aperture
+
+        # Theoretical resolution calculations
+        self.lateral_resolution = 0.61 * wavelength_microns / na
+        self.axial_resolution = 0.5 * wavelength_microns / (na**2)
+
+        # Pinhole transmission calculation
+        # Airy disk radius calculation
+        self.airy_radius = 1.22 * wavelength_microns / (2 * na)
+
+        # Transmission through pinhole
+        def pinhole_transmission(z):
+            """
+            Calculate pinhole transmission as a function of z-position.
+            Uses an error function to model smooth transition.
+            """
+            # Normalized z-position relative to focal plane
+            z_norm = z / self.axial_resolution
+
+            # Smooth transition function
+            return 0.5 * (1 + np.tanh(-z_norm))
+
+        self.pinhole_transmission = pinhole_transmission
+
+        print("Confocal Microscopy Configuration:")
+        print(f"  Scanning Mode: {scanning_mode}")
+        print(f"  Pinhole Diameter: {pinhole_diameter:.2f} µm")
+        print(f"  Lateral Resolution: {self.lateral_resolution:.3f} µm")
+        print(f"  Axial Resolution: {self.axial_resolution:.3f} µm")
+        print(f"  Airy Disk Radius: {self.airy_radius:.3f} µm")
+
+    def calculate_intensity(
+        self,
+        x: np.ndarray | float,
+        y: np.ndarray | float,
+        z: np.ndarray | float,
+        t: float,
+    ) -> np.ndarray:
+        """
+        Calculate the confocal illumination intensity distribution.
+
+        Args:
+            x: X coordinates in microns (3D array)
+            y: Y coordinates in microns (3D array)
+            z: Z coordinates in microns (3D array)
+            t: Time in seconds
+
+        Returns:
+            3D array of intensities in W/µm²
+        """
+        # Get time-dependent parameters
+        power = self.params.get_power(t)
+        pos = self.params.get_position(t)
+
+        # Shift coordinates based on current beam position
+        x_shifted = x - pos[0]
+        y_shifted = y - pos[1]
+        z_shifted = z - pos[2]
+
+        # Base beam parameters
+        w0 = self.params.beam_width  # Beam waist
+        zR = self.params.rayleigh_range  # Rayleigh range
+
+        # Calculate beam width at z
+        w_z = w0 * np.sqrt(1 + (z_shifted / zR) ** 2)
+
+        # Peak intensity calculation
+        I0 = 2 * power / (np.pi * w0**2)
+
+        # Scanning mode intensity modification
+        if self.scanning_mode == "point":
+            # Point scanning: standard Gaussian beam
+            radial_intensity = (
+                I0
+                * (w0 / w_z) ** 2
+                * np.exp(-2 * (x_shifted**2 + y_shifted**2) / w_z**2)
+            )
+        elif self.scanning_mode == "line":
+            # Line scanning: different intensity distribution
+            if self.line_orientation == "horizontal":
+                line_intensity = (
+                    I0 * (w0 / w_z) ** 2 * np.exp(-2 * y_shifted**2 / w_z**2)
+                )
+                radial_intensity = line_intensity
+            else:  # vertical line scanning
+                line_intensity = (
+                    I0 * (w0 / w_z) ** 2 * np.exp(-2 * x_shifted**2 / w_z**2)
+                )
+                radial_intensity = line_intensity
+        else:
+            raise ValueError(f"Unknown scanning mode: {self.scanning_mode}")
+
+        # Pinhole transmission effect
+        pinhole_effect = self.pinhole_transmission(z_shifted)
+
+        # Final intensity calculation
+        return radial_intensity * pinhole_effect

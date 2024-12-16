@@ -12,7 +12,6 @@ from SMS_BP_adv.photophysics.photon_physics import (
 )
 
 from .configio.configmodels import ConfigList
-from .optics.camera import CMOSDetector, EMCCDDetector
 from .optics.filters import FilterSet
 from .optics.lasers import LaserProfile
 from .optics.psf import PSFEngine
@@ -24,7 +23,7 @@ from .sample.sim_sampleplane import EMPTY_STATE_HISTORY_DICT, SamplePlane
 class VirtualMicroscope:
     def __init__(
         self,
-        camera: Tuple[EMCCDDetector | CMOSDetector, QuantumEfficiency],
+        camera: Tuple[Detector, QuantumEfficiency],
         sample_plane: SamplePlane,
         lasers: Dict[str, LaserProfile],
         filterset: FilterSet,
@@ -121,7 +120,6 @@ class VirtualMicroscope:
             xyoffset=xyoffset,
             frames=max_frame,
         )
-        print(timestoconsider, frame_list, max_frame)
 
         # for each object find its location and the excitation laser intensity (after applying excitation filter)
         for time_index, time in enumerate(timestoconsider):

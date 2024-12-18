@@ -90,6 +90,7 @@ class State(BaseModel):
     molar_cross_section: Optional[WavelengthDependentProperty] = Field(
         None, gt=0, description="cm²"
     )  # post init value of molar_cross_section at various wavelengths
+    fluorescent_lifetime: Optional[float] = None
 
     def model_post_init(self, __context):
         # populate ex_max and em_max:
@@ -239,6 +240,8 @@ class Fluorophore(BaseModel):
     transitions: dict[
         str, StateTransition
     ]  # str = StateTransition.from_state + StateTransiiton.to_state
+
+    initial_state: State
 
     @field_validator("states")
     @classmethod

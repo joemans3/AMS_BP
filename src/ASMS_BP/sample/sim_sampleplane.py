@@ -4,9 +4,8 @@ from typing import Dict, Iterator, List, Optional, Tuple
 
 import numpy as np
 
-from SMS_BP_adv.sample.flurophores.flurophore_schema import WavelengthDependentProperty
-
-from .flurophores import Fluorophore, State, StateTransition, StateType
+from ..sample.flurophores.flurophore_schema import WavelengthDependentProperty
+from .flurophores import Fluorophore, State, StateTransition
 
 # can reuse. Used for indicating that there is no transmittance at a given wavelenght ( any given time in which the flurophore is NOT in the fluorescent state). Also used for t=0.
 EMPTY_STATE_HISTORY_DICT = {
@@ -37,22 +36,31 @@ class FluorescentObject:
             self.position_history = {0: self.position}  # Initialize at t=0
 
         if self.state_history is None:
-            # Initialize with dark state
-            initial_state = next(
-                state
-                for state in self.fluorophore.states.values()
-                if state.state_type == StateType.DARK
-            )
-            initial_transitions = [
+            # use the initial state of the fluorophore opbject
+            initial_state = self.fluorophore.initial_state
+            initial_state_transitions = [
                 t
                 for t in self.fluorophore.transitions.values()
                 if t.from_state == initial_state.name
             ]
+
+            # select dark state [Optional]
+            # initial_state = next(
+            #     state
+            #     for state in self.fluorophore.states.values()
+            #     if state.state_type == StateType.DARK
+            # )
+            # initial_transitions = [
+            #     t
+            #     for t in self.fluorophore.transitions.values()
+            #     if t.from_state == initial_state.name
+            # ]
+
             self.state_history = {
                 0: (
                     initial_state,
-                    EMPTY_STATE_HISTORY_DICT,  # No photons available for dark state
-                    initial_transitions,
+                    EMPTY_STATE_HISTORY_DICT,  # placeholder
+                    initial_state_transitions,
                 )
             }
 

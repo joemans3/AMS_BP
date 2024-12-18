@@ -1,9 +1,9 @@
 [project]
-name = "SMS_BP_adv"
+name = "ASMS_BP"
 
 dynamic = ["version"]
 
-description = "Single Molecule Simulations and Microscopy Simulations developed for the Weber Lab by Baljyot Singh Parmar"
+description = "Advanced Single Molecule Simulations and Microscopy Simulations developed for the Weber Lab by Baljyot Singh Parmar"
 
 readme = "README.md"
 
@@ -29,11 +29,12 @@ dependencies = [
   "jsonschema>=4.23.0",
   "mkdocstrings-python>=1.12.1",
   "pydantic>=2.9.2",
+  "tomli>=2.0.2",
 ]
 
 [project.urls]
-Documentation = "https://joemans3.github.io/SMS_BP/"
-"Source code" = "https://github.com/joemans3/SMS_BP"
+Documentation = "https://joemans3.github.io/ASMS_BP/"
+"Source code" = "https://github.com/joemans3/ASMS_BP"
 
 [tool.pyright]
 venvPath = "."
@@ -56,5 +57,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]
-path = "src/SMS_BP_adv/__init__.py"
+path = "src/ASMS_BP/__init__.py"
 
+[project.scripts]
+run_ASMS_BP = "ASMS_BP.run_cell_simulation:typer_app_asms_bp"

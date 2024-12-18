@@ -20,7 +20,6 @@ Usage:
 The file uses Rich for enhanced console output and progress tracking.
 """
 
-import json
 import os
 import shutil
 import time
@@ -32,20 +31,24 @@ import typer
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from typing_extensions import Annotated
 
-from . import __version__
-from .simulate_cell import Simulate_cells
+from ASMS_BP.configio.saving import save_config_frames
 
-cli_help_doc = """
-CLI tool to run [underline]S[/underline]ingle [underline]M[/underline]olecule [underline]S[/underline]imulation: [underline]SMS[/underline]-BP. GitHub: [green]https://github.com/joemans3/SMS_BP[/green].
+from . import __version__
+from .configio.convertconfig import ConfigLoader
+
+cli_help_doc = str(
+    """
+CLI tool to run [underline]A[/underline]dvanced [underline]S[/underline]ingle [underline]M[/underline]olecule [underline]S[/underline]imulation: [underline]ASMS[/underline]-BP. GitHub: [green]https://github.com/joemans3/ASMS_BP[/green].
 [Version: [bold]{0}[/bold]]
 """.format(__version__)
+)
 
 
 # create a new CLI function
-typer_app_sms_bp = typer.Typer(
-    name="SMS_BP CLI Tool",
+typer_app_asms_bp = typer.Typer(
+    name="ASMS_BP CLI Tool",
     help=cli_help_doc,
-    short_help="CLI tool for SMS_BP.",
+    short_help="CLI tool for ASMS_BP.",
     rich_markup_mode="rich",
     pretty_exceptions_show_locals=False,
     add_completion=False,
@@ -55,15 +58,15 @@ typer_app_sms_bp = typer.Typer(
 
 
 # make a callback function to run the simulation
-@typer_app_sms_bp.callback(invoke_without_command=True)
+@typer_app_asms_bp.callback(invoke_without_command=True)
 def cell_simulation():
     # print version
     # find version using the __version__ variable in the __init__.py file
-    out_string = f"SMS_BP version: [bold]{__version__}[/bold]"
+    out_string = f"ASMS_BP version: [bold]{__version__}[/bold]"
     rich.print(out_string)
 
 
-@typer_app_sms_bp.command(name="config")
+@typer_app_asms_bp.command(name="config")
 def generate_config(
     output_path: Annotated[
         Path,
@@ -113,8 +116,8 @@ def generate_config(
         # find the parent dir
         project_directory = Path(__file__).parent
         # find the config file
-        config_file = project_directory / "sim_config.json"
-        output_path = output_path / "sim_config.json"
+        config_file = project_directory / "sim_config.toml"
+        output_path = output_path / "sim_config.toml"
         # copy the config file to the output path
 
         # complete last progress
@@ -134,7 +137,7 @@ def generate_config(
 
 
 # second command to run the simulation using the config file path as argument
-@typer_app_sms_bp.command(name="runsim")
+@typer_app_asms_bp.command(name="runsim")
 def run_cell_simulation(
     config_file: Annotated[Path, typer.Argument(help="Path to the configuration file")],
 ) -> None:
@@ -167,23 +170,18 @@ def run_cell_simulation(
         if not os.path.isfile(config_file):
             rich.print("FileNotFoundError: Configuration file not found.")
             raise typer.Abort()
-        # check if the config file is a valid json file
-        try:
-            with open(config_file) as f:
-                config = json.load(f)
-        except json.JSONDecodeError:
-            rich.print("JSONDecodeError: Configuration file is not a valid JSON file.")
-            raise typer.Abort()
 
-        validate_config(config)
-
-        output_parameters = config["Output_Parameters"]
-        output_path = output_parameters["output_path"]
-
+        config_inator = ConfigLoader(config_path=config_file)
         # find the version flag in the config file
-        if "version" in config:
-            version = config["version"]
+        if "version" in config_inator.config:
+            version = config_inator.config["version"]
             rich.print(f"Using config version: [bold]{version}[/bold]")
+
+        setup_config = config_inator.setup_microscope()
+        microscope = setup_config["microscope"]
+        configEXP = setup_config["experiment_config"]
+        functionEXP = setup_config["experiment_func"]
+
         # complete last progress
         progress.update(task_1, completed=10)
         rich.print(
@@ -192,13 +190,13 @@ def run_cell_simulation(
 
         time_task_2 = time.time()
         task_2 = progress.add_task(description="Running the simulation ...", total=None)
+
         # run the simulation
-        sim = Simulate_cells(str(config_file))
-        sim.get_and_save_sim(
-            cd=output_path,
-            img_name=output_parameters.get("output_name"),
-            subsegment_type=output_parameters.get("subsegment_type"),
-            subsegment_num=int(output_parameters.get("subsegment_number")),
+        frames, metadata = functionEXP(microscope=microscope, config=configEXP)
+
+        # save
+        save_config_frames(
+            metadata, frames, setup_config["base_config"].OutputParameters
         )
 
         progress.update(task_2, completed=None)

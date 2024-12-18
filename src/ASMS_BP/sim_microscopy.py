@@ -1,20 +1,20 @@
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Literal, Optional, Tuple
 
 import numpy as np
 
-from SMS_BP_adv.optics.camera.detectors import Detector
-from SMS_BP_adv.optics.camera.quantum_eff import QuantumEfficiency
-from SMS_BP_adv.photophysics.photon_physics import (
+from .configio.configmodels import ConfigList
+from .metadata.metadata import MetaData
+from .optics.camera.detectors import Detector
+from .optics.camera.quantum_eff import QuantumEfficiency
+from .optics.filters import FilterSet
+from .optics.lasers import LaserProfile
+from .optics.psf import PSFEngine
+from .photophysics.photon_physics import (
     AbsorptionPhysics,
     EmissionPhysics,
     incident_photons,
 )
-
-from .configio.configmodels import ConfigList
-from .optics.filters import FilterSet
-from .optics.lasers import LaserProfile
-from .optics.psf import PSFEngine
 from .probabilityfuncs.markov_chain import rate_to_probability
 from .sample.flurophores.flurophore_schema import StateType, WavelengthDependentProperty
 from .sample.sim_sampleplane import EMPTY_STATE_HISTORY_DICT, SamplePlane
@@ -89,7 +89,7 @@ class VirtualMicroscope:
             for laser in laser_positions.keys():
                 self.lasers[laser].params.position = laser_positions[laser]
 
-    def aquire_time_series(
+    def run_sim(
         self,
         z_val: float,  # um
         laser_power: Dict[str, float],  # str = lasername, float = power in W
@@ -99,20 +99,31 @@ class VirtualMicroscope:
         laser_position: Dict[str, Tuple[float, float, float]]
         | None,  # str = lasername, Tuple = x, y, z in um at the sample plane
         duration_total: Optional[int] = None,  # ms
-    ) -> np.ndarray:
+        exposure_time: Optional[int] = None,
+        interval_time: Optional[int] = None,
+    ) -> Tuple[np.ndarray, MetaData]:
         self._set_laser_powers(laser_power=laser_power)
         if laser_position is not None:
             self._set_laser_positions(laser_positions=laser_position)
 
-        if duration_total is None:
-            duration_total = self.sample_plane.t_end
-
-        timestoconsider, frame_list, max_frame = generate_sampling_pattern(
+        duration_total, exposure_time, interval_time = timeValidator(
             self.config.GlobalParameters.exposure_time,
             self.config.GlobalParameters.interval_time,
+            self.sample_plane.dt,
+            self.sample_plane.t_end,
+            {
+                "exposure_time": exposure_time,
+                "interval_time": interval_time,
+                "total_time": duration_total,
+            },
+        )
+
+        timestoconsider, frame_list, max_frame = generate_sampling_pattern(
+            exposure_time,
+            interval_time,
             self._time,
             self._time + duration_total,
-            self.config.GlobalParameters.oversample_motion_time,
+            self.sample_plane.dt,
         )
         mapSC = mapSampleCamera(
             sampleplane=self.sample_plane,
@@ -149,22 +160,25 @@ class VirtualMicroscope:
                             )  # W/um²
                         ),
                     }
+                print(laser_intensities)
 
                 # make an array of all the possible states
-                statearr = [strans.to_state for strans in statehist[2]]
-                stateTransitionMatrix = [
+                statearr = [
+                    state_transitions.to_state for state_transitions in statehist[2]
+                ]
+                stateTransitionMatrixR = [
                     sum(
-                        strans.activation_rate()(
+                        state_transitions.activation_rate()(
                             laser["wavelength"], laser["intensity"]
                         )
                         for laser in laser_intensities.values()
                     )
-                    for strans in statehist[2]
+                    for state_transitions in statehist[2]
                 ]
 
                 stateTransitionMatrix = [
                     rate_to_probability(i, self.sample_plane.dt * (1e-3))
-                    for i in stateTransitionMatrix
+                    for i in stateTransitionMatrixR
                 ]  # input required is 1/s and s. time is in ms, rate is in 1/s from the .activation_rate() method
                 # make the self->self state the rest of the probability
                 nothing_change_prob = 1.0 - np.sum(stateTransitionMatrix)
@@ -202,7 +216,7 @@ class VirtualMicroscope:
                         int_t.append(i["intensity"])
 
                     absorb_photon_cl = AbsorptionPhysics(
-                        intensity_spectrum=fluorObj.fluorophore.states[
+                        excitation_spectrum=fluorObj.fluorophore.states[
                             statearr[next_state_index]
                         ].excitation_spectrum,
                         intensity_incident=WavelengthDependentProperty(
@@ -217,6 +231,9 @@ class VirtualMicroscope:
                                 for wl in wl_t
                             ],
                         ),
+                        fluorescent_lifetime=fluorObj.fluorophore.states[
+                            statearr[next_state_index]
+                        ].fluorescent_lifetime,
                     )
 
                     emision_photon_cl = EmissionPhysics(
@@ -277,7 +294,7 @@ class VirtualMicroscope:
                             florPos,
                         )
                         inc_photons, psfs = inc.incident_photons_calc(
-                            self.sample_plane.dt
+                            self.sample_plane.dt * 1e-3
                         )
                         for ipsf in psfs:
                             mapSC.add_psf_frame(
@@ -286,12 +303,12 @@ class VirtualMicroscope:
 
         # use photon frames to make digital image
         frames = [
-            self.camera.capture_frame(
-                elpho, exposure_time=self.config.GlobalParameters.exposure_time * 1e-3
-            )
+            self.camera.capture_frame(elpho, exposure_time=exposure_time * 1e-3)
             for elpho in mapSC.holdframe.frames
         ]
-        return np.array(frames)
+        self._time += duration_total
+        metadata = MetaData(notes="Not implimented")
+        return np.array(frames), metadata
 
     def reset_to_initial_config(self) -> bool:
         """Reset to initial configuration."""
@@ -406,3 +423,37 @@ def generate_sampling_pattern(
         times.append(counter_times * oversample_motion_time)
 
     return times, sample_bool, frame_num - 1
+
+
+def timeValidator(
+    oexposure_time: int,
+    ointerval_time: int,
+    oversample_motion_time: int,
+    ototal_time: int,
+    state_arr: Dict[
+        Literal["exposure_time", "interval_time", "total_time"], int | None
+    ],
+) -> Tuple[int, int, int]:
+    duration_total = state_arr.get("total_time", ototal_time) or ototal_time
+    exposure_time = state_arr.get("exposure_time", oexposure_time) or oexposure_time
+    interval_time = state_arr.get("interval_time", ointerval_time) or ointerval_time
+
+    if duration_total > ototal_time:
+        raise ValueError(
+            f"Duration_total: {duration_total}, is larger than the largest simulated: {ototal_time}. Choose a smaller value or rerun the microscope setup with a longer duration."
+        )
+
+    if exposure_time < oversample_motion_time and exposure_time > 0:
+        raise ValueError(
+            f"Exposure time: {exposure_time}, is smaller than the original oversample_motion_time: {oversample_motion_time}"
+        )
+    if interval_time < oversample_motion_time and interval_time > 0:
+        raise ValueError(
+            f"Interval time: {interval_time}, is smaller than the original oversample_motion_time: {oversample_motion_time}"
+        )
+
+    if duration_total % (exposure_time + interval_time) != 0:
+        raise ValueError(
+            f"Total duration: {duration_total} needs to be a multiple of exposure time: {exposure_time} + interval time: {interval_time}."
+        )
+    return duration_total, exposure_time, interval_time

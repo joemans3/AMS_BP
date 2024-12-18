@@ -23,9 +23,9 @@ Usage:
 import matplotlib.pyplot as plt
 import numpy as np
 
-from .track_gen import Track_generator as sf
-from ..utils.decorators import cache
 from ..cells.rectangular_cell import RectangularCell
+from ..utils.decorators import cache
+from .track_gen import Track_generator as sf
 
 
 def create_condensate_dict(
@@ -75,6 +75,7 @@ def create_condensate_dict(
         )
     return condensates
 
+
 class Condensate:
     """Condensate class for storing condensate data.
 
@@ -116,18 +117,31 @@ class Condensate:
         initial_scale: float = 0,
         cell: RectangularCell = None,
     ):
-        self.initial_position = np.array(initial_position) if not isinstance(initial_position, np.ndarray) else initial_position
-        self.initial_time = int(initial_time) if not isinstance(initial_time, int) else initial_time
-        self.diffusion_coefficient = np.array(diffusion_coefficient) if not isinstance(diffusion_coefficient, np.ndarray) else diffusion_coefficient
-        self.hurst_exponent = np.array(hurst_exponent) if not isinstance(hurst_exponent, np.ndarray) else hurst_exponent
+        self.initial_position = (
+            np.array(initial_position)
+            if not isinstance(initial_position, np.ndarray)
+            else initial_position
+        )
+        self.initial_time = (
+            int(initial_time) if not isinstance(initial_time, int) else initial_time
+        )
+        self.diffusion_coefficient = (
+            np.array(diffusion_coefficient)
+            if not isinstance(diffusion_coefficient, np.ndarray)
+            else diffusion_coefficient
+        )
+        self.hurst_exponent = (
+            np.array(hurst_exponent)
+            if not isinstance(hurst_exponent, np.ndarray)
+            else hurst_exponent
+        )
         self.units_time = units_time
         self.units_position = units_position
         self.condensate_id = condensate_id
         self.initial_scale = initial_scale
         if cell is None:
             cell = RectangularCell(
-                origin=np.array([0, 0]),
-                dimensions=np.array([0, 0, 0])
+                origin=np.array([0, 0]), dimensions=np.array([0, 0, 0])
             )
         self.cell = cell
         self.dim = self.initial_position.shape[0]
@@ -251,15 +265,17 @@ class Condensate:
         time_array = np.arange(self.times[-1] + 1, time + 1)
         # Get cell bounds for track generator
         min_bound, max_bound = self.cell.get_bounds()
-        cell_space = np.array([
-            [min_bound[0], max_bound[0]],  # x bounds
-            [min_bound[1], max_bound[1]],  # y bounds
-        ])
-        cell_axial_range = (max_bound[2] - min_bound[2]) / 2.
+        cell_space = np.array(
+            [
+                [min_bound[0], max_bound[0]],  # x bounds
+                [min_bound[1], max_bound[1]],  # y bounds
+            ]
+        )
+        cell_axial_range = (max_bound[2] - min_bound[2]) / 2.0
         track_generator = sf.Track_generator(
             cell_space=cell_space,
             cell_axial_range=cell_axial_range,
-            frame_count=500,
+            cycle_count=500,
             exposure_time=20,
             interval_time=0,
             oversample_motion_time=20,

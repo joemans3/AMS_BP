@@ -4,10 +4,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import tomli
 from pydantic import BaseModel
 
-from SMS_BP_adv.cells.base_cell import BaseCell
-from SMS_BP_adv.sim_microscopy import VirtualMicroscope
-
 from ..cells import RectangularCell
+from ..cells.base_cell import BaseCell
 from ..motion import Track_generator, create_condensate_dict
 from ..motion.track_gen import (
     _convert_tracks_to_trajectory,
@@ -45,6 +43,7 @@ from ..sample.flurophores.flurophore_schema import (
     StateType,
 )
 from ..sample.sim_sampleplane import SamplePlane, SampleSpace
+from ..sim_microscopy import VirtualMicroscope
 from .configmodels import (
     CellParameters,
     CondensateParameters,
@@ -52,6 +51,13 @@ from .configmodels import (
     GlobalParameters,
     MoleculeParameters,
     OutputParameters,
+)
+from .experiments import (
+    BaseExpConfig,
+    TimeSeriesExpConfig,
+    timeseriesEXP,
+    zseriesEXP,
+    zStackExpConfig,
 )
 
 FILTERSET_BASE = ["excitation", "emission", "dichroic"]
@@ -130,6 +136,22 @@ class ConfigLoader:
             OutputParameters, self.config["Output_Parameters"]
         )
 
+    def create_experiment_from_config(
+        self, config: Dict[str, Any]
+    ) -> Tuple[BaseExpConfig, Callable]:
+        configEXP = config["experiment"]
+        if configEXP.get("experiment_type") == "time-series":
+            del configEXP["experiment_type"]
+            tconfig = TimeSeriesExpConfig(**configEXP)
+            callableEXP = timeseriesEXP
+        elif configEXP.get("experiment_type") == "z-stack":
+            del configEXP["experiment_type"]
+            tconfig = zStackExpConfig(**configEXP)
+            callableEXP = zseriesEXP
+        else:
+            raise TypeError("Experiment is not supported")
+        return tconfig, callableEXP
+
     def create_fluorophore_from_config(self, config: Dict[str, Any]) -> Fluorophore:
         """
         Create a fluorophore instance from a configuration dictionary.
@@ -154,6 +176,7 @@ class ConfigLoader:
             extinction_coefficient = None
             quantum_yield = None
             molar_cross_section = None
+            fluorescent_lifetime = None
 
             if "excitation_spectrum" in state_data:
                 excitation_spectrum = SpectralData(
@@ -172,6 +195,10 @@ class ConfigLoader:
 
             if "quantum_yield" in state_data:
                 quantum_yield = state_data["quantum_yield"]
+
+            if "fluorescent_lifetime" in state_data:
+                fluorescent_lifetime = state_data["fluorescent_lifetime"]
+
             # Create state
             state = State(
                 name=state_data["name"],
@@ -183,8 +210,21 @@ class ConfigLoader:
                 molar_cross_section=molar_cross_section,
                 quantum_yield=None,
                 extinction_coefficient=None,
+                fluorescent_lifetime=fluorescent_lifetime,
             )
             states[state.name] = state
+
+        initial_state = None
+        state_list = []
+        for state in states.values():
+            state_list.append(state.name)
+            if state.name == fluor_config["initial_state"]:
+                initial_state = state
+
+        if initial_state is None:
+            raise ValueError(
+                f"Inital state must be a valid name from the provided states: {state_list}."
+            )
 
         # Build transitions
         transitions = {}
@@ -222,7 +262,10 @@ class ConfigLoader:
 
         # Create and return fluorophore
         return Fluorophore(
-            name=fluor_config["name"], states=states, transitions=transitions
+            name=fluor_config["name"],
+            states=states,
+            transitions=transitions,
+            initial_state=initial_state,
         )
 
     def create_psf_from_config(
@@ -525,10 +568,7 @@ class ConfigLoader:
 
         return detector, quantum_efficiency
 
-    def make_trajectories(self):
-        pass
-
-    def setup_microscope(self) -> VirtualMicroscope:
+    def setup_microscope(self) -> dict:
         # base config
         self.populate_dataclass_schema()
         base_config = ConfigList(
@@ -595,6 +635,9 @@ class ConfigLoader:
             tracks=tracks, sample_plane=sample_plane, fluorophore=fluorophore
         )
 
+        # config of experiment
+        configEXP, funcEXP = self.create_experiment_from_config(config=self.config)
+
         vm = VirtualMicroscope(
             camera=(detector, qe),
             sample_plane=sample_plane,
@@ -603,7 +646,23 @@ class ConfigLoader:
             psf=psf,
             config=base_config,
         )
-        return vm
+        return_dict = {
+            "microscope": vm,
+            "base_config": base_config,
+            "psf": psf,
+            "psf_config": psf_config,
+            "filters": filters,
+            "lasers": lasers,
+            "sample_plane": sample_plane,
+            "tracks": tracks,
+            "points_per_time": points_per_time,
+            "condensate_dict": condensates_dict,
+            "cell": cell,
+            "fluorophore": fluorophore,
+            "experiment_config": configEXP,
+            "experiment_func": funcEXP,
+        }
+        return return_dict
 
 
 def make_cell(cell_params) -> BaseCell:
@@ -629,7 +688,7 @@ def make_sample(global_params, cell_params) -> SamplePlane:
 
     # total time
     totaltime = int(
-        global_params.frame_count
+        global_params.cycle_count
         * (global_params.exposure_time + global_params.interval_time)
     )
     # initialize sample plane
@@ -686,13 +745,13 @@ def gen_initial_positions(molecule_params, cell, condensate_params, sampling_fun
 
 def create_track_generator(global_params, cell):
     totaltime = int(
-        global_params.frame_count
+        global_params.cycle_count
         * (global_params.exposure_time + global_params.interval_time)
     )
     # make track generator
     track_generator = Track_generator(
         cell=cell,
-        frame_count=totaltime / global_params.oversample_motion_time,
+        cycle_count=totaltime / global_params.oversample_motion_time,
         exposure_time=global_params.exposure_time,
         interval_time=global_params.interval_time,
         oversample_motion_time=global_params.oversample_motion_time,
@@ -702,7 +761,7 @@ def create_track_generator(global_params, cell):
 
 def get_tracks(molecule_params, global_params, initial_positions, track_generator):
     totaltime = int(
-        global_params.frame_count
+        global_params.cycle_count
         * (global_params.exposure_time + global_params.interval_time)
     )
     if molecule_params.track_type == "constant":

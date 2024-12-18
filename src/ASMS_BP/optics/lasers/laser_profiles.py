@@ -137,7 +137,7 @@ class LaserProfile(ABC):
             x: X coordinates in microns (3D array)
             y: Y coordinates in microns (3D array)
             z: Z coordinates in microns (3D array)
-            t: Time in seconds
+            t: Time in milliseconds
 
         Returns:
             3D array of intensities in W/m²
@@ -355,7 +355,7 @@ class WidefieldBeam(LaserProfile):
         # Wave optics DoF
         self.dof = (wavelength_microns * n) / (na * na)
 
-        print(f"Optical DoF: {self.dof:.2f} µm")
+        # print(f"Optical DoF: {self.dof:.2f} µm")
 
     def _calculate_dof_profile(self, z: np.ndarray | float) -> np.ndarray:
         """
@@ -445,9 +445,9 @@ if __name__ == "__main__":
         t=0,  # t=0 seconds
     )
 
-    print(f"Beam waist: {params.beam_width:.3f} µm")
-    print(f"Rayleigh range: {params.rayleigh_range:.3f} µm")
-    print(f"Diffraction limit: {params.diffraction_limited_width:.3f} µm")
+    # print(f"Beam waist: {params.beam_width:.3f} µm")
+    # print(f"Rayleigh range: {params.rayleigh_range:.3f} µm")
+    # print(f"Diffraction limit: {params.diffraction_limited_width:.3f} µm")
 
 
 class HiLoBeam(LaserProfile):
@@ -488,12 +488,12 @@ class HiLoBeam(LaserProfile):
         self.lateral_resolution = 0.61 * wavelength_microns / self.effective_na
         self.axial_resolution = wavelength_microns / (2 * self.effective_na**2)
 
-        print(
-            f"HiLo Illumination - Inclination Angle: {np.rad2deg(self.inclination_angle):.2f}°"
-        )
-        print(f"Effective NA: {self.effective_na:.3f}")
-        print(f"Lateral Resolution: {self.lateral_resolution:.3f} µm")
-        print(f"Axial Resolution: {self.axial_resolution:.3f} µm")
+        # print(
+        #     f"HiLo Illumination - Inclination Angle: {np.rad2deg(self.inclination_angle):.2f}°"
+        # )
+        # print(f"Effective NA: {self.effective_na:.3f}")
+        # print(f"Lateral Resolution: {self.lateral_resolution:.3f} µm")
+        # print(f"Axial Resolution: {self.axial_resolution:.3f} µm")
 
     def calculate_intensity(
         self,
@@ -618,12 +618,12 @@ class ConfocalBeam(LaserProfile):
 
         self.pinhole_transmission = pinhole_transmission
 
-        print("Confocal Microscopy Configuration:")
-        print(f"  Scanning Mode: {scanning_mode}")
-        print(f"  Pinhole Diameter: {pinhole_diameter:.2f} µm")
-        print(f"  Lateral Resolution: {self.lateral_resolution:.3f} µm")
-        print(f"  Axial Resolution: {self.axial_resolution:.3f} µm")
-        print(f"  Airy Disk Radius: {self.airy_radius:.3f} µm")
+        # print("Confocal Microscopy Configuration:")
+        # print(f"  Scanning Mode: {scanning_mode}")
+        # print(f"  Pinhole Diameter: {pinhole_diameter:.2f} µm")
+        # print(f"  Lateral Resolution: {self.lateral_resolution:.3f} µm")
+        # print(f"  Axial Resolution: {self.axial_resolution:.3f} µm")
+        # print(f"  Airy Disk Radius: {self.airy_radius:.3f} µm")
 
     def calculate_intensity(
         self,

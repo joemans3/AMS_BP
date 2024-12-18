@@ -31,7 +31,7 @@ class Track_generator:
     -----------
     cell : CellType
         Cell object defining the space for track generation
-    frame_count : int
+    cycle_count : int
         The number of frames for the simulation.
     exposure_time : int | float
         Exposure time in milliseconds.
@@ -44,7 +44,7 @@ class Track_generator:
     def __init__(
         self,
         cell: CellType,
-        frame_count: int,
+        cycle_count: int,
         exposure_time: int | float,
         interval_time: int | float,
         oversample_motion_time: int | float,
@@ -69,13 +69,13 @@ class Track_generator:
             ]
         )
 
-        self.frame_count = frame_count  # count of frames
+        self.cycle_count = cycle_count  # count of frames
         self.exposure_time = exposure_time  # in ms
         self.interval_time = interval_time  # in ms
         self.oversample_motion_time = oversample_motion_time  # in ms
-        # total time in ms is the exposure time + interval time * (frame_count) / oversample_motion_time
+        # total time in ms is the exposure time + interval time * (cycle_count) / oversample_motion_time
         # in ms
-        self.total_time = self._convert_frame_to_time(self.frame_count)
+        self.total_time = self._convert_frame_to_time(self.cycle_count)
 
     def _allowable_cell_types(self):
         # only allow rectangular cells for now

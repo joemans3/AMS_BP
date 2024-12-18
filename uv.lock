@@ -15,6 +15,53 @@ wheels = [
 ]
 
 [[package]]
+name = "asms-bp"
+version = "0.0.1"
+source = { editable = "." }
+dependencies = [
+    { name = "jsonschema" },
+    { name = "matplotlib" },
+    { name = "mkdocstrings-python" },
+    { name = "numpy" },
+    { name = "pydantic" },
+    { name = "scikit-image" },
+    { name = "scipy" },
+    { name = "tomli" },
+    { name = "typer" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "mkdocs-material" },
+    { name = "pymdown-extensions" },
+    { name = "pyright" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "jsonschema", specifier = ">=4.23.0" },
+    { name = "matplotlib", specifier = ">=3.6.0" },
+    { name = "mkdocstrings-python", specifier = ">=1.12.1" },
+    { name = "numpy", specifier = ">=1.21.2" },
+    { name = "pydantic", specifier = ">=2.9.2" },
+    { name = "scikit-image", specifier = ">=0.18.3" },
+    { name = "scipy", specifier = ">=1.7.1" },
+    { name = "tomli", specifier = ">=2.0.2" },
+    { name = "typer", specifier = ">=0.12.5" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "mkdocs-material", specifier = "==9.5.40" },
+    { name = "pymdown-extensions", specifier = ">=10.11" },
+    { name = "pyright", specifier = ">=1.1.384" },
+    { name = "pytest", specifier = ">=8.3.3" },
+    { name = "ruff", specifier = ">=0.6.9" },
+]
+
+[[package]]
 name = "attrs"
 version = "24.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1397,51 +1444,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/71/39/171f1c67cd00715f190ba0b100d606d440a28c93c7714febeca8b79af85e/six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926", size = 34041 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d9/5a/e7c31adbe875f2abbb91bd84cf2dc52d792b5a01506781dbcf25c91daf11/six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254", size = 11053 },
-]
-
-[[package]]
-name = "sms-bp-adv"
-version = "0.2.4"
-source = { editable = "." }
-dependencies = [
-    { name = "jsonschema" },
-    { name = "matplotlib" },
-    { name = "mkdocstrings-python" },
-    { name = "numpy" },
-    { name = "pydantic" },
-    { name = "scikit-image" },
-    { name = "scipy" },
-    { name = "typer" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "mkdocs-material" },
-    { name = "pymdown-extensions" },
-    { name = "pyright" },
-    { name = "pytest" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "jsonschema", specifier = ">=4.23.0" },
-    { name = "matplotlib", specifier = ">=3.6.0" },
-    { name = "mkdocstrings-python", specifier = ">=1.12.1" },
-    { name = "numpy", specifier = ">=1.21.2" },
-    { name = "pydantic", specifier = ">=2.9.2" },
-    { name = "scikit-image", specifier = ">=0.18.3" },
-    { name = "scipy", specifier = ">=1.7.1" },
-    { name = "typer", specifier = ">=0.12.5" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "mkdocs-material", specifier = "==9.5.40" },
-    { name = "pymdown-extensions", specifier = ">=10.11" },
-    { name = "pyright", specifier = ">=1.1.384" },
-    { name = "pytest", specifier = ">=8.3.3" },
-    { name = "ruff", specifier = ">=0.6.9" },
 ]
 
 [[package]]

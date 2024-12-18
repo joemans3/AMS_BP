@@ -49,7 +49,7 @@ class MoleculeParameters(BaseModel):
 
 class GlobalParameters(BaseModel):
     sample_plane_dim: List[float] = Field(description="Sample plane dimensions in um")
-    frame_count: int
+    cycle_count: int
     exposure_time: int = Field(description="Exposure time in ms")
     interval_time: int = Field(description="Interval time in ms")
     oversample_motion_time: int = Field(description="Oversample motion time in ms")

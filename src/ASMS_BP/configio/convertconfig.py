@@ -1,8 +1,11 @@
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import tomli
 from pydantic import BaseModel
+
+from ASMS_BP.optics.filters.channels.channelschema import Channels
 
 from ..cells import RectangularCell
 from ..cells.base_cell import BaseCell
@@ -139,7 +142,7 @@ class ConfigLoader:
     def create_experiment_from_config(
         self, config: Dict[str, Any]
     ) -> Tuple[BaseExpConfig, Callable]:
-        configEXP = config["experiment"]
+        configEXP = deepcopy(config["experiment"])
         if configEXP.get("experiment_type") == "time-series":
             del configEXP["experiment_type"]
             tconfig = TimeSeriesExpConfig(**configEXP)
@@ -152,6 +155,22 @@ class ConfigLoader:
             raise TypeError("Experiment is not supported")
         return tconfig, callableEXP
 
+    def create_fluorophores_from_config(
+        self, config: Dict[str, Any]
+    ) -> List[Fluorophore]:
+        # Extract fluorophore section
+        fluor_config = config.get("fluorophores", {})
+        if not fluor_config:
+            raise ValueError("No fluorophores configuration found in config")
+        num_fluorophores = fluor_config["num_of_fluorophores"]
+        fluorophore_names = fluor_config["fluorophore_names"]
+        fluorophores = []
+        for i in range(num_fluorophores):
+            fluorophores.append(
+                self.create_fluorophore_from_config(fluor_config[fluorophore_names[i]])
+            )
+        return fluorophores
+
     def create_fluorophore_from_config(self, config: Dict[str, Any]) -> Fluorophore:
         """
         Create a fluorophore instance from a configuration dictionary.
@@ -163,41 +182,44 @@ class ConfigLoader:
             Fluorophore: A Fluorophore instance with the loaded configuration
         """
         # Extract fluorophore section
-        fluor_config = config.get("fluorophore", {})
+        fluor_config = config
         if not fluor_config:
-            raise ValueError("No fluorophore configuration found in config")
+            raise ValueError("No fluorophore configuration found.")
 
         # Build states
         states = {}
         for state_name, state_data in fluor_config.get("states", {}).items():
             # Create spectral data if present
-            excitation_spectrum = None
-            emission_spectrum = None
-            extinction_coefficient = None
-            quantum_yield = None
-            molar_cross_section = None
-            fluorescent_lifetime = None
-
-            if "excitation_spectrum" in state_data:
-                excitation_spectrum = SpectralData(
-                    wavelengths=state_data["excitation_spectrum"]["wavelengths"],
-                    intensities=state_data["excitation_spectrum"]["intensities"],
+            excitation_spectrum = (
+                SpectralData(
+                    wavelengths=state_data.get("excitation_spectrum", {}).get(
+                        "wavelengths", []
+                    ),
+                    intensities=state_data.get("excitation_spectrum", {}).get(
+                        "intensities", []
+                    ),
                 )
+                if "excitation_spectrum" in state_data
+                else None
+            )
 
-            if "emission_spectrum" in state_data:
-                emission_spectrum = SpectralData(
-                    wavelengths=state_data["emission_spectrum"]["wavelengths"],
-                    intensities=state_data["emission_spectrum"]["intensities"],
+            emission_spectrum = (
+                SpectralData(
+                    wavelengths=state_data.get("emission_spectrum", {}).get(
+                        "wavelengths", []
+                    ),
+                    intensities=state_data.get("emission_spectrum", {}).get(
+                        "intensities", []
+                    ),
                 )
+                if "emission_spectrum" in state_data
+                else None
+            )
 
-            if "extinction_coefficient" in state_data:
-                extinction_coefficient = state_data["extinction_coefficient"]
-
-            if "quantum_yield" in state_data:
-                quantum_yield = state_data["quantum_yield"]
-
-            if "fluorescent_lifetime" in state_data:
-                fluorescent_lifetime = state_data["fluorescent_lifetime"]
+            extinction_coefficient = state_data.get("extinction_coefficient")
+            quantum_yield = state_data.get("quantum_yield")
+            molar_cross_section = state_data.get("molar_cross_section")
+            fluorescent_lifetime = state_data.get("fluorescent_lifetime")
 
             # Create state
             state = State(
@@ -233,30 +255,28 @@ class ConfigLoader:
                 transition = StateTransition(
                     from_state=trans_data["from_state"],
                     to_state=trans_data["to_state"],
-                    activation_spectrum=SpectralData(
-                        wavelengths=trans_data.get("activation_spectrum")[
-                            "wavelengths"
-                        ],
-                        intensities=trans_data.get("activation_spectrum")[
-                            "intensities"
-                        ],
+                    spectrum=SpectralData(
+                        wavelengths=trans_data.get("spectrum")["wavelengths"],
+                        intensities=trans_data.get("spectrum")["intensities"],
                     ),
-                    activation_extinction_coefficient_lambda_val=trans_data.get(
-                        "activation_spectrum"
-                    )["activation_extinction_coefficient"],
-                    activation_extinction_coefficient=None,
-                    activation_cross_section=None,
+                    extinction_coefficient_lambda_val=trans_data.get("spectrum")[
+                        "extinction_coefficient"
+                    ],
+                    extinction_coefficient=None,
+                    cross_section=None,
                     base_rate=None,
+                    quantum_yield=trans_data.get("spectrum")["quantum_yield"],
                 )
             else:
                 transition = StateTransition(
                     from_state=trans_data["from_state"],
                     to_state=trans_data["to_state"],
                     base_rate=trans_data.get("base_rate", None),
-                    activation_spectrum=None,
-                    activation_extinction_coefficient_lambda_val=None,
-                    activation_extinction_coefficient=None,
-                    activation_cross_section=None,
+                    spectrum=None,
+                    extinction_coefficient_lambda_val=None,
+                    extinction_coefficient=None,
+                    cross_section=None,
+                    quantum_yield=None,
                 )
             transitions[transition.from_state + transition.to_state] = transition
 
@@ -457,7 +477,7 @@ class ConfigLoader:
             FilterSet: Created filter set instance
         """
         # Extract filters section
-        filters_config = config.get("filters", {})
+        filters_config = config
         if not filters_config:
             raise ValueError("No filters configuration found in config")
 
@@ -489,6 +509,29 @@ class ConfigLoader:
             emission=emission,
             dichroic=dichroic,
         )
+
+    def create_channels(self, config: Dict[str, Any]) -> Channels:
+        # Extract channel section
+        channel_config = config.get("channels", {})
+        if not channel_config:
+            raise ValueError("No channels configuration found in config")
+        channel_filters = []
+        channel_num = int(channel_config.get("num_of_channels"))
+        channel_names = channel_config.get("channel_names")
+        split_eff = channel_config.get("split_efficiency")
+        for i in range(channel_num):
+            channel_filters.append(
+                self.create_filter_set_from_config(
+                    channel_config.get("filters").get(channel_names[i])
+                )
+            )
+        channels = Channels(
+            filtersets=channel_filters,
+            num_channels=channel_num,
+            splitting_efficiency=split_eff,
+            names=channel_names,
+        )
+        return channels
 
     def create_quantum_efficiency_from_config(
         self, qe_data: List[List[float]]
@@ -543,6 +586,7 @@ class ConfigLoader:
             "pixel_detector_size": float(camera_config["pixel_detector_size"]),
             "magnification": float(camera_config["magnification"]),
             "base_adu": int(camera_config["base_adu"]),
+            "binning_size": int(camera_config["binning_size"]),
         }
 
         # Create appropriate detector based on type
@@ -568,7 +612,39 @@ class ConfigLoader:
 
         return detector, quantum_efficiency
 
+    def duration_time_validation_experiments(self, configEXP) -> bool:
+        if configEXP.exposure_time:
+            if len(configEXP.z_position) * (
+                configEXP.exposure_time + configEXP.interval_time
+            ) > self.config["Global_Parameters"]["cycle_count"] * (
+                self.config["Global_Parameters"]["exposure_time"]
+                + self.config["Global_Parameters"]["interval_time"]
+            ):
+                print(
+                    f"Z-series parameters overriding the set Global_parameters. cycle_count: {len(configEXP.z_position)}, exposure_time: {configEXP.exposure_time}, and interval_time: {configEXP.interval_time}."
+                )
+                self.config["Global_Parameters"]["cycle_count"] = len(
+                    configEXP.z_position
+                )
+                self.config["Global_Parameters"]["exposure_time"] = (
+                    configEXP.exposure_time
+                )
+                self.config["Global_Parameters"]["interval_time"] = (
+                    configEXP.interval_time
+                )
+
+                return False
+            else:
+                return True
+        else:
+            return True
+
     def setup_microscope(self) -> dict:
+        # config of experiment
+        configEXP, funcEXP = self.create_experiment_from_config(config=self.config)
+        self.duration_time_validation_experiments(configEXP)
+
+        # find the larger of the two duration times.
         # base config
         self.populate_dataclass_schema()
         base_config = ConfigList(
@@ -580,13 +656,13 @@ class ConfigLoader:
         )
 
         # fluorophore config
-        fluorophore = self.create_fluorophore_from_config(self.config)
+        fluorophores = self.create_fluorophores_from_config(self.config)
         # psf config
         psf, psf_config = self.create_psf_from_config(self.config)
         # lasers config
         lasers = self.create_lasers_from_config(self.config)
-        # filters config
-        filters = self.create_filter_set_from_config(self.config)
+        # channels config
+        channels = self.create_channels(self.config)
         # detector config
         detector, qe = self.create_detector_from_config(self.config)
 
@@ -632,17 +708,14 @@ class ConfigLoader:
 
         # add tracks to sample
         sample_plane = add_tracks_to_sample(
-            tracks=tracks, sample_plane=sample_plane, fluorophore=fluorophore
+            tracks=tracks, sample_plane=sample_plane, fluorophore=fluorophores
         )
-
-        # config of experiment
-        configEXP, funcEXP = self.create_experiment_from_config(config=self.config)
 
         vm = VirtualMicroscope(
             camera=(detector, qe),
             sample_plane=sample_plane,
             lasers=lasers,
-            filterset=filters,
+            channels=channels,
             psf=psf,
             config=base_config,
         )
@@ -651,14 +724,13 @@ class ConfigLoader:
             "base_config": base_config,
             "psf": psf,
             "psf_config": psf_config,
-            "filters": filters,
+            "channels": channels,
             "lasers": lasers,
             "sample_plane": sample_plane,
             "tracks": tracks,
             "points_per_time": points_per_time,
             "condensate_dict": condensates_dict,
             "cell": cell,
-            "fluorophore": fluorophore,
             "experiment_config": configEXP,
             "experiment_func": funcEXP,
         }
@@ -728,19 +800,22 @@ def make_samplingfunction(condensate_params, cell) -> Callable:
 
 
 def gen_initial_positions(molecule_params, cell, condensate_params, sampling_function):
-    num_molecules = molecule_params.num_molecules
-    initial_positions = gen_points(
-        pdf=sampling_function,
-        total_points=num_molecules,
-        min_x=cell.origin[0],
-        max_x=cell.origin[0] + cell.dimensions[0],
-        min_y=cell.origin[1],
-        max_y=cell.origin[1] + cell.dimensions[1],
-        min_z=-cell.dimensions[2] / 2,
-        max_z=cell.dimensions[2] / 2,
-        density_dif=condensate_params.density_dif,
-    )
-    return initial_positions
+    initials = []
+    for i in range(len(molecule_params.num_molecules)):
+        num_molecules = molecule_params.num_molecules[i]
+        initial_positions = gen_points(
+            pdf=sampling_function,
+            total_points=num_molecules,
+            min_x=cell.origin[0],
+            max_x=cell.origin[0] + cell.dimensions[0],
+            min_y=cell.origin[1],
+            max_y=cell.origin[1] + cell.dimensions[1],
+            min_z=-cell.dimensions[2] / 2,
+            max_z=cell.dimensions[2] / 2,
+            density_dif=condensate_params.density_dif,
+        )
+        initials.append(initial_positions)
+    return initials
 
 
 def create_track_generator(global_params, cell):
@@ -764,50 +839,65 @@ def get_tracks(molecule_params, global_params, initial_positions, track_generato
         global_params.cycle_count
         * (global_params.exposure_time + global_params.interval_time)
     )
-    if molecule_params.track_type == "constant":
-        tracks, points_per_time = _generate_constant_tracks(
-            track_generator, totaltime, initial_positions, 0
-        )
-    elif molecule_params.allow_transition_probability:
-        tracks, points_per_time = _generate_transition_tracks(
-            track_generator=track_generator,
-            track_lengths=int(totaltime / global_params.oversample_motion_time),
-            initial_positions=initial_positions,
-            starting_frames=0,
-            diffusion_parameters=molecule_params.diffusion_coefficient,
-            hurst_parameters=molecule_params.hurst_exponent,
-            diffusion_transition_matrix=change_prob_time(
-                molecule_params.diffusion_transition_matrix,
-                molecule_params.transition_matrix_time_step,
-                global_params.oversample_motion_time,
-            ),
-            hurst_transition_matrix=change_prob_time(
-                molecule_params.hurst_transition_matrix,
-                molecule_params.transition_matrix_time_step,
-                global_params.oversample_motion_time,
-            ),
-            diffusion_state_probability=molecule_params.state_probability_diffusion,
-            hurst_state_probability=molecule_params.state_probability_hurst,
-        )
-    else:
-        tracks, points_per_time = _generate_no_transition_tracks(
-            track_generator=track_generator,
-            track_lengths=int(totaltime / global_params.oversample_motion_time),
-            initial_positions=initial_positions,
-            starting_frames=0,
-            diffusion_parameters=molecule_params.diffusion_coefficient,
-            hurst_parameters=molecule_params.hurst_exponent,
-        )
+    tracks_collection = []
+    points_per_time_collection = []
 
-    return tracks, points_per_time
+    for i in range(len(initial_positions)):
+        if molecule_params.track_type[i] == "constant":
+            tracks, points_per_time = _generate_constant_tracks(
+                track_generator,
+                int(totaltime / global_params.oversample_motion_time),
+                initial_positions[i],
+                0,
+            )
+        elif molecule_params.allow_transition_probability[i]:
+            tracks, points_per_time = _generate_transition_tracks(
+                track_generator=track_generator,
+                track_lengths=int(totaltime / global_params.oversample_motion_time),
+                initial_positions=initial_positions[i],
+                starting_frames=0,
+                diffusion_parameters=molecule_params.diffusion_coefficient[i],
+                hurst_parameters=molecule_params.hurst_exponent[i],
+                diffusion_transition_matrix=change_prob_time(
+                    molecule_params.diffusion_transition_matrix[i],
+                    molecule_params.transition_matrix_time_step[i],
+                    global_params.oversample_motion_time,
+                ),
+                hurst_transition_matrix=change_prob_time(
+                    molecule_params.hurst_transition_matrix[i],
+                    molecule_params.transition_matrix_time_step[i],
+                    global_params.oversample_motion_time,
+                ),
+                diffusion_state_probability=molecule_params.state_probability_diffusion[
+                    i
+                ],
+                hurst_state_probability=molecule_params.state_probability_hurst[i],
+            )
+        else:
+            tracks, points_per_time = _generate_no_transition_tracks(
+                track_generator=track_generator,
+                track_lengths=int(totaltime / global_params.oversample_motion_time),
+                initial_positions=initial_positions[i],
+                starting_frames=0,
+                diffusion_parameters=molecule_params.diffusion_coefficient[i],
+                hurst_parameters=molecule_params.hurst_exponent[i],
+            )
+
+        tracks_collection.append(tracks)
+        points_per_time_collection.append(points_per_time)
+
+    return tracks_collection, points_per_time_collection
 
 
-def add_tracks_to_sample(tracks, sample_plane, fluorophore):
-    for i, j in tracks.items():
-        sample_plane.add_object(
-            object_id=str(i),
-            position=j["xy"][0],
-            fluorophore=fluorophore,
-            trajectory=_convert_tracks_to_trajectory(j),
-        )
+def add_tracks_to_sample(tracks, sample_plane, fluorophore, ID_counter=0):
+    counter = ID_counter
+    for track_type in range(len(tracks)):
+        for j in tracks[track_type].values():
+            sample_plane.add_object(
+                object_id=str(counter),
+                position=j["xy"][0],
+                fluorophore=fluorophore[track_type],
+                trajectory=_convert_tracks_to_trajectory(j),
+            )
+            counter += 1
     return sample_plane

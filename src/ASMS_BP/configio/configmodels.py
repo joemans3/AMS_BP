@@ -14,22 +14,22 @@ class CellParameters(BaseModel):
 
 
 class MoleculeParameters(BaseModel):
-    num_molecules: int
-    track_type: Literal["fbm", "constant"] = Field(
+    num_molecules: List[int]
+    track_type: List[Literal["fbm", "constant"]] = Field(
         description="Type of molecular motion, either fbm or constant"
     )
-    diffusion_coefficient: List[float] = Field(
+    diffusion_coefficient: List[List[float]] = Field(
         description="Diffusion coefficients in um^2/s"
     )
-    diffusion_track_amount: List[float]
-    hurst_exponent: List[float]
-    hurst_track_amount: List[float]
-    allow_transition_probability: bool
-    transition_matrix_time_step: int = Field(description="Time step in ms")
-    diffusion_transition_matrix: List[List[float]]
-    hurst_transition_matrix: List[List[float]]
-    state_probability_diffusion: List[float]
-    state_probability_hurst: List[float]
+    diffusion_track_amount: List[List[float]]
+    hurst_exponent: List[List[float]]
+    hurst_track_amount: List[List[float]]
+    allow_transition_probability: List[bool]
+    transition_matrix_time_step: List[int] = Field(description="Time step in ms")
+    diffusion_transition_matrix: List[List[List[float]]]
+    hurst_transition_matrix: List[List[List[float]]]
+    state_probability_diffusion: List[List[float]]
+    state_probability_hurst: List[List[float]]
 
     @field_validator(
         "diffusion_coefficient",

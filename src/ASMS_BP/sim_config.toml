@@ -4,36 +4,56 @@ time_unit = "ms"
 diffusion_unit = "um^2/s"
 
 [Cell_Parameters]
-cell_space = [[4, 7], [3, 9]] # um
+cell_space = [[4, 7], [3, 9]] # um ([[x_min, x_max], [y_min, y_max]])
 cell_axial_radius = 0.5       # um +/- from 0. Total z range = 2*cell_axial_radius
 
 [Molecule_Parameters]
-num_molecules = 1
-track_type = "fbm"                                               # "constant", "fbm"
-diffusion_coefficient = [0.05, 0.05]                             # um^2/s
-diffusion_track_amount = [0.5, 0.5]
-hurst_exponent = [0.5]
-hurst_track_amount = [1.0]
-allow_transition_probability = true
-transition_matrix_time_step = 20                                 # ms
-diffusion_transition_matrix = [[0.992, 0.008], [0.0273, 0.9727]]
-hurst_transition_matrix = [[0.1]]
-state_probability_diffusion = [0.5, 0.5]
-state_probability_hurst = [1]
+num_molecules = [5000, 5000]
+track_type = ["constant", "constant"] # "constant", "fbm"
+diffusion_coefficient = [[0.0, 0.0], [0.0, 0.0]] # um^2/s
+diffusion_track_amount = [[0.5, 0.5], [0.5, 0.5]]
+hurst_exponent = [[0.5], [0.5]]
+hurst_track_amount = [[1.0], [1.0]]
+allow_transition_probability = [true, true]
+transition_matrix_time_step = [20, 20] # ms
+diffusion_transition_matrix = [
+    [
+        [
+            0.992,
+            0.008,
+        ],
+        [
+            0.0273,
+            0.9727,
+        ],
+    ],
+    [
+        [
+            0.992,
+            0.008,
+        ],
+        [
+            0.0273,
+            0.9727,
+        ],
+    ],
+]
+hurst_transition_matrix = [[[0.1]], [[0.1]]]
+state_probability_diffusion = [[0.5, 0.5], [0.5, 0.5]]
+state_probability_hurst = [[1], [1]]
 
 
 [Global_Parameters]
 sample_plane_dim = [10, 10] # um
-cycle_count = 50
+cycle_count = 50            # cycles of exposure_time + interval_time
 exposure_time = 20          # ms
-
-interval_time = 0          # ms
-oversample_motion_time = 1 # ms
+interval_time = 0           # ms
+oversample_motion_time = 20 # ms
 
 [Condensate_Parameters]
-initial_centers = [[5, 4, 0], [6, 7, 0]] # um
-initial_scale = [0.26, 0.26]             # um
-diffusion_coefficient = [0, 0]           # um^2/s
+initial_centers = [[5.5, 5, 0.05], [5, 7, -0.15]] # um
+initial_scale = [0.26, 0.26]                      # um
+diffusion_coefficient = [0, 0]                    # um^2/s
 hurst_exponent = [0.2, 0.2]
 density_dif = 10
 
@@ -42,6 +62,146 @@ output_path = "<YOUR-PATH-HERE-CAN-BE-ABSOLUTE-OR-RELATIVE>"
 output_name = "Cell_Movie_Test_001"
 subsegment_type = "mean"                                     # not implemented yet, use any string
 subsegment_number = 5                                        # not implemented yet, use any integer
+
+
+[fluorophores]
+num_of_fluorophores = 2
+fluorophore_names = ["PAmCherry", "EGFP"]
+
+# PAmCherry name
+[fluorophores.PAmCherry]
+name = "PAmCherry"
+initial_state = "dark" # flurophore will start with this state in the simulation (all of them), must be valid name from ones provided below.
+
+# States definition
+[fluorophores.PAmCherry.states.bright]
+name = "bright"
+state_type = "fluorescent"         # any of fluorescent, dark, bleached
+quantum_yield = 0.46               # from 0-1
+extinction_coefficient = 18000     # M^-1 cm^-1
+fluorescent_lifetime = 0.000000001 # seconds
+# Spectral data for bright state
+# extrapotation for wavelengths not included uses edge values
+[fluorophores.PAmCherry.states.bright.excitation_spectrum]
+wavelengths = [310.0, 311.0, 411.0, 511.0, 611.0, 612.0]
+intensities = [0.00, 0.047, 0.0043, 0.6, 0.06, 0.00]
+# extrapotation for wavelengths not included uses edge values
+[fluorophores.PAmCherry.states.bright.emission_spectrum]
+wavelengths = [530.0, 529.0, 600.0, 650.0, 700.0, 797.0, 799.0]
+intensities = [0.00, 0.02, 0.98, 0.28, 0.05, 0.003, 0.00]
+
+[fluorophores.PAmCherry.states.dark]
+name = "dark"
+state_type = "dark"
+
+[fluorophores.PAmCherry.states.triplet]
+name = "triplet"
+state_type = "dark"
+
+[fluorophores.PAmCherry.states.bleached]
+name = "bleached"
+state_type = "bleached"
+
+# State transitions
+
+[fluorophores.PAmCherry.transitions.dark_to_bright]
+from_state = "dark"
+to_state = "bright"
+photon_dependent = true
+# extrapotation for wavelengths not included uses edge values
+[fluorophores.PAmCherry.transitions.dark_to_bright.spectrum]
+wavelengths = [308.0, 309.0, 359.0, 403.0, 440.0, 484.0, 485.0]
+intensities = [0.00, 0.04, 0.11, 1.0, 0.07, 0.0004, 0.00]
+extinction_coefficient = 6500                                   # M^-1 cm^-1
+quantum_yield = 0.000005                                        # switching events per photons absorbed
+
+
+[fluorophores.PAmCherry.transitions.bright_to_bleached]
+from_state = "bright"
+to_state = "bleached"
+photon_dependent = true
+[fluorophores.PAmCherry.transitions.bright_to_bleached.spectrum]
+wavelengths = [310.0, 311.0, 411.0, 511.0, 611.0, 612.0]
+intensities = [0.00, 0.047, 0.0043, 0.6, 0.06, 0.00]
+extinction_coefficient = 18000                           # M^-1 cm^-1
+quantum_yield = 0.000005                                 # switching events per photons absorbed 
+
+[fluorophores.PAmCherry.transitions.bright_to_triplet]
+from_state = "bright"
+to_state = "triplet"
+photon_dependent = false
+base_rate = 1            # 1/s
+
+[fluorophores.PAmCherry.transitions.triplet_to_bleached]
+from_state = "triplet"
+to_state = "bleached"
+photon_dependent = false
+base_rate = 1            # 1/s
+
+[fluorophores.PAmCherry.transitions.triplet_to_dark]
+from_state = "triplet"
+to_state = "dark"
+photon_dependent = false
+base_rate = 1            # 1/s
+
+
+# EGFP name
+[fluorophores.EGFP]
+name = "EGFP"
+initial_state = "bright" # flurophore will start with this state in the simulation (all of them), must be valid name from ones provided below.
+
+# States definition
+[fluorophores.EGFP.states.bright]
+name = "bright"
+state_type = "fluorescent"          # any of fluorescent, dark, bleached
+quantum_yield = 0.6                 # from 0-1
+extinction_coefficient = 55900      # M^-1 cm^-1
+fluorescent_lifetime = 0.0000000026 # seconds
+# Spectral data for bright state
+# extrapotation for wavelengths not included uses edge values
+[fluorophores.EGFP.states.bright.excitation_spectrum]
+wavelengths = [300.0, 337.0, 488.0, 501.0, 522.0, 540.0]
+intensities = [0.1, 0.03, 1.00, 0.69, 0.03, 0.00]
+# extrapotation for wavelengths not included uses edge values
+[fluorophores.EGFP.states.bright.emission_spectrum]
+wavelengths = [463.0, 494.0, 503.0, 510.0, 528.0, 549.0, 700.0]
+intensities = [0.00, 0.33, 0.82, 1.00, 0.51, 0.30, 0.00]
+
+
+[fluorophores.EGFP.states.triplet]
+name = "triplet"
+state_type = "dark"
+
+[fluorophores.EGFP.states.bleached]
+name = "bleached"
+state_type = "bleached"
+
+# State transitions
+[fluorophores.EGFP.transitions.bright_to_bleached]
+from_state = "bright"
+to_state = "bleached"
+photon_dependent = true
+[fluorophores.EGFP.transitions.bright_to_bleached.spectrum]
+wavelengths = [300.0, 337.0, 488.0, 501.0, 522.0, 540.0]
+intensities = [0.1, 0.03, 1.00, 0.69, 0.03, 0.00]
+extinction_coefficient = 55900                           # M^-1 cm^-1
+quantum_yield = 0.0000025                                # switching events per photons absorbed 
+
+[fluorophores.EGFP.transitions.bright_to_triplet]
+from_state = "bright"
+to_state = "triplet"
+photon_dependent = true
+[fluorophores.EGFP.transitions.bright_to_triplet.spectrum]
+wavelengths = [300.0, 337.0, 488.0, 501.0, 522.0, 540.0]
+intensities = [0.1, 0.03, 1.00, 0.69, 0.03, 0.00]
+extinction_coefficient = 55900                           # M^-1 cm^-1
+quantum_yield = 0.0000025                                # switching events per photons absorbed 
+
+[fluorophores.EGFP.transitions.triplet_to_bleached]
+from_state = "triplet"
+to_state = "bleached"
+photon_dependent = false
+base_rate = 1            # 1/s
 
 
 # PSF Configuration
@@ -67,35 +227,44 @@ type = "widefield" # "gaussian" or "hilo" or "widefield"
 preset = "red_633"
 
 [lasers.red.parameters]
-power = 0.5              # Power in watts 
-wavelength = 633         # Wavelength in nanometers
+power = 50000            # Power in watts 
+wavelength = 600         # Wavelength in nanometers
 beam_width = 5.0         # 1/e² beam width at waist in microns
 numerical_aperture = 1.4 # NA of focusing lens
 refractive_index = 1.518
-inclination_angle = 67.0 # degrees
+inclination_angle = 67.0 # degrees, only for HiLo
 
 [lasers.blue]
 type = "widefield"
 preset = "blue_405"
 
 [lasers.blue.parameters]
-power = 0.5
+power = 5
 wavelength = 405
 beam_width = 5.0
 numerical_aperture = 1.4
 refractive_index = 1.518
 
+
+[channels]
+num_of_channels = 2
+channel_names = ["red", "green"]
+split_efficiency = [
+    1.0,
+    1.0,
+] # 1.0 is 100% efficiency. Physically represents the efficiency of the channel splitter for each channel. max: 1.0 = equal to the original emission light.
 # Filter Set Configuration
-[filters]
+[channels.filters]
+[channels.filters.red] # .red , .green etc, must be of channel_name.
 filter_set_name = "Red Filter Set"
 filter_set_description = "Sample Red filter set configuration"
 
-[filters.excitation]
+[channels.filters.red.excitation]
 name = "Red-Ex"
 type = "allow_all"
-points = 1000
+points = 100
 
-[filters.emission]
+[channels.filters.red.emission]
 name = "Red-Em"
 type = "bandpass"
 center_wavelength = 600  # nm
@@ -103,10 +272,26 @@ bandwidth = 35           # nm
 transmission_peak = 0.95
 points = 1000
 
+[channels.filters.green]
+filter_set_name = "Green Filter Set"
+filter_set_description = "Sample Green filter set configuration"
+[channels.filters.green.excitation]
+name = "Green-Ex"
+type = "allow_all"
+points = 1000
+[channels.filters.green.emission]
+name = "Green-Em"
+type = "bandpass"
+center_wavelength = 500  # nm
+bandwidth = 35           # nm
+transmission_peak = 0.95
+points = 1000
+
+
 # Camera configurations
 [camera]
 type = "CMOS"
-pixel_count = [200, 200]  # [width, height], 1200x1200 (x pixel_size)
+pixel_count = [190, 190]  # [width, height], 1200x1200 (x pixel_size)
 pixel_detector_size = 6.5 # um
 magnification = 100
 dark_current = 0.0005     # electrons/pixel/second
@@ -114,6 +299,7 @@ readout_noise = 1.6       # electrons RMS
 bit_depth = 16
 sensitivity = 1.0         # electrons/ADU
 base_adu = 100            #ADU
+binning_size = 1          # 1x1 , if 2 then 2x2
 
 # Quantum efficiency curve (wavelength in nm : efficiency 0-1)
 # extrapotation for wavelengths not included uses edge values
@@ -152,103 +338,22 @@ quantum_efficiency = [
     ],
 ]
 
-# Fluorophore name
-[fluorophore]
-name = "PAmCherry"
-
-# States definition
-[fluorophore.states.bright]
-name = "bright"
-state_type = "fluorescent" # any of fluorescent, dark, triplet, bleached
-
-quantum_yield = 0.46 # from 0-1
-
-extinction_coefficient = 18000 # M^-1 cm^-1
-
-fluorescent_lifetime = 0.000000001 # seconds
-
-# Spectral data for bright state
-# extrapotation for wavelengths not included uses edge values
-[fluorophore.states.bright.excitation_spectrum]
-wavelengths = [310.0, 311.0, 411.0, 511.0, 611.0, 612.0]
-intensities = [0.00, 0.047, 0.0043, 0.6, 0.06, 0.00]
-
-# extrapotation for wavelengths not included uses edge values
-[fluorophore.states.bright.emission_spectrum]
-wavelengths = [530.0, 529.0, 600.0, 650.0, 700.0, 797.0, 799.0]
-intensities = [0.00, 0.02, 0.98, 0.28, 0.05, 0.003, 0.00]
-
-[fluorophore.states.dark]
-name = "dark"
-state_type = "dark"
-
-[fluorophore.states.triplet]
-name = "triplet"
-state_type = "triplet"
-
-[fluorophore.states.bleached]
-name = "bleached"
-state_type = "bleached"
-
-# State transitions
-
-[fluorophore.transitions.dark_to_bright]
-from_state = "dark"
-to_state = "bright"
-photon_dependent = true
-# extrapotation for wavelengths not included uses edge values
-[fluorophore.transitions.dark_to_bright.activation_spectrum]
-wavelengths = [308.0, 309.0, 359.0, 403.0, 440.0, 484.0, 485.0]
-intensities = [0.00, 0.04, 0.11, 1.0, 0.07, 0.0004, 0.00]
-activation_extinction_coefficient = 6500                        # M^-1 cm^-1
-
-[fluorophore.transitions.bright_to_dark]
-from_state = "bright"
-to_state = "dark"
-photon_dependent = false
-base_rate = 0.1          # 1/s
-
-[fluorophore.transitions.bright_to_bleached]
-from_state = "bright"
-to_state = "bleached"
-photon_dependent = false
-base_rate = 0.1          # 1/s
-
-[fluorophore.transitions.bright_to_triplet]
-from_state = "bright"
-to_state = "triplet"
-photon_dependent = false
-base_rate = 0.1          # 1/s
-
-[fluorophore.transitions.triplet_to_bleached]
-from_state = "triplet"
-to_state = "bleached"
-photon_dependent = false
-base_rate = 0.1          # 1/s
-
-[fluorophore.transitions.triplet_to_dark]
-from_state = "triplet"
-to_state = "dark"
-photon_dependent = false
-base_rate = 0.1          # 1/s
-
 
 [experiment]
-name = "PAmCherry_Test"
+name = "PAmCherry_EGFP_Test"
 description = "Sample experiment configuration"
-experiment_type = "time-series"                 # "time-series" or "z-stack"
-z_position = 0.0
-laser_names_active = ["red", "blue"]
-laser_powers_active = [0.5, 0.005]              #W
-laser_positions_active = [[5, 5, 0], [5, 5, 0]] # um
-xyoffset = [0, 0]                               # um
-
-# [experiment.z-stack]
-# z_positions = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
+# experiment_type = "time-series"                 # "time-series" or "z-stack"
+# z_position = 0.0
 # laser_names_active = ["red", "blue"]
-# laser_powers_active = [0.005, 0.005] #W
-# laser_position_active = [[5,5,0], [5,5,0]] # um
-# xyoffset = [0, 0] # um
-# exposure_time = 20 # ms, needs to be >= than oversample motion time in GlobalParameters
-# interval_time = 0 # ms, must be == 0 or if >0 then must be >= oversample motion time in GlobalParameters
+# laser_powers_active = [0.5, 0.05]               #W
+# laser_positions_active = [[5, 5, 0], [5, 5, 0]] # um
+# xyoffset = [0, 0]                               # um
 
+experiment_type = "z-stack"                                             # "time-series" or "z-stack"
+z_position = [-0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5]
+laser_names_active = ["red", "blue"]
+laser_powers_active = [0.5, 0.05]                                       #W
+laser_positions_active = [[5, 5, 0], [5, 5, 0]]                         # um
+xyoffset = [0, 0]                                                       # um
+exposure_time = 100                                                     # ms, needs to be >= than oversample motion time in GlobalParameters
+interval_time = 0                                                       # ms, must be == 0 or if >0 then must be >= oversample motion time in GlobalParameters

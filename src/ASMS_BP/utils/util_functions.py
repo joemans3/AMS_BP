@@ -1,9 +1,13 @@
-from PIL import Image
-import numpy as np
+import json
 import os
 import pickle
-import json
+
+import numpy as np
 import skimage as skimage
+from PIL import Image
+
+from ASMS_BP.utils.decorators import cache
+
 
 def convert_arrays_to_lists(obj: np.ndarray | dict) -> list | dict:
     """
@@ -25,6 +29,7 @@ def convert_arrays_to_lists(obj: np.ndarray | dict) -> list | dict:
         return {k: convert_arrays_to_lists(v) for k, v in obj.items()}
     else:
         return obj
+
 
 # Function to recursively convert lists to NumPy arrays
 def convert_lists_to_arrays(obj: list | dict) -> np.ndarray | dict:
@@ -49,7 +54,9 @@ def convert_lists_to_arrays(obj: list | dict) -> np.ndarray | dict:
         return obj
 
 
-def save_tiff(image: np.ndarray, path: str, img_name: str | None = None) -> None:
+def save_tiff(
+    image: np.ndarray, path: str, img_name: str | None = None, tifffile_args: dict = {}
+) -> None:
     """
     Save the image as a TIFF file.
 
@@ -61,6 +68,8 @@ def save_tiff(image: np.ndarray, path: str, img_name: str | None = None) -> None
         Path where the image will be saved.
     img_name : str, optional
         Name of the image file (without extension), by default None.
+    tifffile_args: dict(str, val)
+        named arguments passed to the tifffile plugin as a dict.
 
     Returns:
     --------
@@ -69,8 +78,73 @@ def save_tiff(image: np.ndarray, path: str, img_name: str | None = None) -> None
     if img_name is None:
         skimage.io.imsave(path, image)
     else:
-        skimage.io.imsave(os.path.join(path, img_name + ".tiff"), image)
+        skimage.io.imsave(
+            os.path.join(path, img_name + ".tiff"),
+            image,
+            plugin="tifffile",
+            plugin_args=tifffile_args,
+        )
     return
+
+
+def binning_array(
+    array_to_bin: np.ndarray, binning_size: int, mode: str = "sum"
+) -> np.ndarray:
+    """
+    Bin an N-dimensional array by summing values in each bin.
+
+    Parameters:
+    -----------
+    array_to_bin: numpy.ndarray
+        Input N-dimensional array to be binned
+    binning_size : int
+        Size of the binning window (e.g., 2 for 2x2 binning)
+    mode : str, optional
+        Method for binning. Currently only supports 'sum'
+
+    Returns:
+    --------
+    numpy.ndarray
+        Binned array with reduced dimensions
+    """
+    if binning_size == 1:
+        return array_to_bin
+    if mode != "sum":
+        raise ValueError("Only 'sum' mode is currently supported")
+
+    # Get the shape of the input array
+    original_shape = np.array(array_to_bin.shape)
+
+    # Calculate the shape of the output array
+    # We need to handle both cases where the dimension is divisible by binning_size
+    # and where it's not
+    output_shape = np.ceil(original_shape / binning_size).astype(int)
+
+    # Calculate the effective shape that we can fully bin
+    # This handles cases where the array dimensions aren't perfectly divisible
+    effective_shape = (output_shape * binning_size) - original_shape
+
+    # Pad the array if necessary to make it divisible by binning_size
+    if np.any(effective_shape > 0):
+        pad_width = np.array([(0, int(s)) for s in effective_shape])
+        array_to_bin = np.pad(array_to_bin, pad_width, mode="constant")
+
+    # Generate slicing for the reshape operation
+    new_shape = []
+    for dim in array_to_bin.shape:
+        new_shape.extend([dim // binning_size, binning_size])
+
+    # Reshape and sum along the appropriate axes
+    reshaped = array_to_bin.reshape(new_shape)
+
+    # Calculate the axes to sum over
+    # For N dimensions, we want to sum over axes 1, 3, 5, etc.
+    sum_axes = tuple(range(1, len(new_shape), 2))
+
+    # Perform the binning by summing
+    binned = reshaped.sum(axis=sum_axes)
+
+    return binned
 
 
 # function to perform the subsegmentation
@@ -238,3 +312,9 @@ def make_directory_structure(
         img = Image.fromarray(hold_img[i])
         img.save(hold_name[i])
     return hold_img
+
+
+@cache
+def ms_to_seconds(time: int | float) -> float:
+    return time * 1e-3
+

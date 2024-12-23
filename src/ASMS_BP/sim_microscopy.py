@@ -7,7 +7,7 @@ from .configio.configmodels import ConfigList
 from .metadata.metadata import MetaData
 from .optics.camera.detectors import Detector
 from .optics.camera.quantum_eff import QuantumEfficiency
-from .optics.filters import FilterSet
+from .optics.filters.channels.channelschema import Channels
 from .optics.lasers import LaserProfile
 from .optics.psf import PSFEngine
 from .photophysics.photon_physics import (
@@ -15,9 +15,10 @@ from .photophysics.photon_physics import (
     EmissionPhysics,
     incident_photons,
 )
-from .probabilityfuncs.markov_chain import rate_to_probability
+from .photophysics.state_kinetics import StateTransitionCalculator
 from .sample.flurophores.flurophore_schema import StateType, WavelengthDependentProperty
 from .sample.sim_sampleplane import EMPTY_STATE_HISTORY_DICT, SamplePlane
+from .utils.util_functions import ms_to_seconds
 
 
 class VirtualMicroscope:
@@ -26,7 +27,7 @@ class VirtualMicroscope:
         camera: Tuple[Detector, QuantumEfficiency],
         sample_plane: SamplePlane,
         lasers: Dict[str, LaserProfile],
-        filterset: FilterSet,
+        channels: Channels,
         psf: Callable[[float | int, Optional[float | int]], PSFEngine],
         config: ConfigList,
         start_time: int = 0,
@@ -36,7 +37,7 @@ class VirtualMicroscope:
         self.qe = camera[1]
         self.sample_plane = sample_plane
         self.lasers = lasers
-        self.filterset = filterset
+        self.channels = channels
         self.psf = psf
         self._time = start_time  # ms
         self.config = config
@@ -63,7 +64,7 @@ class VirtualMicroscope:
             "qe": self.qe,
             "sample_plane": self.sample_plane,
             "lasers": self.lasers,
-            "filterset": self.filterset,
+            "channels": self.channels,
             "psf": self.psf,
             "config": self.config,
             "_time": self._time,
@@ -101,7 +102,7 @@ class VirtualMicroscope:
         duration_total: Optional[int] = None,  # ms
         exposure_time: Optional[int] = None,
         interval_time: Optional[int] = None,
-    ) -> Tuple[np.ndarray, MetaData]:
+    ) -> Tuple[np.ndarray, MetaData, int | float]:
         self._set_laser_powers(laser_power=laser_power)
         if laser_position is not None:
             self._set_laser_positions(laser_positions=laser_position)
@@ -111,6 +112,7 @@ class VirtualMicroscope:
             self.config.GlobalParameters.interval_time,
             self.sample_plane.dt,
             self.sample_plane.t_end,
+            self._time,
             {
                 "exposure_time": exposure_time,
                 "interval_time": interval_time,
@@ -125,190 +127,155 @@ class VirtualMicroscope:
             self._time + duration_total,
             self.sample_plane.dt,
         )
-        mapSC = mapSampleCamera(
-            sampleplane=self.sample_plane,
-            camera=self.camera,
-            xyoffset=xyoffset,
-            frames=max_frame,
-        )
 
+        mapSC = {}
+        for i in range(self.channels.num_channels):
+            mapSC[self.channels.names[i]] = mapSampleCamera(
+                sampleplane=self.sample_plane,
+                camera=self.camera,
+                xyoffset=xyoffset,
+                frames=max_frame,
+            )
+        image_stack = []
+        channel_names = []
+
+        fm = timestoconsider[-1]
+        photons = 0
         # for each object find its location and the excitation laser intensity (after applying excitation filter)
         for time_index, time in enumerate(timestoconsider):
             # transmission rate (1/s) at the current time for each filterset (channel) for each flurophore
             for objID, fluorObj in self.sample_plane._objects.items():
+                # find the current state history of the fluorophore
+                # (State, random_Val, list[StateTransition])
+                statehist = fluorObj.state_history[time]
+                # if not aval transitions go next
+                # this assumes that the bleached state is the only state from which there are no more transitions
+                if not statehist[2]:
+                    fluorObj.state_history[time + self.sample_plane.dt] = statehist
+                    continue
+
                 # flurophore position
-                florPos = fluorObj.position_history[time]
+                florPos = np.copy(fluorObj.position_history[time])
                 # make z relative to the z_Val of the stage
                 florPos[2] -= z_val
 
-                # find the current state history of the fluorophore
-                statehist = fluorObj.state_history[time]
-
-                # (State, photon_count, list[StateTransition])
                 # overlap in the transmission of the lasers into the sample-plane
                 # intensity
-                laser_intensities = {}
-                for laserID in laser_power.keys():
-                    laser_intensities[laserID] = {
-                        "wavelength": self.lasers[laserID].params.wavelength,
-                        "intensity": (
-                            self.filterset.excitation.find_transmission(
-                                self.lasers[laserID].params.wavelength
-                            )
-                            * self.lasers[laserID].calculate_intensity(
-                                x=florPos[0], y=florPos[1], z=florPos[2], t=time
-                            )  # W/um²
-                        ),
-                    }
-                print(laser_intensities)
+                def laser_intensities_gen(
+                    florPos: list | np.ndarray, time: int | float
+                ) -> dict:
+                    laser_intensities = {}
+                    for laserID in laser_power.keys():
+                        laser_intensities[laserID] = {
+                            "wavelength": self.lasers[laserID].params.wavelength,
+                            "intensity": (
+                                self.channels.filtersets[
+                                    0  # assumes all lasers are on at once in all channels
+                                ].excitation.find_transmission(
+                                    self.lasers[laserID].params.wavelength
+                                )
+                                * self.lasers[laserID].calculate_intensity(
+                                    x=florPos[0], y=florPos[1], z=florPos[2], t=time
+                                )  # W/um²
+                            ),
+                        }
+                    return laser_intensities
 
-                # make an array of all the possible states
-                statearr = [
-                    state_transitions.to_state for state_transitions in statehist[2]
-                ]
-                stateTransitionMatrixR = [
-                    sum(
-                        state_transitions.activation_rate()(
-                            laser["wavelength"], laser["intensity"]
-                        )
-                        for laser in laser_intensities.values()
-                    )
-                    for state_transitions in statehist[2]
-                ]
-
-                stateTransitionMatrix = [
-                    rate_to_probability(i, self.sample_plane.dt * (1e-3))
-                    for i in stateTransitionMatrixR
-                ]  # input required is 1/s and s. time is in ms, rate is in 1/s from the .activation_rate() method
-                # make the self->self state the rest of the probability
-                nothing_change_prob = 1.0 - np.sum(stateTransitionMatrix)
-                statearr = [statehist[0].name] + statearr
-                stateTransitionMatrix = [nothing_change_prob] + list(
-                    stateTransitionMatrix
+                state_calculator_setup = StateTransitionCalculator(
+                    fluorObj, self.sample_plane.dt_s, time, laser_intensities_gen
                 )
-
-                assert np.sum(stateTransitionMatrix) == 1.0
-
-                next_state_index = np.random.choice(
-                    np.arange(len(statearr)), p=stateTransitionMatrix
+                # ({state.name: [total_time_in_state, laser_intensities]}, final_state (State)
+                fluorescent_state_history, final_state, ernomsg = (
+                    state_calculator_setup()
                 )
-
-                # initialize None transmission_photon_rate
-                transmission_photon_rate = None
-                if (
-                    fluorObj.fluorophore.states[statearr[next_state_index]].state_type
-                    == StateType.FLUORESCENT
-                ):
-                    if (
-                        fluorObj.fluorophore.states[
-                            statearr[next_state_index]
-                        ].quantum_yield
-                        is None
-                    ):
-                        raise ValueError(
-                            "Fluorescent states must have spectral data, quantum yield, extinction coefficient, and photon budget"
-                        )
-                    # make the absorb photon class
-                    wl_t = []
-                    int_t = []
-                    for i in laser_intensities.values():
-                        wl_t.append(i["wavelength"])
-                        int_t.append(i["intensity"])
-
-                    absorb_photon_cl = AbsorptionPhysics(
-                        excitation_spectrum=fluorObj.fluorophore.states[
-                            statearr[next_state_index]
-                        ].excitation_spectrum,
-                        intensity_incident=WavelengthDependentProperty(
-                            wavelengths=wl_t, values=int_t
-                        ),
-                        absorb_cross_section_spectrum=WavelengthDependentProperty(
-                            wavelengths=wl_t,
-                            values=[
-                                fluorObj.fluorophore.states[
-                                    statearr[next_state_index]
-                                ].molar_cross_section.get_value(wl)  # pyright: ignore
-                                for wl in wl_t
-                            ],
-                        ),
-                        fluorescent_lifetime=fluorObj.fluorophore.states[
-                            statearr[next_state_index]
-                        ].fluorescent_lifetime,
-                    )
-
-                    emision_photon_cl = EmissionPhysics(
-                        emission_spectrum=fluorObj.fluorophore.states[  # pyright: ignore
-                            statearr[next_state_index]
-                        ].emission_spectrum,
-                        quantum_yield=fluorObj.fluorophore.states[  # pyright: ignore
-                            statearr[next_state_index]
-                        ].quantum_yield,
-                        transmission_filter=self.filterset.emission,
-                    )
-
-                    transmission_photon_rate = emision_photon_cl.transmission_photon_rate(
-                        emission_photon_rate_lambda=emision_photon_cl.emission_photon_rate(
-                            total_absorbed_rate=absorb_photon_cl.absorbed_photon_rate()
-                        )
-                    )
-                # if no fluorescent state the transmission_photon_rate is None -> update state history with the empty.
-                if transmission_photon_rate is None:
-                    statehist_updated = (
-                        fluorObj.fluorophore.states[statearr[next_state_index]],
-                        EMPTY_STATE_HISTORY_DICT,
-                        [
-                            stateTrans
-                            for stateTrans in fluorObj.fluorophore.transitions.values()
-                            if stateTrans.from_state
-                            == fluorObj.fluorophore.states[
-                                statearr[next_state_index]
-                            ].name
-                        ],
-                    )
-                else:
-                    # build transmission_dict
-                    transmission_dict = {self.filterset.name: transmission_photon_rate}
-                    statehist_updated = (
-                        fluorObj.fluorophore.states[statearr[next_state_index]],
-                        transmission_dict,
-                        [
-                            stateTrans
-                            for stateTrans in fluorObj.fluorophore.transitions.values()
-                            if stateTrans.from_state
-                            == fluorObj.fluorophore.states[
-                                statearr[next_state_index]
-                            ].name
-                        ],
-                    )
-                fluorObj.state_history[time + self.sample_plane.dt] = statehist_updated
 
                 if frame_list[time_index] != 0:
-                    if transmission_photon_rate is None:
-                        inc_photons = None
-                        psfs = None
-                    else:
-                        inc = incident_photons(
-                            transmission_photon_rate,
-                            self.qe,
-                            self.psf,
-                            florPos,
+                    for (
+                        fstateNAME,
+                        time_and_laser_intensities,
+                    ) in fluorescent_state_history.items():
+                        deltaTime, laser_intensities = time_and_laser_intensities
+                        fstate = fluorObj.fluorophore.states[fstateNAME]
+
+                        wl_t = []
+                        int_t = []
+                        for i in laser_intensities.values():
+                            wl_t.append(i["wavelength"])
+                            int_t.append(i["intensity"])
+
+                        absorb_photon_cl = AbsorptionPhysics(
+                            excitation_spectrum=fstate.excitation_spectrum,
+                            intensity_incident=WavelengthDependentProperty(
+                                wavelengths=wl_t, values=int_t
+                            ),
+                            absorb_cross_section_spectrum=WavelengthDependentProperty(
+                                wavelengths=wl_t,
+                                values=[
+                                    fstate.molar_cross_section.get_value(wl)  # pyright: ignore
+                                    for wl in wl_t
+                                ],
+                            ),
+                            fluorescent_lifetime_inverse=fstate.fluorescent_lifetime_inverse,
                         )
-                        inc_photons, psfs = inc.incident_photons_calc(
-                            self.sample_plane.dt * 1e-3
-                        )
-                        for ipsf in psfs:
-                            mapSC.add_psf_frame(
-                                ipsf, florPos[:2], frame_list[time_index]
+                        absorbed_photon_rate = absorb_photon_cl.absorbed_photon_rate()
+
+                        for channel_num in range(self.channels.num_channels):
+                            emission_photon_cl = EmissionPhysics(
+                                emission_spectrum=fstate.emission_spectrum,
+                                quantum_yield=fstate.quantum_yield,
+                                transmission_filter=self.channels.filtersets[
+                                    channel_num
+                                ].emission,
                             )
 
+                            transmission_photon_rate = emission_photon_cl.transmission_photon_rate(
+                                emission_photon_rate_lambda=emission_photon_cl.emission_photon_rate(
+                                    total_absorbed_rate=absorbed_photon_rate
+                                    * self.channels.splitting_efficiency[channel_num]
+                                )
+                            )
+
+                            inc = incident_photons(
+                                transmission_photon_rate,
+                                self.qe,
+                                self.psf,
+                                florPos,
+                            )
+                            inc_photons, psfs = inc.incident_photons_calc(deltaTime)
+                            photons += inc_photons
+                            for ipsf in psfs:
+                                mapSC[self.channels.names[channel_num]].add_psf_frame(
+                                    ipsf, florPos[:2], frame_list[time_index]
+                                )
+
+                statehist_updated = (
+                    final_state,
+                    EMPTY_STATE_HISTORY_DICT,
+                    [
+                        stateTrans
+                        for stateTrans in fluorObj.fluorophore.transitions.values()
+                        if stateTrans.from_state == final_state.name
+                    ],
+                )
+                if final_state.state_type == StateType.BLEACHED:
+                    fm = time
+                fluorObj.state_history[time + self.sample_plane.dt] = statehist_updated
+
         # use photon frames to make digital image
-        frames = [
-            self.camera.capture_frame(elpho, exposure_time=exposure_time * 1e-3)
-            for elpho in mapSC.holdframe.frames
-        ]
+        exposure_time_sc = ms_to_seconds(exposure_time)
+        for channel_name in mapSC.keys():
+            frames = [
+                self.camera.capture_frame(elpho, exposure_time=exposure_time_sc)
+                for elpho in mapSC[channel_name].holdframe.frames
+            ]
+            image_stack.append(frames)
+            channel_names.append(channel_name)
         self._time += duration_total
-        metadata = MetaData(notes="Not implimented")
-        return np.array(frames), metadata
+        metadata = MetaData(notes="Not implimented", axis="ZCTYX")
+
+        # return frames in the format ZCTYX
+        # Z is infered from the stack so [np.array(image_stack)] is one Z stack
+        return np.array(image_stack), metadata, photons
 
     def reset_to_initial_config(self) -> bool:
         """Reset to initial configuration."""
@@ -344,15 +311,35 @@ class mapSampleCamera:
     def add_psf_frame(
         self, psf: np.ndarray, mol_pos: Tuple[float, float], frame_num: int
     ) -> None:
+        psf_shape = psf.shape
+        frame_shape = self.holdframe.frames[frame_num - 1].shape
         # find the pixel indices of the psf
         x, y = self.get_pixel_indices(mol_pos[0], mol_pos[1])
         # find the bottom left corner of the psf
-        x0 = x - int(psf.shape[0] / 2)
-        y0 = y - int(psf.shape[1] / 2)
-        # add the psf to the frame
+        x0 = x - psf_shape[0] // 2
+        y0 = y - psf_shape[1] // 2
+
+        # Calculate the overlapping region between PSF and frame
+        # For the frame
+        frame_x_start = max(0, x0)
+        frame_y_start = max(0, y0)
+        frame_x_end = min(frame_shape[0], x0 + psf_shape[0])
+        frame_y_end = min(frame_shape[1], y0 + psf_shape[1])
+
+        # If there's no overlap, return
+        if frame_x_end <= frame_x_start or frame_y_end <= frame_y_start:
+            return
+
+        # Calculate corresponding region in the PSF
+        psf_x_start = max(0, -x0)
+        psf_y_start = max(0, -y0)
+        psf_x_end = psf_shape[0] - max(0, (x0 + psf_shape[0]) - frame_shape[0])
+        psf_y_end = psf_shape[1] - max(0, (y0 + psf_shape[1]) - frame_shape[1])
+
+        # Add the overlapping region of the PSF to the frame
         self.holdframe.frames[frame_num - 1][
-            y0 : y0 + psf.shape[0], x0 : x0 + psf.shape[1]
-        ] += psf
+            frame_y_start:frame_y_end, frame_x_start:frame_x_end
+        ] += psf[psf_y_start:psf_y_end, psf_x_start:psf_x_end]
 
     def get_frame(self, frame_num: int) -> np.ndarray:
         return self.holdframe.frames[frame_num]
@@ -420,7 +407,7 @@ def generate_sampling_pattern(
         if (counter_times + 1) % (int_e_o + int_i_o) == 0:
             frame_num += 1
 
-        times.append(counter_times * oversample_motion_time)
+        times.append(counter_times * oversample_motion_time + start_time)
 
     return times, sample_bool, frame_num - 1
 
@@ -430,6 +417,7 @@ def timeValidator(
     ointerval_time: int,
     oversample_motion_time: int,
     ototal_time: int,
+    current_time: int,
     state_arr: Dict[
         Literal["exposure_time", "interval_time", "total_time"], int | None
     ],
@@ -438,9 +426,9 @@ def timeValidator(
     exposure_time = state_arr.get("exposure_time", oexposure_time) or oexposure_time
     interval_time = state_arr.get("interval_time", ointerval_time) or ointerval_time
 
-    if duration_total > ototal_time:
+    if (current_time + duration_total) > ototal_time:
         raise ValueError(
-            f"Duration_total: {duration_total}, is larger than the largest simulated: {ototal_time}. Choose a smaller value or rerun the microscope setup with a longer duration."
+            f"Duration_total: {duration_total + current_time}, is larger than the largest simulated: {ototal_time}. Choose a smaller value or rerun the microscope setup with a longer duration."
         )
 
     if exposure_time < oversample_motion_time and exposure_time > 0:

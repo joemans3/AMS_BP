@@ -58,7 +58,6 @@ class StateType(Enum):
 
     FLUORESCENT = "fluorescent"
     DARK = "dark"
-    TRIPLET = "triplet"
     BLEACHED = "bleached"
 
 
@@ -67,7 +66,7 @@ class State(BaseModel):
 
     name: str
     state_type: StateType
-    # Spectral properties (only required for fluorescent states)
+    # Spectral properties
     excitation_spectrum: Optional[SpectralData] = None
     emission_spectrum: Optional[SpectralData] = None
 
@@ -90,7 +89,10 @@ class State(BaseModel):
     molar_cross_section: Optional[WavelengthDependentProperty] = Field(
         None, gt=0, description="cm²"
     )  # post init value of molar_cross_section at various wavelengths
-    fluorescent_lifetime: Optional[float] = None
+    fluorescent_lifetime: Optional[float] = (
+        None  # 1/s for the ground -> excited -> ground cycle
+    )
+    fluorescent_lifetime_inverse: Optional[float] = None  # calculated in post
 
     def model_post_init(self, __context):
         # populate ex_max and em_max:
@@ -123,6 +125,8 @@ class State(BaseModel):
                 self.quantum_yield = self._val_ratio_expand(
                     self.quantum_yield_lambda_val, self.em_max, self.emission_spectrum
                 )
+        if self.fluorescent_lifetime is not None:
+            self.fluorescent_lifetime_inverse = 1.0 / self.fluorescent_lifetime
 
     def _val_ratio_expand(
         self,
@@ -145,76 +149,75 @@ class StateTransition(BaseModel):
 
     from_state: str
     to_state: str
-    activation_spectrum: Optional[SpectralData] = Field(
+    spectrum: Optional[SpectralData] = Field(
         None, description="Wavelength-dependent activation spectrum"
     )
-    activation_extinction_coefficient_lambda_val: Optional[float] = Field(
+    extinction_coefficient_lambda_val: Optional[float] = Field(
         None,
         description="Value of activation_extinction_coefficient at wavelength (M⁻¹cm⁻¹)",
     )
-    activation_extinction_coefficient: Optional[WavelengthDependentProperty] = Field(
+    extinction_coefficient: Optional[WavelengthDependentProperty] = Field(
         None,
         description="Wavelength-dependent activation extinction coefficient (M⁻¹cm⁻¹)",
     )
-    activation_cross_section: Optional[WavelengthDependentProperty] = Field(
+    cross_section: Optional[WavelengthDependentProperty] = Field(
         None, description="Wavelength-dependent activation cross section (cm²)"
     )  # post init value of activation_cross_section at various wavelengths
     base_rate: Optional[float] = Field(None, description="Base transition rate (1/s)")
+    quantum_yield: Optional[float] = Field(
+        None,
+        description="quantum yeild of state change (switching events per N photons absorbed)",
+    )
 
     def model_post_init(self, __context) -> None:
         if (
-            self.activation_extinction_coefficient_lambda_val is not None
-            and self.activation_spectrum is not None
+            self.extinction_coefficient_lambda_val is not None
+            and self.spectrum is not None
         ):
             # find the max wavelength of the activation spectrum
-            activation_max = self.activation_spectrum.wavelengths[
-                self.activation_spectrum.values.index(
-                    max(self.activation_spectrum.values)
-                )
+            activation_max = self.spectrum.wavelengths[
+                self.spectrum.values.index(max(self.spectrum.values))
             ]
             act_ext_c_spec = self._val_ratio_expand(
-                self.activation_extinction_coefficient_lambda_val,
+                self.extinction_coefficient_lambda_val,
                 activation_max,
-                self.activation_spectrum,
+                self.spectrum,
             )
-            self.activation_extinction_coefficient = act_ext_c_spec
+            self.extinction_coefficient = act_ext_c_spec
 
             _ = WavelengthDependentProperty(
-                wavelengths=self.activation_extinction_coefficient.wavelengths,
-                values=[
-                    i * CS_COEFF for i in self.activation_extinction_coefficient.values
-                ],
+                wavelengths=self.extinction_coefficient.wavelengths,
+                values=[i * CS_COEFF for i in self.extinction_coefficient.values],
             )
-            self.activation_cross_section = _
+            self.cross_section = _
 
-    def activation_rate(self) -> Callable:
+    def rate(self) -> Callable:
         """Get activation rate at a specific wavelength (nm) and corresponding intensity (W/um^2)"""
-        if (
-            self.activation_extinction_coefficient is None
-            and self.activation_spectrum is None
-        ):
+        if self.extinction_coefficient is None and self.spectrum is None:
 
-            def _activation_rate_base(wavelength: float, intensity: float) -> float:
+            def _rate_base(wavelength: float, intensity: float) -> float:
                 if self.base_rate is None:
                     return 0
                 return self.base_rate
 
-            return _activation_rate_base  # 1/s
+            return _rate_base  # 1/s
         else:
 
             @np.vectorize
-            def _activation_rate(
+            def rate(
                 wavelength: float, intensity: float
             ) -> float:  # wavelength in nm, intensity in W/um^2. Final result in 1/s
                 return (
-                    self.activation_cross_section.get_value(wavelength)
+                    self.cross_section.get_value(wavelength)
                     * intensity
-                    * self.activation_spectrum.get_intensity(wavelength)  # pyright: ignore
+                    * self.spectrum.get_intensity(wavelength)  # pyright: ignore
                     * wavelength
-                    * H_C_COM  # (cross section in cm², intensity in W/um², wavelength in nm: 10^-4, 10^12, 10^-9 -> to m.)
+                    * H_C_COM
+                    * (1e-1)
+                    * self.quantum_yield  # (cross section in cm², intensity in W/um², wavelength in nm: 10^-4, 10^12, 10^-9 -> to m.)
                 )
 
-            return _activation_rate  # 1/s
+            return rate  # 1/s
 
     def _val_ratio_expand(
         self,
@@ -272,3 +275,6 @@ class Fluorophore(BaseModel):
                 raise ValueError(f"Invalid to_state: {transition.to_state}")
 
         return v
+
+    def _find_transitions(self, statename: str) -> List[StateTransition]:
+        return [t for t in self.transitions.values() if t.from_state == statename]

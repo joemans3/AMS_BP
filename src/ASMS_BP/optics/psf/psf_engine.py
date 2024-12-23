@@ -78,7 +78,7 @@ class PSFEngine:
         return (pixels_needed, pixels_needed)
 
     @cache
-    def gaussian_psf_z(self, z_val: float) -> np.ndarray:
+    def psf_z(self, z_val: float) -> np.ndarray:
         """Generate z=z_val Gaussian approximation of PSF
         returned normalized values"""
         psf_size = self.calculate_psf_size()
@@ -94,7 +94,7 @@ class PSFEngine:
         return psf  # * self._gaussian_3d_normalization_A(sigma_z = sigma_z, sigma_x = sigma_xy, sigma_y = sigma_xy)
 
     @cache
-    def gaussian_psf_z_xy0(self, z_val: float) -> np.ndarray:
+    def psf_z_xy0(self, z_val: float) -> np.ndarray:
         """Generate z=z_val Gaussian approximation of PSF with x=y=0
         returned normalized values"""
 
@@ -104,13 +104,13 @@ class PSFEngine:
         return psf
 
     @cache
-    def _gaussian_3d_normalization_A(
+    def _3d_normalization_A(
         self, sigma_z: float, sigma_x: float, sigma_y: float
     ) -> float:
         return 1.0 / (((2.0 * np.pi) ** (3.0 / 2.0)) * sigma_x * sigma_y * sigma_z)
 
     @cache
-    def _gaussian_2d_normalization_A(self, sigma_x: float, sigma_y: float) -> float:
+    def _2d_normalization_A(self, sigma_x: float, sigma_y: float) -> float:
         return 1.0 / ((2.0 * np.pi) * sigma_x * sigma_y)
 
     @staticmethod
@@ -131,8 +131,12 @@ class PSFEngine:
         Raises:
             ValueError: If unknown normalization mode is specified
         """
+        # check if all zeros
+        psf_sum = np.sum(psf)
+        if not psf_sum:
+            return psf
         if mode == "sum":
-            return psf / np.sum(psf)
+            return psf / psf_sum
         elif mode == "max":
             return psf / np.max(psf)
         elif mode == "energy":

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Callable, List, Optional, Tuple
 
+import numpy as np
+
 from ..optics.camera.detectors import photon_noise
 from ..optics.camera.quantum_eff import QuantumEfficiency
 from ..optics.filters.filters import FilterSpectrum
@@ -13,20 +15,18 @@ from ..utils.constants import H_C_COM
 
 
 @dataclass
-class AbsorptionPhysics:
+class AbsorptionBase:
     excitation_spectrum: SpectralData  # wl in nm, relative intensity
     intensity_incident: WavelengthDependentProperty  # wl in nm, intensity in W/um^2
     absorb_cross_section_spectrum: (
         WavelengthDependentProperty  # wl in nm, cross section in cm^2
     )
-    fluorescent_lifetime: float  # in 1/s
-    flux_density_lambda: Optional[WavelengthDependentProperty] = None
 
     def __post_init__(self):
-        if self.flux_density_lambda is None:
-            self.flux_density_lambda = self._calc_flux_density()
+        self.flux_density_precursor_lambda = self._calc_flux_density_precursor()
 
-    def _calc_flux_density(self) -> WavelengthDependentProperty:
+    def _calc_flux_density_precursor(self) -> WavelengthDependentProperty:
+        """Per wavelength of incoming light W/cm^2 (intensity), find the quantity W/cm over the excitation_spectrum provided"""
         wavelengths = []
         ex_flux_density_lambda = []
         for i in range(len(self.intensity_incident.wavelengths)):
@@ -39,24 +39,39 @@ class AbsorptionPhysics:
             wavelengths=wavelengths, values=ex_flux_density_lambda
         )
 
+
+@dataclass
+class AbsorptionPhysics(AbsorptionBase):
+    fluorescent_lifetime_inverse: float
+
+    def saturation_rate(self, rate: float, max_rate: float) -> float:
+        return np.clip(rate, 0, max_rate)
+
     def absorbed_photon_rate(self) -> float:
-        """Calculate the number of incident photons"""
-        if self.flux_density_lambda is None:
+        """Calculate the rate of incident photons"""
+        if self.flux_density_precursor_lambda is None:
             raise ValueError("Flux density not calculated")
 
-        # calculate number of photons
-        photon_rate_lambda = 0
-        for i in range(len(self.flux_density_lambda.wavelengths)):
+        photon_rate_lambda = 0  # adding up all the wavelength based intensity rates
+        for i in range(len(self.flux_density_precursor_lambda.wavelengths)):
             cross_section = self.absorb_cross_section_spectrum.values[i]
             int_inverse_seconds_i = (
-                cross_section * self.flux_density_lambda.values[i] * H_C_COM * 1e-1
+                cross_section
+                * self.flux_density_precursor_lambda.values[i]
+                * H_C_COM
+                * 1e-1
             )
-            photon_rate_lambda += int_inverse_seconds_i * (
-                1.0 / (1.0 + (self.fluorescent_lifetime * int_inverse_seconds_i))
-            )
-        print(photon_rate_lambda)
 
-        return photon_rate_lambda  # 1/s, 10^-1 combined all conversion factors
+            photon_rate_lambda += int_inverse_seconds_i
+        return self.saturation_rate(
+            photon_rate_lambda,
+            self.fluorescent_lifetime_inverse,
+        )  # 1/s, 10^-1 combined all conversion factors
+
+
+@dataclass
+class PhotoStateSwitchPhysics(AbsorptionBase):
+    quantum_yeild: float  # switching events per photon absorbed
 
 
 @dataclass
@@ -94,11 +109,7 @@ class EmissionPhysics:
                 * self.quantum_yield.values[i]
                 * self.emission_spectrum.values[i]
             )
-        print(
-            WavelengthDependentProperty(
-                wavelengths=wavelengths, values=emission_rate_lambda
-            )
-        )
+
         return WavelengthDependentProperty(
             wavelengths=wavelengths, values=emission_rate_lambda
         )
@@ -121,11 +132,7 @@ class EmissionPhysics:
                     emission_photon_rate_lambda.wavelengths[i]
                 )
             )
-        print(
-            WavelengthDependentProperty(
-                wavelengths=wavelengths, values=transmission_rate_lambda
-            )
-        )
+
         return WavelengthDependentProperty(
             wavelengths=wavelengths, values=transmission_rate_lambda
         )
@@ -148,18 +155,21 @@ class incident_photons:
         photons = 0
         psf_hold = []
         for i in range(len(self.transmission_photon_rate.wavelengths)):
-            qe_lam = self.quantumEff.get_qe(
-                self.transmission_photon_rate.wavelengths[i]
-            )
-            photons_n = self.transmission_photon_rate.values[i] * dt
-            photons += photons_n
-            psf_gen = (
-                self.generator[i].normalize_psf(
-                    self.generator[i].gaussian_psf_z(z_val=self.position[2]), mode="sum"
+            if self.transmission_photon_rate.values[i] > 0:
+                qe_lam = self.quantumEff.get_qe(
+                    self.transmission_photon_rate.wavelengths[i]
                 )
-                * self.generator[i].gaussian_psf_z_xy0(z_val=self.position[2])
-                * photons_n
-            )
-            psf_hold.append(photon_noise(psf_gen) * qe_lam)
+                photons_n = self.transmission_photon_rate.values[i] * dt
+                photons += photons_n
+                psf_gen = (
+                    self.generator[i].normalize_psf(
+                        self.generator[i].psf_z(z_val=self.position[2]),
+                        mode="sum",
+                    )
+                    * self.generator[i].psf_z_xy0(z_val=self.position[2])
+                    * photons_n
+                )
+
+                psf_hold.append(photon_noise(psf_gen) * qe_lam)
 
         return photons, psf_hold

@@ -36,6 +36,10 @@ class TimeSeriesExpConfig(BaseExpConfig):
                 f"laser_powers_active({len_lpow}), "
                 f"laser_positions_active({len_lpos})"
             )
+        if self.exposure_time or self.interval_time or self.duration_time:
+            raise ValueError(
+                "Please do not define exposure_time, interval_time, or duration_time in a time series experiment component. Use the GlobalParameters to set this."
+            )
         self.laser_powers = {
             self.laser_names_active[i]: self.laser_powers_active[i]
             for i in range(len(self.laser_names_active))
@@ -82,7 +86,7 @@ def timeseriesEXP(
     microscope: VirtualMicroscope,
     config: TimeSeriesExpConfig,
 ) -> Tuple[np.ndarray, MetaData]:
-    frames, metadata = microscope.run_sim(
+    frames, metadata, _ = microscope.run_sim(
         z_val=config.z_position,
         laser_power=config.laser_powers,
         laser_position=config.laser_positions,
@@ -91,7 +95,7 @@ def timeseriesEXP(
         exposure_time=config.exposure_time,
         interval_time=config.interval_time,
     )
-    return frames, metadata
+    return np.array([frames]), metadata
 
 
 def zseriesEXP(
@@ -101,7 +105,7 @@ def zseriesEXP(
     frames = []
     metadata = []
     for i in config.z_position:
-        f, m = microscope.run_sim(
+        f, m, _ = microscope.run_sim(
             z_val=i,
             laser_power=config.laser_powers,
             laser_position=config.laser_positions,

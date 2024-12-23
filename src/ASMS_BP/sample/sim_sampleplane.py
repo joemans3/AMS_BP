@@ -23,7 +23,7 @@ class FluorescentObject:
 
     # Track position history: Dict[timestamp_ms, position]
     position_history: Optional[Dict[int, Tuple[float, float, float]]] = None
-    # Track fluorophore state history: Dict[timestamp_ms, (current_state, random_val, available_transitions)]
+    # Track fluorophore state history: Dict[timestamp_ms, (current_state, random_val, available_transitions)] # never input, calculated post.
     state_history: Optional[
         Dict[
             int,
@@ -38,11 +38,9 @@ class FluorescentObject:
         if self.state_history is None:
             # use the initial state of the fluorophore opbject
             initial_state = self.fluorophore.initial_state
-            initial_state_transitions = [
-                t
-                for t in self.fluorophore.transitions.values()
-                if t.from_state == initial_state.name
-            ]
+            initial_state_transitions = self.fluorophore._find_transitions(
+                initial_state.name
+            )
 
             # select dark state [Optional]
             # initial_state = next(
@@ -197,6 +195,7 @@ class SamplePlane:
 
         # Time parameters
         self.dt = oversample_motion_time  # ms
+        self.dt_s = self.dt * (1e-3)
         self.t_end = t_end  # ms
         self.time_points = list(range(0, self.t_end, self.dt))
 

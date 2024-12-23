@@ -2,10 +2,10 @@ import json
 import os
 
 import numpy as np
+from tifffile import TiffWriter
 
 from ..configio.configmodels import OutputParameters
 from ..metadata.metadata import MetaData
-from ..utils.util_functions import save_tiff
 
 
 def save_config_frames(
@@ -15,8 +15,12 @@ def save_config_frames(
     # make the directory if it does not exist
     if not os.path.exists(cd):
         os.makedirs(cd)
-    save_tiff(frames, cd, outputparams.output_name)
 
+    with TiffWriter(
+        os.path.join(cd, outputparams.output_name + ".ome" + ".tiff"), bigtiff=True
+    ) as f:
+        metadata = {"axes": config.axis}
+        f.write(frames, metadata=metadata)
     # make json ster. from the MetaData
     metadata_json = config.model_dump()
 

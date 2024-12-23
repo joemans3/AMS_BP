@@ -31,10 +31,9 @@ import typer
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from typing_extensions import Annotated
 
-from ASMS_BP.configio.saving import save_config_frames
-
 from . import __version__
 from .configio.convertconfig import ConfigLoader
+from .configio.saving import save_config_frames
 
 cli_help_doc = str(
     """

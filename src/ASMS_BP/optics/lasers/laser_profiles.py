@@ -9,10 +9,8 @@ import numpy as np
 class Units(Enum):
     """Enumeration of supported units for laser parameters."""
 
-    NANOMETERS = "nm"
     MICRONS = "µm"
     WATTS = "W"
-    MILLIWATTS = "mW"
 
 
 @dataclass

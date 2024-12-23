@@ -1,4 +1,5 @@
 import numpy as np
+
 from ...utils.decorators import _catch_recursion_error
 
 # Reflecting boundary condition which is a recursive function so that even if the first candidate

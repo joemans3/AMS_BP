@@ -70,6 +70,7 @@ def to_string_node(nested: Union[str, List]) -> StringNode:
 
 class MetaData(BaseModel):
     notes: StringNode | list | str
+    axis: str
 
     def __post_init__(self):
         if isinstance(self.notes, (list, str)):

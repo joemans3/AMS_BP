@@ -30,6 +30,7 @@ class Detector(ABC):
         bit_depth: int = 16,
         sensitivity: float = 1.0,
         base_adu: int = 100,
+        binning_size: int = 1,
     ):
         """
         Initialize detector parameters.
@@ -55,13 +56,17 @@ class Detector(ABC):
         self.pixel_detector_size = pixel_detector_size
         self.magnification = magnification
         self.base_adu = base_adu
+        self.binning_size = binning_size
+        self.binning_function = create_binning_function(
+            self.pixel_count, self.binning_size, mode="sum"
+        )
 
     def base_frame(self, base_adu: int) -> np.ndarray:
         return np.zeros(self.pixel_count) + base_adu
 
     def electrons_to_counts(self, electrons: np.ndarray) -> np.ndarray:
         """
-        Convert electrons to digital counts (ADU).
+        Convert electrons to digital counts (ADU). This is rounded to the integer, but not bounded by the bit depth.
 
         Args:
             electrons: Array of electron values
@@ -72,7 +77,35 @@ class Detector(ABC):
         # Convert electrons to counts using sensitivity
         counts = electrons / self.sensitivity
         # Clip to valid range and round to integers
-        return np.clip(np.round(counts), 0, self._max_counts).astype(np.uint16)
+        return np.round(counts)
+
+    def clipADU(self, counts: np.ndarray) -> np.ndarray:
+        if self.bit_depth == 8:
+            return np.clip(
+                self.base_adu + self.binning_function(counts),
+                0,
+                self._max_counts,
+            ).astype(np.uint8)
+        elif self.bit_depth == 16:
+            return np.clip(
+                self.base_adu + self.binning_function(counts),
+                0,
+                self._max_counts,
+            ).astype(np.uint16)
+        elif self.bit_depth == 32:
+            return np.clip(
+                self.base_adu + self.binning_function(counts),
+                0,
+                self._max_counts,
+            ).astype(np.uint32)
+        elif self.bit_depth == 64:
+            return np.clip(
+                self.base_adu + self.binning_function(counts),
+                0,
+                self._max_counts,
+            ).astype(np.uint64)
+        else:
+            raise ValueError(f"bit depth: {self.bit_depth} is not supported.")
 
     @abstractmethod
     def capture_frame(self, photons: np.ndarray, exposure_time: float) -> np.ndarray:
@@ -105,6 +138,7 @@ class EMCCDDetector(Detector):
         sensitivity: float = 1.0,
         bit_depth: int = 16,
         base_adu: int = 0,
+        binning_size: int = 1,
     ):
         """
         Initialize EMCCD detector.
@@ -125,6 +159,7 @@ class EMCCDDetector(Detector):
             bit_depth,
             sensitivity,
             base_adu,
+            binning_size,
         )
         self.em_gain = em_gain
         self.clock_induced_charge = clock_induced_charge
@@ -155,7 +190,7 @@ class EMCCDDetector(Detector):
         # Convert electrons to digital counts (ADU)
         counts = self.electrons_to_counts(electrons)
 
-        return counts + self.base_adu
+        return self.clipADU(counts)
 
 
 class CMOSDetector(Detector):
@@ -172,6 +207,7 @@ class CMOSDetector(Detector):
         sensitivity: float = 1.0,
         bit_depth: int = 16,
         base_adu: int = 0,
+        binning_size: int = 1,
     ):
         """
         Initialize CMOS detector.
@@ -193,6 +229,7 @@ class CMOSDetector(Detector):
             bit_depth,
             sensitivity,
             base_adu,
+            binning_size,
         )
 
     def capture_frame(self, photons: np.ndarray, exposure_time: float) -> np.ndarray:
@@ -215,4 +252,69 @@ class CMOSDetector(Detector):
         # Convert electrons to digital counts (ADU)
         counts = self.electrons_to_counts(electrons)
 
-        return counts + self.base_adu
+        return self.clipADU(counts)
+
+
+def create_binning_function(input_shape, binning_size, mode="sum"):
+    """
+    Creates an optimized partial function for binning arrays of a specific shape.
+
+    Parameters:
+    -----------
+    input_shape : tuple
+        Shape of the input arrays that will be binned
+    binning_size : int
+        Size of the binning window (e.g., 2 for 2x2 binning)
+    mode : str, optional
+        Method for binning. Currently only supports 'sum'
+
+    Returns:
+    --------
+    function
+        A specialized function that only takes an array as input and performs binning
+    """
+    # Pre-calculate all the constants we'll need
+    original_shape = np.array(input_shape)
+    output_shape = np.ceil(original_shape / binning_size).astype(int)
+    effective_shape = (output_shape * binning_size) - original_shape
+
+    # Pre-calculate padding configuration if needed
+    needs_padding = np.any(effective_shape > 0)
+    pad_width = [(0, int(s)) for s in effective_shape] if needs_padding else None
+
+    # Pre-calculate reshape dimensions
+    new_shape = []
+    working_shape = output_shape * binning_size if needs_padding else original_shape
+    for dim in working_shape:
+        new_shape.extend([dim // binning_size, binning_size])
+
+    # Pre-calculate sum axes
+    sum_axes = tuple(range(1, len(new_shape), 2))
+
+    def optimized_binning(array):
+        """
+        Optimized binning function for arrays of a specific shape.
+
+        Parameters:
+        -----------
+        array : numpy.ndarray
+            Input array to be binned (must match input_shape)
+
+        Returns:
+        --------
+        numpy.ndarray
+            Binned array
+        """
+        if array.shape != input_shape:
+            raise ValueError(
+                f"Input array shape {array.shape} does not match expected shape {input_shape}"
+            )
+
+        # Apply padding if needed
+        if needs_padding:
+            array = np.pad(array, pad_width, mode="constant")
+
+        # Perform binning
+        return array.reshape(new_shape).sum(axis=sum_axes)
+
+    return optimized_binning

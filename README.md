@@ -2,6 +2,7 @@
 <p>
 <img src="./docs/assets/icons/drawing.svg" alt="AMS-BP Logo" width="500" height="200">
 </p>
+
 ## Advanced Fluorescence Microscopy Simulation Tool
 
 AMS-BP is a powerful simulation tool for advanced fluorescence microscopy experiments. This guide covers both command-line usage and library integration.

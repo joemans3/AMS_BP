@@ -16,7 +16,7 @@ from .photophysics.photon_physics import (
     incident_photons,
 )
 from .photophysics.state_kinetics import StateTransitionCalculator
-from .sample.flurophores.flurophore_schema import StateType, WavelengthDependentProperty
+from .sample.flurophores.flurophore_schema import WavelengthDependentProperty
 from .sample.sim_sampleplane import EMPTY_STATE_HISTORY_DICT, SamplePlane
 from .utils.util_functions import ms_to_seconds
 
@@ -139,8 +139,6 @@ class VirtualMicroscope:
         image_stack = []
         channel_names = []
 
-        fm = timestoconsider[-1]
-        photons = 0
         # for each object find its location and the excitation laser intensity (after applying excitation filter)
 
         for time_index, time in enumerate(timestoconsider):
@@ -242,8 +240,7 @@ class VirtualMicroscope:
                                 self.psf,
                                 florPos,
                             )
-                            inc_photons, psfs = inc.incident_photons_calc(deltaTime)
-                            photons += inc_photons
+                            _, psfs = inc.incident_photons_calc(deltaTime)
                             for ipsf in psfs:
                                 mapSC[self.channels.names[channel_num]].add_psf_frame(
                                     ipsf, florPos[:2], frame_list[time_index]
@@ -258,8 +255,6 @@ class VirtualMicroscope:
                         if stateTrans.from_state == final_state.name
                     ],
                 )
-                if final_state.state_type == StateType.BLEACHED:
-                    fm = time
                 fluorObj.state_history[time + self.sample_plane.dt] = statehist_updated
 
         # use photon frames to make digital image

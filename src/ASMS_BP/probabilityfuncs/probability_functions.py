@@ -42,12 +42,13 @@ After initialization, do not change the parameters directly. Use the update_para
 """
 
 import numpy as np
-from typing import Union, List
+from typing import Union
 from ..cells.spherical_cell import SphericalCell
 from ..cells.rod_cell import RodCell
 from ..cells.rectangular_cell import RectangularCell
 
 CellType = Union[SphericalCell, RodCell, RectangularCell]
+
 
 def generate_points(
     pdf: callable,
@@ -188,7 +189,7 @@ class multiple_top_hat_probability:
         self.subspace_radius = np.array(subspace_radius)
         self.density_dif = density_dif
         self.cell = cell
-        
+
         # Calculate probabilities using cell's volume property
         total_volume = self.cell.volume
         self.subspace_probability = self._calculate_subspace_probability(
@@ -202,16 +203,19 @@ class multiple_top_hat_probability:
         """Returns the probability given a coordinate"""
         if not isinstance(position, np.ndarray):
             raise TypeError("Position must be a numpy array.")
-            
+
         # First check if point is within the cell
         if not self.cell.contains_point(position):
             return 0.0
 
         # Then check if point is within any subspace
         for i in range(self.num_subspace):
-            if np.linalg.norm(position - self.subspace_centers[i]) <= self.subspace_radius[i]:
+            if (
+                np.linalg.norm(position - self.subspace_centers[i])
+                <= self.subspace_radius[i]
+            ):
                 return self.subspace_probability
-                
+
         return self.non_subspace_probability
 
     def _calculate_subspace_probability(
@@ -228,12 +232,14 @@ class multiple_top_hat_probability:
         subspace_radius: np.ndarray,
     ) -> float:
         """Calculate probability outside subspaces"""
-        total_subspace_volume = num_subspace * (4/3) * np.pi * np.mean(subspace_radius)**3
+        total_subspace_volume = (
+            num_subspace * (4 / 3) * np.pi * np.mean(subspace_radius) ** 3
+        )
         remaining_volume = total_volume - total_subspace_volume
-        
+
         if remaining_volume <= 0:
             return 0.0
-            
+
         return 1.0 / total_volume
 
     @property
@@ -328,7 +334,7 @@ class multiple_top_hat_probability:
 
         # Recalculate total volume based on cell type
         if isinstance(self.cell, SphericalCell):
-            total_volume = (4/3) * np.pi * self.cell.radius**3
+            total_volume = (4 / 3) * np.pi * self.cell.radius**3
         elif isinstance(self.cell, RodCell):
             total_volume = self.cell.volume
         elif isinstance(self.cell, RectangularCell):

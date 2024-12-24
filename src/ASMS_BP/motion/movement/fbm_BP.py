@@ -1,11 +1,11 @@
 import numpy as np
 from .boundary_conditions import _refecting_boundary, _absorbing_boundary
 from ...probabilityfuncs.markov_chain import MCMC_state_selection
+
 BOUNDARY_CONDITIONS = {
     "reflecting": _refecting_boundary,
     "absorbing": _absorbing_boundary,
 }
-
 
 
 class FBM_BP:
@@ -126,7 +126,7 @@ class FBM_BP:
                 self.diffusion_parameter,
                 self.n - 1,
             )
-        
+
         if len(self.hurst_parameter) == 1:
             self._hurst_n = np.full(self.n, self.hurst_parameter[0])
         else:

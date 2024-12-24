@@ -3,7 +3,7 @@ name = "AMS_BP"
 
 dynamic = ["version"]
 
-description = "Advanced Molecule Simulations and Microscopy Simulations developed for the Weber Lab by Baljyot Singh Parmar"
+description = "Advanced Microscopy Simulations developed for the Weber Lab by Baljyot Singh Parmar"
 
 readme = "README.md"
 

@@ -1,5 +1,5 @@
 # AMS-BP User Guide
-## Advanced Molecule Simulation Tool
+## Advanced Fluorescence Microscopy Simulation Tool
 
 AMS-BP is a powerful simulation tool for advanced fluorescence microscopy experiments. This guide covers both command-line usage and library integration.
 
@@ -44,6 +44,13 @@ run_AMS_BP runsim CONFIG_FILE
 
 - `-o, --output_path PATH`: Specify the output directory for the configuration file
 - `-r, --recursive_o`: Create output directory if it doesn't exist
+
+### ***PyPi
+
+1. Run:
+```bash
+pip install AMS_BP
+```
 
 ## Configuration File
 

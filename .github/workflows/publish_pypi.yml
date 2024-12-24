@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/SMS_BP  
+      url: https://pypi.org/p/AMS_BP  
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
 

@@ -37,7 +37,7 @@ from .configio.saving import save_config_frames
 
 cli_help_doc = str(
     """
-CLI tool to run [underline]A[/underline]dvanced [underline]S[/underline]ingle [underline]M[/underline]olecule [underline]S[/underline]imulation: [underline]ASMS[/underline]-BP. GitHub: [green]https://github.com/joemans3/ASMS_BP[/green].
+CLI tool to run [underline]A[/underline]dvanced [underline]M[/underline]olecule [underline]S[/underline]imulation: [underline]ASMS[/underline]-BP. GitHub: [green]https://github.com/joemans3/AMS_BP[/green].
 [Version: [bold]{0}[/bold]]
 """.format(__version__)
 )
@@ -45,9 +45,9 @@ CLI tool to run [underline]A[/underline]dvanced [underline]S[/underline]ingle [u
 
 # create a new CLI function
 typer_app_asms_bp = typer.Typer(
-    name="ASMS_BP CLI Tool",
+    name="AMS_BP CLI Tool",
     help=cli_help_doc,
-    short_help="CLI tool for ASMS_BP.",
+    short_help="CLI tool for AMS_BP.",
     rich_markup_mode="rich",
     pretty_exceptions_show_locals=False,
     add_completion=False,
@@ -61,7 +61,7 @@ typer_app_asms_bp = typer.Typer(
 def cell_simulation():
     # print version
     # find version using the __version__ variable in the __init__.py file
-    out_string = f"ASMS_BP version: [bold]{__version__}[/bold]"
+    out_string = f"AMS_BP version: [bold]{__version__}[/bold]"
     rich.print(out_string)
 
 

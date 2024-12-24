@@ -5,8 +5,6 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import tomli
 from pydantic import BaseModel
 
-from ASMS_BP.optics.filters.channels.channelschema import Channels
-
 from ..cells import RectangularCell
 from ..cells.base_cell import BaseCell
 from ..motion import Track_generator, create_condensate_dict
@@ -25,6 +23,7 @@ from ..optics.filters import (
     create_bandpass_filter,
     create_tophat_filter,
 )
+from ..optics.filters.channels.channelschema import Channels
 from ..optics.lasers.laser_profiles import (
     GaussianBeam,
     HiLoBeam,

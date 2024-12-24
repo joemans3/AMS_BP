@@ -1,4 +1,4 @@
-# ASMS_BP Configuration and Setup Documentation
+# AMS_BP Configuration and Setup Documentation
 
 ## ConfigLoader Class
 
@@ -134,11 +134,11 @@ Generates molecular tracks based on parameters.
 - `pydantic`: For data validation using BaseModel
 - `pathlib`: For path handling
 - Various internal modules:
-  - `ASMS_BP.optics.filters`
-  - `ASMS_BP.cells`
-  - `ASMS_BP.motion`
-  - `ASMS_BP.optics.camera`
-  - `ASMS_BP.sample`
+  - `AMS_BP.optics.filters`
+  - `AMS_BP.cells`
+  - `AMS_BP.motion`
+  - `AMS_BP.optics.camera`
+  - `AMS_BP.sample`
 
 ## Usage Example
 

@@ -15,13 +15,13 @@ The module also utilizes **Rich** for enhanced console output and progress track
 
 The main Typer application object that defines the CLI interface.
 
-- **Name**: `ASMS_BP CLI Tool`
+- **Name**: `AMS_BP CLI Tool`
 - **Help Text**: 
   ```
-  CLI tool to run Advanced Single Molecule Simulation: ASMS-BP. GitHub: https://github.com/joemans3/ASMS_BP.
+  CLI tool to run Advanced Molecule Simulation: ASMS-BP. GitHub: https://github.com/joemans3/AMS_BP.
   [Version: {__version__}]
   ```
-- **Short Help**: `CLI tool for ASMS_BP.`
+- **Short Help**: `CLI tool for AMS_BP.`
 - **Rich Markup Mode**: `rich`
 - **Pretty Exceptions**: Exceptions are displayed without showing locals.
 - **Completion**: Disabled.
@@ -32,11 +32,11 @@ The main Typer application object that defines the CLI interface.
 
 ### 2. `cell_simulation()`
 
-A callback function that displays the version information of the **ASMS_BP** package.
+A callback function that displays the version information of the **AMS_BP** package.
 
 - **Output**: 
   ```
-  ASMS_BP version: [bold]{__version__}[/bold]
+  AMS_BP version: [bold]{__version__}[/bold]
   ```
 
 ---
@@ -127,7 +127,7 @@ python run_cell_simulation.py runsim [CONFIG_FILE]
 
 ## GitHub Repository
 
-For more information, visit the [ASMS_BP GitHub repository](https://github.com/joemans3/ASMS_BP).
+For more information, visit the [AMS_BP GitHub repository](https://github.com/joemans3/AMS_BP).
 
 ---
 
@@ -136,5 +136,5 @@ For more information, visit the [ASMS_BP GitHub repository](https://github.com/j
 The current version of the module is:
 
 ```
-ASMS_BP version: [bold]{__version__}[/bold]
+AMS_BP version: [bold]{__version__}[/bold]
 ```

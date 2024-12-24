@@ -1,7 +1,7 @@
-# ASMS-BP User Guide
-## Advanced Single Molecule Simulation Tool
+# AMS-BP User Guide
+## Advanced Molecule Simulation Tool
 
-ASMS-BP is a powerful simulation tool for single molecule localization microscopy experiments. This guide covers both command-line usage and library integration.
+AMS-BP is a powerful simulation tool for advanced fluorescence microscopy experiments. This guide covers both command-line usage and library integration.
 
 ## Table of Contents
 - [Installation](#installation)
@@ -21,23 +21,23 @@ ASMS-BP is a powerful simulation tool for single molecule localization microscop
 1. [Install UV](https://docs.astral.sh/uv/getting-started/installation/).
 2. Run the command:
 ```bash
-uv tool install ASMS_BP
+uv tool install AMS_BP
 ```
 3. You will have access to two CLI commands (using the uv interface):
-    - `run_ASMS_BP runsim` : This is the main entry point for the simulation. (see `run_ASMS_BP runsim --help` for more details)
-    - `run_ASMS_BP config` : This is a helper tool to generate a template config file for the simulation. (see `run_ASMS_BP config --help` for more details)
-    - Note: using `run_ASMS_BP --help` will show you all the available commands.
+    - `run_AMS_BP runsim` : This is the main entry point for the simulation. (see `run_AMS_BP runsim --help` for more details)
+    - `run_AMS_BP config` : This is a helper tool to generate a template config file for the simulation. (see `run_AMS_BP config --help` for more details)
+    - Note: using `run_AMS_BP --help` will show you all the available commands.
 4. You can now use these tools (they are isolated in their own env created by uv, which is cool).
 ## Command Line Interface
 
-ASMS-BP provides a command-line interface with two main commands:
+AMS-BP provides a command-line interface with two main commands:
 
 ```bash
 # Generate a default configuration file
-run_ASMS_BP config [OPTIONS]
+run_AMS_BP config [OPTIONS]
 
 # Run a simulation using a configuration file
-run_ASMS_BP runsim CONFIG_FILE
+run_AMS_BP runsim CONFIG_FILE
 ```
 
 ### Config Command Options
@@ -90,7 +90,7 @@ diffusion_unit = "um^2/s" # diffusion coefficient units
 
 ## Running Experiments
 
-ASMS-BP supports two types of experiments:
+AMS-BP supports two types of experiments:
 
 ### 1. Time Series
 ```toml
@@ -114,12 +114,12 @@ laser_positions_active = [[5, 5, 0], [5, 5, 0]]
 
 ## Advanced Usage
 
-### Using ASMS-BP as a Library
+### Using AMS-BP as a Library
 
-For programmatic control, you can import and use ASMS-BP as a Python library:
+For programmatic control, you can import and use AMS-BP as a Python library:
 
 ```python
-from ASMS_BP.configio.convertconfig import ConfigLoader
+from AMS_BP.configio.convertconfig import ConfigLoader
 
 # Configuration loader intialization
 config_loader = ConfigLoader(config_path="path/to/config.toml")
@@ -134,7 +134,7 @@ function_exp = setup_config["experiment_func"]
 frames, metadata = function_exp(microscope=microscope, config=config_exp)
 
 # Save results
-from ASMS_BP.configio.saving import save_config_frames
+from AMS_BP.configio.saving import save_config_frames
 save_config_frames(metadata, frames, setup_config["base_config"].OutputParameters)
 ```
 
@@ -147,7 +147,7 @@ save_config_frames(metadata, frames, setup_config["base_config"].OutputParameter
 
 ### Custom Experiment Types
 
-When using ASMS-BP as a library, you can create custom experiment types by:
+When using AMS-BP as a library, you can create custom experiment types by:
 
 1. Extending the base experiment class
 2. Implementing custom scanning patterns

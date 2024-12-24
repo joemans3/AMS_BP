@@ -6,7 +6,7 @@ import numpy as np
 import skimage as skimage
 from PIL import Image
 
-from ASMS_BP.utils.decorators import cache
+from ..utils.decorators import cache
 
 
 def convert_arrays_to_lists(obj: np.ndarray | dict) -> list | dict:

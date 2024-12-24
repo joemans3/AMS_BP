@@ -28,6 +28,14 @@ uv tool install AMS_BP
     - `run_AMS_BP config` : This is a helper tool to generate a template config file for the simulation. (see `run_AMS_BP config --help` for more details)
     - Note: using `run_AMS_BP --help` will show you all the available commands.
 4. You can now use these tools (they are isolated in their own env created by uv, which is cool).
+
+### ***PyPi***
+
+1. Run:
+```bash
+pip install AMS_BP
+```
+
 ## Command Line Interface
 
 AMS-BP provides a command-line interface with two main commands:
@@ -44,13 +52,6 @@ run_AMS_BP runsim CONFIG_FILE
 
 - `-o, --output_path PATH`: Specify the output directory for the configuration file
 - `-r, --recursive_o`: Create output directory if it doesn't exist
-
-### ***PyPi***
-
-1. Run:
-```bash
-pip install AMS_BP
-```
 
 ## Configuration File
 

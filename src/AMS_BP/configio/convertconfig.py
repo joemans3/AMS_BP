@@ -680,7 +680,7 @@ class ConfigLoader:
         )
 
         # make sampling function
-        sampling_function = make_samplingfunction(
+        sampling_functions = make_samplingfunction(
             condensate_params=base_config.CondensateParameters, cell=cell
         )
 
@@ -689,7 +689,7 @@ class ConfigLoader:
             molecule_params=base_config.MoleculeParameters,
             cell=cell,
             condensate_params=base_config.CondensateParameters,
-            sampling_function=sampling_function,
+            sampling_functions=sampling_functions,
         )
 
         # create the track generator
@@ -776,34 +776,42 @@ def make_sample(global_params, cell_params) -> SamplePlane:
     return sample_plane
 
 
-def make_condensatedict(condensate_params, cell) -> dict:
-    condensates_dict = create_condensate_dict(
-        initial_centers=condensate_params.initial_centers,
-        initial_scale=condensate_params.initial_scale,
-        diffusion_coefficient=condensate_params.diffusion_coefficient,
-        hurst_exponent=condensate_params.hurst_exponent,
-        cell=cell,
-    )
+def make_condensatedict(condensate_params, cell) -> List[dict]:
+    condensates_dict = []
+    for i in range(len(condensate_params.initial_centers)):
+        condensates_dict.append(
+            create_condensate_dict(
+                initial_centers=condensate_params.initial_centers[i],
+                initial_scale=condensate_params.initial_scale[i],
+                diffusion_coefficient=condensate_params.diffusion_coefficient[i],
+                hurst_exponent=condensate_params.hurst_exponent[i],
+                cell=cell,
+            )
+        )
     return condensates_dict
 
 
-def make_samplingfunction(condensate_params, cell) -> Callable:
-    sampling_function = tp(
-        num_subspace=len(condensate_params.initial_centers),
-        subspace_centers=condensate_params.initial_centers,
-        subspace_radius=condensate_params.initial_scale,
-        density_dif=condensate_params.density_dif,
-        cell=cell,
-    )
-    return sampling_function
+def make_samplingfunction(condensate_params, cell) -> List[Callable]:
+    sampling_functions = []
+    for i in range(len(condensate_params.initial_centers)):
+        sampling_functions.append(
+            tp(
+                num_subspace=len(condensate_params.initial_centers[i]),
+                subspace_centers=condensate_params.initial_centers[i],
+                subspace_radius=condensate_params.initial_scale[i],
+                density_dif=condensate_params.density_dif[i],
+                cell=cell,
+            )
+        )
+    return sampling_functions
 
 
-def gen_initial_positions(molecule_params, cell, condensate_params, sampling_function):
+def gen_initial_positions(molecule_params, cell, condensate_params, sampling_functions):
     initials = []
     for i in range(len(molecule_params.num_molecules)):
         num_molecules = molecule_params.num_molecules[i]
         initial_positions = gen_points(
-            pdf=sampling_function,
+            pdf=sampling_functions[i],
             total_points=num_molecules,
             min_x=cell.origin[0],
             max_x=cell.origin[0] + cell.dimensions[0],
@@ -811,7 +819,7 @@ def gen_initial_positions(molecule_params, cell, condensate_params, sampling_fun
             max_y=cell.origin[1] + cell.dimensions[1],
             min_z=-cell.dimensions[2] / 2,
             max_z=cell.dimensions[2] / 2,
-            density_dif=condensate_params.density_dif,
+            density_dif=condensate_params.density_dif[i],
         )
         initials.append(initial_positions)
     return initials

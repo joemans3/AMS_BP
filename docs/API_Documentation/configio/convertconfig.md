@@ -108,13 +108,13 @@ Creates sample plane from parameters.
 
 ### `make_condensatedict`
 ```python
-def make_condensatedict(condensate_params, cell) -> dict
+def make_condensatedict(condensate_params, cell) -> List[dict]
 ```
-Creates condensate dictionary from parameters.
+Creates condensate dictionaries from parameters.
 - **Parameters:**
   - `condensate_params`: Condensate parameters
   - `cell`: Cell instance
-- **Returns:** Condensate dictionary
+- **Returns:** Condensate dictionaries
 
 ### `get_tracks`
 ```python

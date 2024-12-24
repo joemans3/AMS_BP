@@ -122,24 +122,24 @@ This document provides a detailed explanation of the TOML configuration file use
 ## 5. **Condensate Parameters**
 
 ### `initial_centers`
-- **Type**: Array of Arrays of Numbers
-- **Shape**: `[[x, y, z], ...]`
-- **Description**: The initial centers of condensates in micrometers (`um`).
+- **Type**: Array of Array of Arrays of Numbers
+- **Shape**: `[[[x, y, z], ...], ...]`
+- **Description**: The initial centers of condensates in micrometers (`um`). The first dimension is the types of different molecules. Similarr to the `num_molecules` array in the molecule parameters.
 
 ### `initial_scale`
-- **Type**: Array of Numbers
+- **Type**: Array of Array of Numbers
 - **Description**: The initial scale of condensates in micrometers (`um`).
 
 ### `diffusion_coefficient`
-- **Type**: Array of Numbers
+- **Type**: Array of Array of Numbers
 - **Description**: The diffusion coefficients of condensates in `um^2/s`.
 
 ### `hurst_exponent`
-- **Type**: Array of Numbers
+- **Type**: Array of Array of Numbers
 - **Description**: The Hurst exponents of condensates.
 
 ### `density_dif`
-- **Type**: Number
+- **Type**: Array of Number
 - **Description**: The density difference between the condensate and the background.
 
 ---

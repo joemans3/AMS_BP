@@ -77,20 +77,49 @@ oversample_motion_time = 20 # ms
 [Condensate_Parameters]
 initial_centers = [
     [
-        5.5,
-        5,
-        0.05,
+        [
+            5.5,
+            5,
+            0.05,
+        ],
+        [
+            5,
+            5,
+            -0.15,
+        ],
+        [
+            5,
+            6,
+            -0.15,
+        ],
+        [
+            5,
+            5.5,
+            -0.15,
+        ],
+        [
+            6,
+            5.5,
+            -0.15,
+        ],
     ],
     [
-        5,
-        7,
-        -0.15,
+        [
+            5.5,
+            5,
+            0.05,
+        ],
+        [
+            5,
+            7,
+            -0.15,
+        ],
     ],
-] # um, first dimension is the # of condentates. center = [x,y,z]
-initial_scale = [0.26, 0.26] # um
-diffusion_coefficient = [0, 0] # um^2/s
-hurst_exponent = [0.2, 0.2]
-density_dif = 10 # density of the condensate vs the background.
+] # um. First dimension is the types of molecules as in Molecule Parameters.num_molecules. second dimension is the # of condentates. center = [x,y,z]
+initial_scale = [[0.26, 0.26, 0.13, 0.13, 0.26], [0.26, 0.26]] # um
+diffusion_coefficient = [[0, 0, 0, 0, 0], [0, 0]] # um^2/s
+hurst_exponent = [[0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2]]
+density_dif = [10, 10] # density of the condensate vs the background.
 
 [Output_Parameters]
 output_path = "<YOUR-PATH-HERE-CAN-BE-ABSOLUTE-OR-RELATIVE>"

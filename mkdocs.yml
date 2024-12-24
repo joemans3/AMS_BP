@@ -3,6 +3,7 @@ site_url: https://joemans3.github.io/AMS_BP/
 repo_url: https://github.com/joemans3/AMS_BP
 theme: 
   name: material
+  logo: assets/icons/drawing.png
   icon:
     repo: fontawesome/brands/git-alt
   features:

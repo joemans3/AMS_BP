@@ -107,23 +107,24 @@ class CondensateParameters(BaseModel)
 ```
 
 #### Fields
-- `initial_centers: List[List[float]]`
+First dimension represents the types of molecules. (similar to the MoleculeParameters)
+- `initial_centers: List[List[List[float]]]`
   - Description: Initial centers in micrometers
   - 2D array automatically converted to numpy array
 
-- `initial_scale: List[float]`
+- `initial_scale: List[List[float]]`
   - Description: Initial scale in micrometers
   - Automatically converted to numpy array
 
-- `diffusion_coefficient: List[float]`
+- `diffusion_coefficient: List[List[float]]`
   - Description: Diffusion coefficients in μm²/s
   - Automatically converted to numpy array
 
-- `hurst_exponent: List[float]`
+- `hurst_exponent: List[List[float]]`
   - Description: Hurst exponents for motion
   - Automatically converted to numpy array
 
-- `density_dif: int`
+- `density_dif: List[int]`
   - Description: Density difference parameter
 
 ### OutputParameters
@@ -190,11 +191,11 @@ config = ConfigList(
         oversample_motion_time=10
     ),
     CondensateParameters=CondensateParameters(
-        initial_centers=[[5.0, 5.0]],
-        initial_scale=[2.0],
-        diffusion_coefficient=[0.1],
-        hurst_exponent=[0.7],
-        density_dif=2
+        initial_centers=[[[5.0, 5.0]]],
+        initial_scale=[[2.0]],
+        diffusion_coefficient=[[0.1]],
+        hurst_exponent=[[0.7]],
+        density_dif=[2]
     ),
     OutputParameters=OutputParameters(
         output_path="./output",

@@ -1,4 +1,7 @@
-# AMS-BP User Guide
+# AMS-BP
+<p>
+<img src="./docs/assets/icons/drawing.svg" alt="AMS-BP Logo" width="500" height="200">
+</p>
 ## Advanced Fluorescence Microscopy Simulation Tool
 
 AMS-BP is a powerful simulation tool for advanced fluorescence microscopy experiments. This guide covers both command-line usage and library integration.
@@ -59,7 +62,7 @@ run_AMS_BP runsim CONFIG_FILE
 
 The configuration file (sim_config.toml) is divided into several key sections:
 
-#### For a detailed description of the configuration file, refer to the [Configuration File Reference](./API_Documentation/sim_config.md).
+#### For a detailed description of the configuration file, refer to the [Configuration File Reference](https://joemans3.github.io/AMS_BP/API_Documentation/sim_config/).
 ### Basic Units
 ```toml
 version = "0.1"

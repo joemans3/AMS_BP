@@ -60,19 +60,22 @@ class GlobalParameters(BaseModel):
 
 
 class CondensateParameters(BaseModel):
-    initial_centers: List[List[float]] = Field(description="Initial centers in um")
-    initial_scale: List[float] = Field(description="Initial scale in um")
-    diffusion_coefficient: List[float] = Field(
+    initial_centers: List[List[List[float]]] = Field(
+        description="Initial centers in um"
+    )
+    initial_scale: List[List[float]] = Field(description="Initial scale in um")
+    diffusion_coefficient: List[List[float]] = Field(
         description="Diffusion coefficients in um^2/s"
     )
-    hurst_exponent: List[float]
-    density_dif: int
+    hurst_exponent: List[List[float]]
+    density_dif: List[int]
 
-    @field_validator(
-        "initial_centers", "initial_scale", "diffusion_coefficient", "hurst_exponent"
-    )
-    def convert_to_array(cls, v):
-        return np.array(v)
+    # @field_validator(
+    #     "initial_centers", "initial_scale", "diffusion_coefficient", "hurst_exponent"
+    # )
+    # def convert_to_array(cls, v):
+    #     return np.array(v)
+    #
 
 
 class OutputParameters(BaseModel):

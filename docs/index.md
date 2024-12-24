@@ -4,7 +4,7 @@
 AMS-BP is a powerful simulation tool for advanced fluorescence microscopy experiments. This guide covers both command-line usage and library integration.
 
 ## Table of Contents
-- [Installation](#installation)
+- [Installation](#installation) 
 - [Command Line Interface](#command-line-interface)
 - [Configuration File](#configuration-file)
 - [Running Experiments](#running-experiments)

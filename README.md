@@ -3,6 +3,8 @@
 
 AMS-BP is a powerful simulation tool for advanced fluorescence microscopy experiments. This guide covers both command-line usage and library integration.
 
+> **_NOTE:_** Please note that this application DOES NOT currently model the process of stimulated emission, and as such is not suitable for simulating stimulated emission microscopy ([STED](https://en.wikipedia.org/wiki/STED_microscopy))-type experiments. Work in this area is ongoing.
+
 ## Table of Contents
 - [Installation](#installation)
 - [Command Line Interface](#command-line-interface)
@@ -145,40 +147,3 @@ frames, metadata = function_exp(microscope=microscope, config=config_exp)
 from AMS_BP.configio.saving import save_config_frames
 save_config_frames(metadata, frames, setup_config["base_config"].OutputParameters)
 ```
-
-### Key Components When Using as Library
-
-1. **ConfigLoader**: Handles configuration file parsing and validation
-2. **Microscope**: Represents the virtual microscope setup
-3. **Experiment Functions**: Control experiment execution
-4. **Save Functions**: Handle data output
-
-### Custom Experiment Types
-
-When using AMS-BP as a library, you can create custom experiment types by:
-
-1. Extending the base experiment class
-2. Implementing custom scanning patterns
-3. Defining new molecule behaviors
-4. Creating specialized analysis routines
-
-## Tips and Best Practices
-
-1. **Configuration Management**
-   - Keep separate config files for different experiment types
-   - Version control your configurations
-   - Document any custom modifications
-
-2. **Resource Usage**
-   - Monitor memory usage for large simulations
-   - Use appropriate sampling rates
-
-3. **Data Output**
-   - Set appropriate output paths
-   - Use meaningful naming conventions
-   - Consider data format requirements for analysis
-
-## Troubleshooting
-
-Common issues and their solutions:
-TODO

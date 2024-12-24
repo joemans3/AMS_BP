@@ -146,10 +146,16 @@ class incident_photons:
     position: Tuple[float, float, float]
 
     def __post_init__(self):
-        self.generator = [
-            self.psf(self.transmission_photon_rate.wavelengths[i], self.position[2])
-            for i in range(len(self.transmission_photon_rate.wavelengths))
-        ]
+        self.generator = []
+        for i in range(len(self.transmission_photon_rate.wavelengths)):
+            if self.transmission_photon_rate.values[i] > 0:
+                self.generator.append(
+                    self.psf(
+                        self.transmission_photon_rate.wavelengths[i], self.position[2]
+                    )
+                )
+            else:
+                self.generator.append(0)
 
     def incident_photons_calc(self, dt: float) -> Tuple[float, List]:
         photons = 0

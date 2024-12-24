@@ -19,8 +19,11 @@ def save_config_frames(
     with TiffWriter(
         os.path.join(cd, outputparams.output_name + ".ome" + ".tiff"), bigtiff=True
     ) as f:
-        metadata = {"axes": config.axis}
-        f.write(frames, metadata=metadata)
+        metadata = {"axes": config.axes}
+        f.write(
+            frames,
+            metadata=config.model_dump(exclude={"notes"}),
+        )
     # make json ster. from the MetaData
     metadata_json = config.model_dump()
 

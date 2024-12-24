@@ -102,7 +102,7 @@ class VirtualMicroscope:
         duration_total: Optional[int] = None,  # ms
         exposure_time: Optional[int] = None,
         interval_time: Optional[int] = None,
-    ) -> Tuple[np.ndarray, MetaData, int | float]:
+    ) -> Tuple[np.ndarray, MetaData]:
         self._set_laser_powers(laser_power=laser_power)
         if laser_position is not None:
             self._set_laser_positions(laser_positions=laser_position)
@@ -142,6 +142,7 @@ class VirtualMicroscope:
         fm = timestoconsider[-1]
         photons = 0
         # for each object find its location and the excitation laser intensity (after applying excitation filter)
+
         for time_index, time in enumerate(timestoconsider):
             # transmission rate (1/s) at the current time for each filterset (channel) for each flurophore
             for objID, fluorObj in self.sample_plane._objects.items():
@@ -271,11 +272,21 @@ class VirtualMicroscope:
             image_stack.append(frames)
             channel_names.append(channel_name)
         self._time += duration_total
-        metadata = MetaData(notes="Not implimented", axis="ZCTYX")
+        metadata = MetaData(
+            notes="Not implimented",
+            axes="ZCTYX",
+            TimeIncrement=interval_time + exposure_time,
+            TimeIncrementUnit="ms",
+            PhysicalSizeX=self.camera.pixel_size * 1e-6,
+            PhysicalSizeXUnit="m",
+            PhysicalSizeY=self.camera.pixel_size * 1e-6,
+            PhysicalSizeYUnit="m",
+            # Channel={"Name": self.channels.names},
+        )
 
         # return frames in the format ZCTYX
         # Z is infered from the stack so [np.array(image_stack)] is one Z stack
-        return np.array(image_stack), metadata, photons
+        return np.array(image_stack), metadata
 
     def reset_to_initial_config(self) -> bool:
         """Reset to initial configuration."""

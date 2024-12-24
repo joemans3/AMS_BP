@@ -1,5 +1,4 @@
-from functools import cache
-from typing import Optional, TypeAlias
+from typing import Dict, Optional, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
@@ -13,18 +12,31 @@ class FilterSpectrum(BaseModel):
 
     wavelengths: NDArray[np.float64] = Field(description="Wavelengths in nanometers")
     transmission: NDArray[np.float64] = Field(description="Transmission values (0-1)")
+    cached_transmissions: Dict[float, float] = Field(default_factory=dict, exclude=True)
     name: str
 
     @field_validator("transmission")
     def validate_transmission(cls, v: NDArray[np.float64]) -> NDArray[np.float64]:
         if not np.all((v >= 0) & (v <= 1)):
-            raise ValueError("Transmission values must be between 0 and 1")
+            invalid_indices = np.where((v < 0) | (v > 1))[0]
+            invalid_values = v[invalid_indices]
+            raise ValueError(
+                f"Transmission values must be between 0 and 1. Found invalid values "
+                f"{invalid_values} at indices {invalid_indices}"
+            )
         return v
 
     @field_validator("wavelengths")
     def validate_wavelengths(cls, v: NDArray[np.float64]) -> NDArray[np.float64]:
         if not np.all(v > 0):
-            raise ValueError("Wavelengths must be positive")
+            invalid_indices = np.where(v <= 0)[0]
+            invalid_values = v[invalid_indices]
+            raise ValueError(
+                f"Wavelengths must be positive. Found invalid values "
+                f"{invalid_values} at indices {invalid_indices}"
+            )
+        if not np.all(np.diff(v) > 0):
+            raise ValueError("Wavelengths must be strictly increasing")
         return v
 
     @field_validator("wavelengths", "transmission")
@@ -35,17 +47,42 @@ class FilterSpectrum(BaseModel):
             info.data.get("wavelengths") is not None
             and info.data.get("transmission") is not None
         ):
-            if len(info.data["wavelengths"]) != len(info.data["transmission"]):
+            wavelengths_len = len(info.data["wavelengths"])
+            transmission_len = len(info.data["transmission"])
+            if wavelengths_len != transmission_len:
                 raise ValueError(
-                    "Wavelengths and transmission arrays must have the same length"
+                    f"Wavelengths and transmission arrays must have the same length. "
+                    f"Got wavelengths={wavelengths_len}, transmission={transmission_len}"
                 )
         return v
 
-    class Config:
-        arbitrary_types_allowed = True
-
     def find_transmission(self, wavelength: float) -> float:
-        return np.interp(wavelength, self.wavelengths, self.transmission)
+        """
+        Find the transmission value for a given wavelength using interpolation.
+        Caches computed values for future lookups.
+
+        Args:
+            wavelength: The wavelength in nanometers
+
+        Returns:
+            Interpolated transmission value between 0 and 1
+        """
+        try:
+            return self.cached_transmissions[wavelength]
+        except KeyError:
+            # Quick bounds check
+            if wavelength < self.wavelengths[0] or wavelength > self.wavelengths[-1]:
+                return 0.0
+
+            # Calculate and cache the interpolated value
+            transmission = float(
+                np.interp(wavelength, self.wavelengths, self.transmission)
+            )
+            self.cached_transmissions[wavelength] = transmission
+            return transmission
+
+    class Config:
+        arbitrary_types_allowed = True  # figure out why this is needed for allowing arbitrary_types_allowed. What is it doing under the hood.
 
 
 class FilterSet(BaseModel):
@@ -55,22 +92,6 @@ class FilterSet(BaseModel):
     dichroic: FilterSpectrum
     emission: FilterSpectrum
     name: str = Field(default="Generic Filter Set")
-
-    @cache
-    def get_total_transmission(self, wavelength: float) -> float:
-        """Calculate total transmission at a specific wavelength"""
-        # Interpolate transmission values for each filter component
-        exc_trans = np.interp(
-            wavelength, self.excitation.wavelengths, self.excitation.transmission
-        )
-        dic_trans = np.interp(
-            wavelength, self.dichroic.wavelengths, self.dichroic.transmission
-        )
-        em_trans = np.interp(
-            wavelength, self.emission.wavelengths, self.emission.transmission
-        )
-
-        return exc_trans * dic_trans * em_trans
 
 
 def create_bandpass_filter(

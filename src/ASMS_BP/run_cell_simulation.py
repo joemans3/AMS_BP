@@ -191,6 +191,7 @@ def run_cell_simulation(
         task_2 = progress.add_task(description="Running the simulation ...", total=None)
 
         # run the simulation
+
         frames, metadata = functionEXP(microscope=microscope, config=configEXP)
 
         # save

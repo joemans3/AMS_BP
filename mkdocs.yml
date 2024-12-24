@@ -1,0 +1,28 @@
+site_name: ASMS_BP
+site_url: https://mydomain.org/mysite
+theme: 
+  name: material
+  icon:
+    repo: fontawesome/brands/git-alt
+  features:
+    - navigation.footer
+    - search.suggest
+markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
+  - toc:
+      permalink: "#"
+      baselevel: 2
+      separator: "_"
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+plugins:
+- mkdocstrings:
+    enabled: !ENV [ENABLE_MKDOCSTRINGS, true]
+    default_handler: python
+    handlers:
+      python:
+        options:
+          show_source: false
+- search

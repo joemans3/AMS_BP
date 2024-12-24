@@ -1,21 +1,45 @@
 version = "0.1"
-length_unit = "um"
-time_unit = "ms"
-diffusion_unit = "um^2/s"
+length_unit = "um"        # always um.
+time_unit = "ms"          # always ms
+diffusion_unit = "um^2/s" # always um^2/s
 
 [Cell_Parameters]
 cell_space = [[4, 7], [3, 9]] # um ([[x_min, x_max], [y_min, y_max]])
 cell_axial_radius = 0.5       # um +/- from 0. Total z range = 2*cell_axial_radius
 
 [Molecule_Parameters]
-num_molecules = [5000, 5000]
+num_molecules = [
+    5000,
+    5000,
+] # size of array tells the types of molecules (must be same as num_of_fluorophores below). All of the Molecule_Parameters are of the same first dimension as this.
 track_type = ["constant", "constant"] # "constant", "fbm"
-diffusion_coefficient = [[0.0, 0.0], [0.0, 0.0]] # um^2/s
-diffusion_track_amount = [[0.5, 0.5], [0.5, 0.5]]
+diffusion_coefficient = [
+    [
+        0.0,
+        0.0,
+    ],
+    [
+        0.0,
+        0.0,
+    ],
+] # um^2/s, size of each index (eg. len(...[0]) is the # of diffusion coefficients the system can explore.
+diffusion_track_amount = [
+    [
+        0.5,
+        0.5,
+    ],
+    [
+        0.5,
+        0.5,
+    ],
+] # only usefull for initial distribution of diffusion coefficients to trajectories.
 hurst_exponent = [[0.5], [0.5]]
 hurst_track_amount = [[1.0], [1.0]]
-allow_transition_probability = [true, true]
-transition_matrix_time_step = [20, 20] # ms
+allow_transition_probability = [true, true] # bool
+transition_matrix_time_step = [
+    20,
+    20,
+] # ms, the time at which the probabilities in the below are presented.
 diffusion_transition_matrix = [
     [
         [
@@ -51,11 +75,22 @@ interval_time = 0           # ms
 oversample_motion_time = 20 # ms
 
 [Condensate_Parameters]
-initial_centers = [[5.5, 5, 0.05], [5, 7, -0.15]] # um
-initial_scale = [0.26, 0.26]                      # um
-diffusion_coefficient = [0, 0]                    # um^2/s
+initial_centers = [
+    [
+        5.5,
+        5,
+        0.05,
+    ],
+    [
+        5,
+        7,
+        -0.15,
+    ],
+] # um, first dimension is the # of condentates. center = [x,y,z]
+initial_scale = [0.26, 0.26] # um
+diffusion_coefficient = [0, 0] # um^2/s
 hurst_exponent = [0.2, 0.2]
-density_dif = 10
+density_dif = 10 # density of the condensate vs the background.
 
 [Output_Parameters]
 output_path = "<YOUR-PATH-HERE-CAN-BE-ABSOLUTE-OR-RELATIVE>"
@@ -81,11 +116,9 @@ quantum_yield = 0.46               # from 0-1
 extinction_coefficient = 18000     # M^-1 cm^-1
 fluorescent_lifetime = 0.000000001 # seconds
 # Spectral data for bright state
-# extrapotation for wavelengths not included uses edge values
 [fluorophores.PAmCherry.states.bright.excitation_spectrum]
 wavelengths = [310.0, 311.0, 411.0, 511.0, 611.0, 612.0]
 intensities = [0.00, 0.047, 0.0043, 0.6, 0.06, 0.00]
-# extrapotation for wavelengths not included uses edge values
 [fluorophores.PAmCherry.states.bright.emission_spectrum]
 wavelengths = [530.0, 529.0, 600.0, 650.0, 700.0, 797.0, 799.0]
 intensities = [0.00, 0.02, 0.98, 0.28, 0.05, 0.003, 0.00]
@@ -108,7 +141,6 @@ state_type = "bleached"
 from_state = "dark"
 to_state = "bright"
 photon_dependent = true
-# extrapotation for wavelengths not included uses edge values
 [fluorophores.PAmCherry.transitions.dark_to_bright.spectrum]
 wavelengths = [308.0, 309.0, 359.0, 403.0, 440.0, 484.0, 485.0]
 intensities = [0.00, 0.04, 0.11, 1.0, 0.07, 0.0004, 0.00]
@@ -158,11 +190,9 @@ quantum_yield = 0.6                 # from 0-1
 extinction_coefficient = 55900      # M^-1 cm^-1
 fluorescent_lifetime = 0.0000000026 # seconds
 # Spectral data for bright state
-# extrapotation for wavelengths not included uses edge values
 [fluorophores.EGFP.states.bright.excitation_spectrum]
 wavelengths = [300.0, 337.0, 488.0, 501.0, 522.0, 540.0]
 intensities = [0.1, 0.03, 1.00, 0.69, 0.03, 0.00]
-# extrapotation for wavelengths not included uses edge values
 [fluorophores.EGFP.states.bright.emission_spectrum]
 wavelengths = [463.0, 494.0, 503.0, 510.0, 528.0, 549.0, 700.0]
 intensities = [0.00, 0.33, 0.82, 1.00, 0.51, 0.30, 0.00]
@@ -224,7 +254,7 @@ active = ["red", "blue"] # List of active lasers provided in setup
 
 [lasers.red]
 type = "widefield" # "gaussian" or "hilo" or "widefield"
-preset = "red_633"
+preset = "red_633" # description
 
 [lasers.red.parameters]
 power = 50000            # Power in watts 

@@ -641,9 +641,9 @@ class ConfigLoader:
 
     def setup_microscope(self) -> dict:
         # config of experiment
+
         configEXP, funcEXP = self.create_experiment_from_config(config=self.config)
         self.duration_time_validation_experiments(configEXP)
-
         # find the larger of the two duration times.
         # base config
         self.populate_dataclass_schema()

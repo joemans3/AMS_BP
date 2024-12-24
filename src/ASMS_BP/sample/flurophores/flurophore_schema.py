@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable, List, Optional, TypeVar
+from typing import Any, Callable, Dict, List, Optional, TypeVar
 
 import numpy as np
 from pydantic import BaseModel, Field, field_validator
@@ -22,6 +22,11 @@ class WavelengthDependentBase(BaseModel):
 
     wavelengths: List[float] = Field(..., description="Wavelengths (nm)")
     values: List[float] = Field(..., description="Values")
+    cache_values: Dict[float, float] = Field(init=False, default={})
+
+    def model_post_init(self, __context: Any) -> None:
+        for i in range(len(self.wavelengths)):
+            self.cache_values[self.wavelengths[i]] = self.values[i]
 
     @field_validator("wavelengths", "values")
     @classmethod
@@ -32,7 +37,12 @@ class WavelengthDependentBase(BaseModel):
 
     def get_value(self, wavelength: float) -> float:
         """Get interpolated value at a specific wavelength"""
-        return np.interp(wavelength, self.wavelengths, self.values)  # pyright: ignore
+        try:
+            return self.cache_values[wavelength]
+        except KeyError:
+            interp_val = float(np.interp(wavelength, self.wavelengths, self.values))  # pyright: ignore
+            self.cache_values[wavelength] = interp_val
+            return interp_val
 
 
 class SpectralData(WavelengthDependentBase):

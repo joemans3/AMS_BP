@@ -1,4 +1,4 @@
-from typing import Iterator, List, Union
+from typing import Iterator, List, Literal, Union
 
 from pydantic import BaseModel
 
@@ -70,7 +70,14 @@ def to_string_node(nested: Union[str, List]) -> StringNode:
 
 class MetaData(BaseModel):
     notes: StringNode | list | str
-    axis: str
+    axes: str
+    TimeIncrement: float
+    TimeIncrementUnit: Literal["s", "ms"]
+    PhysicalSizeX: float
+    PhysicalSizeXUnit: Literal["nm", "m"]
+    PhysicalSizeY: float
+    PhysicalSizeYUnit: Literal["nm", "m"]
+    # Channel: Dict[Literal["Name"], List[str]]
 
     def __post_init__(self):
         if isinstance(self.notes, (list, str)):

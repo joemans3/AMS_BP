@@ -5,14 +5,11 @@ This module defines the `VirtualMicroscope` class and related utility classes an
 ## Table of Contents
 
 - [VirtualMicroscope](#virtualmicroscope)
-  - [Attributes](#attributes)
-  - [Methods](#methods)
+
 - [mapSampleCamera](#mapsamplecamera)
-  - [Attributes](#mapsamplecamera-attributes)
-  - [Methods](#mapsamplecamera-methods)
+
 - [PhotonFrameContainer](#photonframecontainer)
-  - [Attributes](#photonframecontainer-attributes)
-  - [Methods](#photonframecontainer-methods)
+
 - [Utility Functions](#utility-functions)
   - [generate_sampling_pattern](#generate_sampling_pattern)
   - [timeValidator](#timevalidator)

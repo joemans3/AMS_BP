@@ -45,7 +45,7 @@ run_AMS_BP runsim CONFIG_FILE
 - `-o, --output_path PATH`: Specify the output directory for the configuration file
 - `-r, --recursive_o`: Create output directory if it doesn't exist
 
-### ***PyPi
+### ***PyPi***
 
 1. Run:
 ```bash

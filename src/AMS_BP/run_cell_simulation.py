@@ -1,14 +1,14 @@
 """
 run_cell_simulation.py
 
-This file contains the command-line interface (CLI) for the SMS_BP package, which is used for simulating single molecule localization microscopy experiments.
+This file contains the command-line interface (CLI) for the AMS_BP package.
 
 The CLI is built using Typer and provides two main commands:
 1. 'config': Generates a sample configuration file.
 2. 'runsim': Runs the cell simulation using a provided configuration file.
 
 Main Components:
-- typer_app_sms_bp: The main Typer application object.
+- typer_app_asms_bp: The main Typer application object.
 - cell_simulation(): Callback function that displays the version information.
 - generate_config(): Command to generate a sample configuration file.
 - run_cell_simulation(): Command to run the cell simulation using a configuration file.
@@ -37,7 +37,7 @@ from .configio.saving import save_config_frames
 
 cli_help_doc = str(
     """
-CLI tool to run [underline]A[/underline]dvanced [underline]M[/underline]olecule [underline]S[/underline]imulation: [underline]ASMS[/underline]-BP. GitHub: [green]https://github.com/joemans3/AMS_BP[/green].
+CLI tool to run [underline]A[/underline]dvanced [underline]M[/underline]olecule [underline]S[/underline]imulation: [underline]AMS[/underline]-BP. GitHub: [green]https://github.com/joemans3/AMS_BP[/green].
 [Version: [bold]{0}[/bold]]
 """.format(__version__)
 )

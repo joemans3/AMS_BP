@@ -324,11 +324,12 @@ class ConfigLoader:
         ):
             # Create PSFParameters instance
             parameters = PSFParameters(
-                wavelength=wavelength,
+                emission_wavelength=wavelength,
                 numerical_aperture=float(params_config["numerical_aperture"]),
                 pixel_size=pixel_size,
                 z_step=float(params_config["z_step"]) if z_step is None else z_step,
                 refractive_index=float(params_config.get("refractive_index", 1.0)),
+                pinhole_diameter=params_config.get("pinhole_diameter", None),
             )
 
             # Create PSF engine

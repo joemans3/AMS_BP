@@ -1,4 +1,4 @@
-from typing import Iterator, List, Literal, Union
+from typing import Dict, Iterator, List, Literal, Union
 
 from pydantic import BaseModel
 
@@ -77,7 +77,7 @@ class MetaData(BaseModel):
     PhysicalSizeXUnit: Literal["nm", "m"]
     PhysicalSizeY: float
     PhysicalSizeYUnit: Literal["nm", "m"]
-    # Channel: Dict[Literal["Name"], List[str]]
+    Channel: Dict[Literal["Name"], List[str]]
 
     def __post_init__(self):
         if isinstance(self.notes, (list, str)):

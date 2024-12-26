@@ -224,6 +224,7 @@ Each fluorophore has transitions defined with the following parameters:
 - **Properties**:
   - **`numerical_aperture`**: The numerical aperture (typical range: 0.1 - 1.5).
   - **`refractive_index`**: The refractive index (default is air: 1.0).
+  - **`pinhole_diameter`**: None or float. In units of um. None = no pinhole before the detector.
 
 ---
 

@@ -276,7 +276,7 @@ class VirtualMicroscope:
             PhysicalSizeXUnit="m",
             PhysicalSizeY=self.camera.pixel_size * 1e-6,
             PhysicalSizeYUnit="m",
-            # Channel={"Name": self.channels.names},
+            Channel={"Name": self.channels.names},
         )
 
         # return frames in the format ZCTYX

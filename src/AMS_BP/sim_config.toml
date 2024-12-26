@@ -275,6 +275,7 @@ custom_path = ""
 [psf.parameters]
 numerical_aperture = 1.4 # typical range: 0.1 - 1.5
 refractive_index = 1.0   # default is air (1.0)
+#pinhole_diameter = 1.0  # Do not include for no pinhole else float in um units
 
 # Multiple Laser Configuration File
 

@@ -5,52 +5,61 @@ from typing import Literal, Optional, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
+AIRYFACTOR = 1.0
+
 
 @dataclass(frozen=True)
 class PSFParameters:
-    """Parameters for PSF (Point Spread Function) generation.
+    """Parameters for emission PSF (Point Spread Function) at the detector.
+
+
+    This class defines parameters that determine how light from a point source
+    (e.g., a fluorescent molecule) diffracts through the collection optics
+    to form a pattern at the detector.
 
     Attributes:
-        wavelength: Light wavelength in nanometers
-        numerical_aperture: Numerical aperture of the optical system
-        pixel_size: Size of pixels in micrometers
+        emission_wavelength: Emission wavelength in nanometers
+        numerical_aperture: Numerical aperture of the collection objective
+        pixel_size: Size of pixels in micrometers at the detector
         z_step: Axial step size in micrometers
         refractive_index: Refractive index of the medium (default: 1.0 for air)
+        pinhole_diameter: Diameter of the pinhole in micrometers (default: None for widefield)
+                         The pinhole spatially filters the emitted light before it reaches
+                         the detector.
     """
 
-    wavelength: float
+    emission_wavelength: float
     numerical_aperture: float
     pixel_size: float
     z_step: float
     refractive_index: float = 1.0
-
-    # def __post_init__(self) -> None:
-    #     """Validate parameters after initialization."""
-    #     if any(
-    #         param <= 0
-    #         for param in (
-    #             self.wavelength,
-    #             self.numerical_aperture,
-    #             self.pixel_size,
-    #             self.z_step,
-    #             self.refractive_index,
-    #         )
-    #     ):
-    #         raise ValueError("All parameters must be positive numbers")
-    #     if self.numerical_aperture >= self.refractive_index:
-    #         raise ValueError("Numerical aperture must be less than refractive index")
+    pinhole_diameter: Optional[float] = None  # um
 
     @cached_property
     def wavelength_um(self) -> float:
-        """Wavelength in micrometers."""
-        return self.wavelength / 1000.0
+        """Emission wavelength in micrometers."""
+        return self.emission_wavelength / 1000.0
+
+    @cached_property
+    def pinhole_radius(self) -> Optional[float]:
+        """Pinhole radius in micrometers."""
+        return (
+            self.pinhole_diameter / 2.0 if self.pinhole_diameter is not None else None
+        )
 
 
 class PSFEngine:
-    """Engine for generating various microscope Point Spread Functions.
+    """Engine for calculating emission light PSF at the detector.
 
-    This class implements calculations for both 2D and 3D Point Spread Functions
-    using Gaussian approximations.
+    This class calculates how light from a point source (like a fluorescent molecule)
+    spreads due to diffraction through the collection optics to form a pattern at
+    the detector. For confocal systems, it can include the effect of a pinhole
+    that spatially filters the light before detection.
+
+    Note: This PSF describes only the diffraction of emitted light through the
+    collection optics. While a confocal microscope uses focused illumination to
+    excite molecules, that illumination pattern does not affect how the emitted
+    light diffracts to form the PSF we calculate here.
     """
 
     def __init__(self, params: PSFParameters):
@@ -79,34 +88,69 @@ class PSFEngine:
         self._norm_sigma_xy = self._sigma_xy / 2.355
         self._norm_sigma_z = self._sigma_z / 2.355
 
+        # Generate pinhole mask if specified
+        if self.params.pinhole_radius is not None:
+            if self.params.pinhole_radius < AIRYFACTOR * self._sigma_xy:
+                raise ValueError(
+                    f"Pinhole size ({self.params.pinhole_radius} um) is smaller than {AIRYFACTOR} times the Airy lobe. This will diffract the emission light in the pinhole; an ideal pinhole size for this setup is {self._sigma_xy} um."
+                )
+            self._pinhole_mask = self._generate_pinhole_mask()
+        else:
+            self._pinhole_mask = None
+
+    def _generate_pinhole_mask(self) -> NDArray[np.float64]:
+        """Generate a binary mask representing the pinhole's spatial filtering.
+
+        The pinhole blocks emission light based on position in the image plane,
+        affecting what portion of the diffracted light reaches the detector.
+        """
+        x, y = self._grid_xy
+        r = np.sqrt(x**2 + y**2)
+        return (r <= self.params.pinhole_radius).astype(np.float64)
+
     @lru_cache(maxsize=128)
     def psf_z(self, z_val: float) -> NDArray[np.float64]:
-        """Generate z=z_val Gaussian approximation of PSF.
+        """Calculate the PSF at the detector for a point source at z_val.
+
+        This represents how light from a point source at position z_val
+        diffracts through the collection optics to form a pattern at the
+        detector. If a pinhole is present, it spatially filters this pattern.
 
         Args:
-            z_val: Z-position in micrometers
+            z_val: Z-position of the point source in micrometers
 
         Returns:
-            2D array containing the PSF at given z position
+            2D array containing the light intensity pattern at the detector
         """
         x, y = self._grid_xy
 
-        # Vectorized calculation
+        # Calculate how light from the point source diffracts through collection optics
         r_squared = (x / self._norm_sigma_xy) ** 2 + (y / self._norm_sigma_xy) ** 2
         z_term = (z_val / self._norm_sigma_z) ** 2
-        return np.exp(-0.5 * (r_squared + z_term))
+        psf_at_detector = np.exp(-0.5 * (r_squared + z_term))
+
+        if self._pinhole_mask is not None:
+            # Apply pinhole's spatial filtering
+            return psf_at_detector * self._pinhole_mask
+
+        return psf_at_detector
 
     @lru_cache(maxsize=128)
     def psf_z_xy0(self, z_val: float) -> float:
-        """Generate z=z_val Gaussian approximation of PSF with x=y=0.
+        """Calculate the PSF intensity at the center of the detector.
+
+        For a point source at z_val, this gives the intensity of light
+        that reaches the detector center (x=y=0). This point is always
+        within the pinhole if one is present.
 
         Args:
-            z_val: Z-position in micrometers
+            z_val: Z-position of the point source in micrometers
 
         Returns:
-            PSF value at x=y=0 and given z position
+            Light intensity at detector center
         """
-        return np.exp(-0.5 * (z_val / self._norm_sigma_z) ** 2)
+        z_term = (z_val / self._norm_sigma_z) ** 2
+        return np.exp(-0.5 * z_term)
 
     @cache
     def _3d_normalization_A(

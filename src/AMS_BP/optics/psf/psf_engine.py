@@ -100,12 +100,19 @@ class PSFEngine:
 
     def _generate_pinhole_mask(self) -> NDArray[np.float64]:
         """Generate a binary mask representing the pinhole's spatial filtering.
-
-        The pinhole blocks emission light based on position in the image plane,
-        affecting what portion of the diffracted light reaches the detector.
+        The pinhole is centered on the grid, blocking emission light based on position
+        in the image plane, affecting what portion of the diffracted light reaches
+        the detector.
         """
         x, y = self._grid_xy
-        r = np.sqrt(x**2 + y**2)
+
+        # Calculate the grid center
+        x_center = (x.max() + x.min()) / 2
+        y_center = (y.max() + y.min()) / 2
+
+        # Calculate radial distance from grid center
+        r = np.sqrt((x - x_center) ** 2 + (y - y_center) ** 2)
+
         return (r <= self.params.pinhole_radius).astype(np.float64)
 
     @lru_cache(maxsize=128)

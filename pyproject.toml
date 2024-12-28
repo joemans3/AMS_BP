@@ -22,7 +22,6 @@ maintainers = [
 
 dependencies = [
   "numpy>=1.21.2",
-  "matplotlib>=3.6.0",
   "scipy>=1.7.1",
   "scikit-image>=0.18.3",
   "typer>=0.12.5",
@@ -41,8 +40,10 @@ venv = ".venv"
 
 [tool.uv]
 dev-dependencies = [
+  "matplotlib>=3.10.0",
   "mkdocs-material==9.5.40",
   "mkdocstrings-python>=1.12.2",
+  "notebook>=7.3.2",
   "pymdown-extensions>=10.11",
   "pyright>=1.1.384",
   "pytest>=8.3.3",

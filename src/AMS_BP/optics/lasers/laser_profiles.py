@@ -416,7 +416,7 @@ class WidefieldBeam(LaserProfile):
         base_intensity = power / (np.pi * self.max_radius**2)
 
         # Apply radial intensity profile with smooth falloff at edges
-        edge_width = self.max_radius * 0.1  # 10% of max radius
+        edge_width = self.max_radius * 0.01  # 10% of max radius
         radial_profile = 0.5 * (1 - np.tanh((r - self.max_radius) / edge_width))
         # Apply DoF-based axial intensity profile
         axial_profile = self._calculate_dof_profile(z_shifted)

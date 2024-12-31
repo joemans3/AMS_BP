@@ -73,7 +73,9 @@ class VirtualMicroscope:
     def _set_laser_powers(self, laser_power: Dict[str, float]) -> None:
         if laser_power is not None:
             for laser in laser_power.keys():
-                if isinstance(self.lasers[laser].params.power, float):
+                if isinstance(self.lasers[laser].params.power, float) and isinstance(
+                    laser_power[laser], float
+                ):
                     if laser_power[laser] > self.lasers[laser].params.max_power:
                         raise ValueError(
                             "Provided laser power for laser: {} nm, is larger than the maximum power: {}".format(

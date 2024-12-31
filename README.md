@@ -151,3 +151,5 @@ frames, metadata = function_exp(microscope=microscope, config=config_exp)
 from AMS_BP.configio.saving import save_config_frames
 save_config_frames(metadata, frames, setup_config["base_config"].OutputParameters)
 ```
+
+> A more detailed example is provided in the jupyter notebook in the examples. For starters refer to the [VisualizingIndividualModules](examples/VisualizingIndividualModules/modules_explained.ipynb)

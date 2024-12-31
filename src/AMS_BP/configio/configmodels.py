@@ -21,9 +21,7 @@ class MoleculeParameters(BaseModel):
     diffusion_coefficient: List[List[float]] = Field(
         description="Diffusion coefficients in um^2/s"
     )
-    diffusion_track_amount: List[List[float]]
     hurst_exponent: List[List[float]]
-    hurst_track_amount: List[List[float]]
     allow_transition_probability: List[bool]
     transition_matrix_time_step: List[int] = Field(description="Time step in ms")
     diffusion_transition_matrix: List[List[List[float]]]
@@ -33,9 +31,7 @@ class MoleculeParameters(BaseModel):
 
     @field_validator(
         "diffusion_coefficient",
-        "diffusion_track_amount",
         "hurst_exponent",
-        "hurst_track_amount",
         "state_probability_diffusion",
         "state_probability_hurst",
     )

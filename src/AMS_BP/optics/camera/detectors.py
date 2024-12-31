@@ -305,7 +305,7 @@ def create_binning_function(input_shape, binning_size, mode="sum"):
         numpy.ndarray
             Binned array
         """
-        if array.shape != input_shape:
+        if array.shape != tuple(input_shape):
             raise ValueError(
                 f"Input array shape {array.shape} does not match expected shape {input_shape}"
             )

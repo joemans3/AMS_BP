@@ -41,16 +41,8 @@ class MoleculeParameters(BaseModel)
   - Description: Diffusion coefficients in μm²/s
   - 2D array automatically converted to numpy array
 
-- `diffusion_track_amount: List[List[float]]`
-  - Description: Amount of diffusive tracking for each state
-  - 2D array automatically converted to numpy array
-
 - `hurst_exponent: List[List[float]]`
   - Description: Hurst exponents for fractional Brownian motion
-  - 2D array automatically converted to numpy array
-
-- `hurst_track_amount: List[List[float]]`
-  - Description: Amount of Hurst tracking for each state
   - 2D array automatically converted to numpy array
 
 - `allow_transition_probability: List[bool]`

@@ -20,7 +20,6 @@ Usage:
         condensate(times, time_unit) -> dict{"Position":np.ndarray, "Scale":float}
 """
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 from ..cells.rectangular_cell import RectangularCell

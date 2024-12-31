@@ -96,7 +96,10 @@ class LaserParameters:
             Power in watts
         """
         if callable(self.power):
-            return self.power(t)
+            power = self.power(t)
+            if power < 0:
+                raise ValueError("Laser Power Cannot be Negative")
+            return power
         return self.power
 
     def get_position(self, t: float) -> Tuple[float, float, float]:

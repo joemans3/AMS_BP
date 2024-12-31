@@ -27,6 +27,7 @@ class StateTransitionCalculator:
         self.current_global_time = current_global_time  # ms (oversample motion time)
         self.laser_intensity_generator = laser_intensity_generator
         self.fluorescent_state_history = {}  # {fluorescent.state.name : [delta time (seconds), laser_intensites], ...}
+        self.current_global_time_s = self.current_global_time * 1e-3
 
     def __call__(
         self,
@@ -48,7 +49,9 @@ class StateTransitionCalculator:
         time = 0
         transitions = self.flurophoreobj.state_history[self.current_global_time][2]
         final_state_name = transitions[0].from_state
-        laser_intensities = self._initialize_state_hist(self.current_global_time, time)
+        laser_intensities = self._initialize_state_hist(
+            self.current_global_time, time + self.current_global_time_s
+        )
 
         while time < self.time_duration:
             stateTransitionMatrixR = [

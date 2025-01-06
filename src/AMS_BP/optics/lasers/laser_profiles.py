@@ -371,15 +371,16 @@ class WidefieldBeam(LaserProfile):
         Returns:
             Intensity scaling factor between 0 and 1
         """
-        # Use error function for smooth transition at DoF boundaries
-        # Scale factor determines how sharp the transition is
-        scale_factor = 2.0  # Adjust this to change transition sharpness
-
-        # Normalize z by DoF and create smooth falloff
-        normalized_z = scale_factor * (np.abs(z) - self.dof / 2) / self.dof
-
-        # Use sigmoid function for smooth transition
-        return 1 / (1 + np.exp(normalized_z))
+        # # Use error function for smooth transition at DoF boundaries
+        # # Scale factor determines how sharp the transition is
+        # scale_factor = 2.0  # Adjust this to change transition sharpness
+        #
+        # # Normalize z by DoF and create smooth falloff
+        # normalized_z = scale_factor * (np.abs(z)) / self.dof
+        #
+        # # Use sigmoid function for smooth transition
+        # return 1 / (1 + np.exp(normalized_z))
+        return 1.0
 
     def calculate_intensity(
         self,
@@ -416,7 +417,7 @@ class WidefieldBeam(LaserProfile):
         base_intensity = power / (np.pi * self.max_radius**2)
 
         # Apply radial intensity profile with smooth falloff at edges
-        edge_width = self.max_radius * 0.00001 
+        edge_width = self.max_radius * 0.00001
         radial_profile = 0.5 * (1 - np.tanh((r - self.max_radius) / edge_width))
         # Apply DoF-based axial intensity profile
         axial_profile = self._calculate_dof_profile(z_shifted)

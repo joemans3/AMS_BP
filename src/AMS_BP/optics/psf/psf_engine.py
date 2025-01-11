@@ -116,7 +116,7 @@ class PSFEngine:
         return (r <= self.params.pinhole_radius).astype(np.float64)
 
     @lru_cache(maxsize=128)
-    def psf_z(self, z_val: float) -> NDArray[np.float64]:
+    def psf_z(self, x_val: float, y_val: float, z_val: float) -> NDArray[np.float64]:
         """Calculate the PSF at the detector for a point source at z_val.
 
         This represents how light from a point source at position z_val
@@ -124,6 +124,8 @@ class PSFEngine:
         detector. If a pinhole is present, it spatially filters this pattern.
 
         Args:
+            x_val: x-position of the point source in micrometers
+            y_val: y-position of the point source in micrometers
             z_val: Z-position of the point source in micrometers
 
         Returns:
@@ -132,7 +134,9 @@ class PSFEngine:
         x, y = self._grid_xy
 
         # Calculate how light from the point source diffracts through collection optics
-        r_squared = (x / self._norm_sigma_xy) ** 2 + (y / self._norm_sigma_xy) ** 2
+        r_squared = (
+            (x - x_val % self.params.pixel_size) / self._norm_sigma_xy
+        ) ** 2 + ((y - y_val % self.params.pixel_size) / self._norm_sigma_xy) ** 2
         z_term = (z_val / self._norm_sigma_z) ** 2
         psf_at_detector = np.exp(-0.5 * (r_squared + z_term))
 
@@ -252,7 +256,7 @@ def calculate_psf_size(
         Tuple of dimensions (z,y,x) or (y,x) for the PSF calculation
     """
     # Calculate radius to capture important features (2x Airy radius)
-    r_psf = 2 * sigma_xy
+    r_psf = 3 * sigma_xy
 
     # Convert to pixels and ensure odd number
     pixels_xy = int(np.ceil(r_psf / pixel_size))

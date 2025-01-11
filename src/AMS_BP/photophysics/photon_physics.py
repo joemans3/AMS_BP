@@ -168,11 +168,11 @@ class incident_photons:
                 photons_n = self.transmission_photon_rate.values[i] * dt
                 photons += photons_n
                 psf_gen = (
-                    self.generator[i].normalize_psf(
-                        self.generator[i].psf_z(z_val=self.position[2]),
-                        mode="sum",
+                    self.generator[i].psf_z(
+                        x_val=self.position[0],
+                        y_val=self.position[1],
+                        z_val=self.position[2],
                     )
-                    * self.generator[i].psf_z_xy0(z_val=self.position[2])
                     * photons_n
                 )
 

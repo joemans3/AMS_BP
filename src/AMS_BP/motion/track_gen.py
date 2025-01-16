@@ -124,12 +124,12 @@ class Track_generator:
             rel_space_lim[i] = self.space_lim[i] - initials[i]
 
         # convert the diffusion_coefficients
-        diffusion_coefficient = self._convert_diffcoef_um2s_um2xms(
-            diffusion_coefficient
-        )
+        # diffusion_coefficient = self._convert_diffcoef_um2s_um2xms(
+        #     diffusion_coefficient
+        # )
         fbm = FBM_BP(
             n=track_length,
-            dt=1,
+            dt=self.oversample_motion_time / 1000.0,
             hurst_parameters=[hurst_exponent],
             diffusion_parameters=[diffusion_coefficient],
             diffusion_parameter_transition_matrix=[1],
@@ -216,11 +216,11 @@ class Track_generator:
         for i in range(3):
             rel_space_lim[i] = self.space_lim[i] - initials[i]
         # convert the diffusion_coefficients
-        diffusion_parameters = self._convert_diffcoef_um2s_um2xms(diffusion_parameters)
+        # diffusion_parameters = self._convert_diffcoef_um2s_um2xms(diffusion_parameters)
         # initialize the fbm class
         fbm = FBM_BP(
             n=track_length,
-            dt=1,
+            dt=self.oversample_motion_time / 1000.0,
             hurst_parameters=hurst_parameters,
             diffusion_parameters=diffusion_parameters,
             diffusion_parameter_transition_matrix=diffusion_transition_matrix,

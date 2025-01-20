@@ -85,15 +85,19 @@ class PSFEngine:
         self._grid_xy = _generate_grid(self._psf_size, self.params.pixel_size)
 
         # Pre-calculate normalized sigma values
-        self._norm_sigma_xy = self._sigma_xy / 2.355
-        self._norm_sigma_z = self._sigma_z / 2.355
+        self._norm_sigma_xy = self._sigma_xy / 2.0
+        self._norm_sigma_z = self._sigma_z / 2.0
 
         # Generate pinhole mask if specified
         if self.params.pinhole_radius is not None:
             if self.params.pinhole_radius < AIRYFACTOR * self._sigma_xy:
-                raise ValueError(
+                RuntimeWarning(
                     f"Pinhole size ({self.params.pinhole_radius} um) is smaller than {AIRYFACTOR} times the Airy lobe. This will diffract the emission light in the pinhole; an ideal pinhole size for this setup is {self._sigma_xy} um."
                 )
+                #
+                # raise ValueError(
+                #     f"Pinhole size ({self.params.pinhole_radius} um) is smaller than {AIRYFACTOR} times the Airy lobe. This will diffract the emission light in the pinhole; an ideal pinhole size for this setup is {self._sigma_xy} um."
+                # )
             self._pinhole_mask = self._generate_pinhole_mask()
         else:
             self._pinhole_mask = None
@@ -116,7 +120,9 @@ class PSFEngine:
         return (r <= self.params.pinhole_radius).astype(np.float64)
 
     @lru_cache(maxsize=128)
-    def psf_z(self, x_val: float, y_val: float, z_val: float) -> NDArray[np.float64]:
+    def psf_z(
+        self, x_val: float, y_val: float, z_val: float, norm_scale: bool = True
+    ) -> NDArray[np.float64]:
         """Calculate the PSF at the detector for a point source at z_val.
 
         This represents how light from a point source at position z_val
@@ -132,13 +138,20 @@ class PSFEngine:
             2D array containing the light intensity pattern at the detector
         """
         x, y = self._grid_xy
+        sigma_xy_z_squared = (self._norm_sigma_xy**2) * (
+            1 + (z_val / self._norm_sigma_z) ** 2
+        )
 
         # Calculate how light from the point source diffracts through collection optics
-        r_squared = (
-            (x - x_val % self.params.pixel_size) / self._norm_sigma_xy
-        ) ** 2 + ((y - y_val % self.params.pixel_size) / self._norm_sigma_xy) ** 2
-        z_term = (z_val / self._norm_sigma_z) ** 2
-        psf_at_detector = np.exp(-0.5 * (r_squared + z_term))
+        r_squared = (x - x_val % self.params.pixel_size) ** 2 + (
+            y - y_val % self.params.pixel_size
+        ) ** 2
+        psf_at_detector = np.exp(-0.5 * (r_squared / sigma_xy_z_squared))
+
+        if norm_scale:
+            psf_at_detector = self.normalize_psf(
+                psf_at_detector, mode="sum"
+            ) * self.psf_z_xy0(z_val)
 
         if self._pinhole_mask is not None:
             # Apply pinhole's spatial filtering

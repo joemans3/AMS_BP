@@ -1,12 +1,21 @@
 import json
 import os
 import pickle
+from bisect import bisect_right
 
 import numpy as np
 import skimage as skimage
 from PIL import Image
 
 from ..utils.decorators import cache
+
+
+def find_le(a, x) -> int:
+    "Find rightmost value less than or equal to x"
+    i = bisect_right(a, x)
+    if i:
+        return a[i - 1]
+    raise ValueError
 
 
 def convert_arrays_to_lists(obj: np.ndarray | dict) -> list | dict:

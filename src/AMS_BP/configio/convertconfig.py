@@ -770,7 +770,7 @@ def make_sample(global_params, cell_params) -> SamplePlane:
             (0, global_params.sample_plane_dim[0]),
             (0, global_params.sample_plane_dim[1]),
             (-cell_params.cell_axial_radius, cell_params.cell_axial_radius),
-        ),
+        ),  # simulates the whole simulation space to avoid the issue of PSF bleeding into FOV if the molecule's location is technically outside of the FOV dictated by the camera detector size and objective magnification.
         oversample_motion_time=global_params.oversample_motion_time,
         t_end=totaltime,
     )

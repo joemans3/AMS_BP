@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Literal, Optional, Tuple
+from typing import Callable, Dict, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 
@@ -70,7 +70,9 @@ class VirtualMicroscope:
             "_time": self._time,
         }
 
-    def _set_laser_powers(self, laser_power: Dict[str, float]) -> None:
+    def _set_laser_powers(
+        self, laser_power: Dict[str, Union[float, Callable[[float], float]]]
+    ) -> None:
         if laser_power is not None:
             for laser in laser_power.keys():
                 if isinstance(self.lasers[laser].params.power, float) and isinstance(
@@ -86,7 +88,14 @@ class VirtualMicroscope:
                 self.lasers[laser].params.power = laser_power[laser]
 
     def _set_laser_positions(
-        self, laser_positions: Dict[str, Tuple[float, float, float]]
+        self,
+        laser_positions: Dict[
+            str,
+            Union[
+                Tuple[float, float, float],
+                Callable[[float], Tuple[float, float, float]],
+            ],
+        ],
     ) -> None:
         if laser_positions is not None:
             for laser in laser_positions.keys():
@@ -95,11 +104,19 @@ class VirtualMicroscope:
     def run_sim(
         self,
         z_val: float,  # um
-        laser_power: Dict[str, float],  # str = lasername, float = power in W
+        laser_power: Dict[
+            str, Union[float, Callable[[float], float]]  # power or f(t) -> power
+        ],  # str = lasername, float = power in W
         xyoffset: Tuple[
             float, float
         ],  # location of the bottom left corner of the field of view -> sample -> camera
-        laser_position: Dict[str, Tuple[float, float, float]]
+        laser_position: Dict[
+            str,  # laser name
+            Union[
+                Tuple[float, float, float],  # x, y, z
+                Callable[[float], Tuple[float, float, float]],  # f(t) -> x, y, z
+            ],
+        ]
         | None,  # str = lasername, Tuple = x, y, z in um at the sample plane
         duration_total: Optional[int] = None,  # ms
         exposure_time: Optional[int] = None,

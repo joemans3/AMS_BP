@@ -23,17 +23,21 @@ class LaserParameters:
 
     wavelength: float  # Wavelength in nanometers
     power: Union[float, Callable[[float], float]]  # Power in watts
-    beam_width: float  # 1/e² beam width at waist in microns
+    beam_width: Optional[float] = None  # 1/e² beam width at waist in microns
     numerical_aperture: Optional[float] = None  # NA of focusing lens
-    position: Union[Tuple[float, float, float], Callable[[float], np.ndarray]] = (
+    position: Union[
+        Tuple[float, float, float], Callable[[float], Tuple[float, float, float]]
+    ] = (
         0.0,
         0.0,
         0.0,
     )
-    refractive_index: float = 1.0  # Refractive index of medium
+    refractive_index: Optional[float] = 1.0  # Refractive index of medium
 
     def __post_init__(self):
         """Validate parameters after initialization."""
+        if not self.beam_width:
+            self.beam_width = self.diffraction_limited_width
         self._validate_parameters()
         self._compute_derived_parameters()
         self.max_power = self.power

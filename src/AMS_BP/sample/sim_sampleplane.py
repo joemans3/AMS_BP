@@ -133,8 +133,8 @@ class SampleSpace:
         z_min, z_max = fov.z_bounds
 
         return (
-            0 <= x_min <= x_max <= self.x_max
-            and 0 <= y_min <= y_max <= self.y_max
+            x_min <= x_min <= x_max <= self.x_max
+            and x_min <= y_min <= y_max <= self.y_max
             and self.z_min <= z_min <= z_max <= self.z_max
         )
 
@@ -332,3 +332,34 @@ class SamplePlane:
     ) -> Tuple[Tuple[float, float], Tuple[float, float], Tuple[float, float]]:
         """Return the sample space bounds"""
         return self._space.bounds
+
+
+def _FOV_lims(
+    xyoffset: Tuple[float, float],
+    detector_pixelcount: Tuple[int, int],
+    detector_pixelsize_magnification: float,
+) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+    """
+    Utility to determine the FOV (what regions in the sample space the camera can capture) -> mainly used for defining laser position callables.
+
+    Parameters:
+    -----------
+    xyoffset: Tuple[float, float]
+        position in the sample plane which defines the bottom left corner on the detector pixel array; in units of the sample space (um)
+
+    detector_pixelcount: Tuple[int, int]
+        number of pixels in the detector in the both x and y
+
+    detector_pixelsize_magnification: float
+        the pixel size of each pixel (of detector_pixelcount) after the magnification of the optical setup is considered. I.e what each pixel in the final image represents in the units of the sample space (um).
+
+    Returns:
+    --------
+    (x_lims, y_lims): Tuple[Tuple[float, float], Tuple[float, float]]
+        min < max for each lim
+    """
+    x_min = xyoffset[0]
+    y_min = xyoffset[1]
+    x_max = x_min + detector_pixelcount[0] * detector_pixelsize_magnification
+    y_max = y_min + detector_pixelcount[1] * detector_pixelsize_magnification
+    return ((x_min, x_max), (y_min, y_max))

@@ -16,7 +16,7 @@ from .photophysics.photon_physics import (
     incident_photons,
 )
 from .photophysics.state_kinetics import StateTransitionCalculator
-from .sample.flurophores.flurophore_schema import WavelengthDependentProperty
+from .sample.flurophores.flurophore_schema import StateType, WavelengthDependentProperty
 from .sample.sim_sampleplane import EMPTY_STATE_HISTORY_DICT, SamplePlane
 from .utils.util_functions import ms_to_seconds
 
@@ -110,17 +110,22 @@ class VirtualMicroscope:
         xyoffset: Tuple[
             float, float
         ],  # location of the bottom left corner of the field of view -> sample -> camera
-        laser_position: Dict[
-            str,  # laser name
-            Union[
-                Tuple[float, float, float],  # x, y, z
-                Callable[[float], Tuple[float, float, float]],  # f(t) -> x, y, z
-            ],
-        ]
-        | None,  # str = lasername, Tuple = x, y, z in um at the sample plane
+        laser_position: Optional[
+            Dict[
+                str,  # laser name
+                Union[
+                    Tuple[float, float, float],  # x, y, z
+                    Callable[[float], Tuple[float, float, float]],  # f(t) -> x, y, z
+                ],
+            ]
+        ] = None,  # str = lasername, Tuple = x, y, z in um at the sample plane
         duration_total: Optional[int] = None,  # ms
         exposure_time: Optional[int] = None,
         interval_time: Optional[int] = None,
+        scanning: Optional[
+            bool
+        ] = False,  # True if scanning -> laser will autoposition to the xy location of the fluorophore but at the z_val of the plane being imaged and NOT the z value of the fluorophore.
+        # as a consequence the "effective" time spent by the laser of on the fluorophore position is not the dwell time of traditional confocal, but "always on". TODO: better fix.
     ) -> Tuple[np.ndarray, MetaData]:
         self._set_laser_powers(laser_power=laser_power)
         if laser_position is not None:
@@ -168,7 +173,9 @@ class VirtualMicroscope:
                 statehist = fluorObj.state_history[time]
                 # if not aval transitions go next
                 # this assumes that the bleached state is the only state from which there are no more transitions
-                if not statehist[2]:
+                if (not statehist[2]) and (
+                    statehist[0].state_type != StateType.FLUORESCENT
+                ):
                     fluorObj.state_history[time + self.sample_plane.dt] = statehist
                     continue
 
@@ -184,6 +191,11 @@ class VirtualMicroscope:
                 ) -> dict:
                     laser_intensities = {}
                     for laserID in laser_power.keys():
+                        if scanning:
+                            self.lasers[laserID].params.position = (
+                                *florPos[:2],
+                                0,
+                            )  # z value is 0 since this is the neew focus plane
                         laser_intensities[laserID] = {
                             "wavelength": self.lasers[laserID].params.wavelength,
                             "intensity": (

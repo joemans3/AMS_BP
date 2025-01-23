@@ -55,6 +55,15 @@ class StateTransitionCalculator:
     def MCMC(self) -> Tuple[State, ErnoMsg]:
         time = 0
         transitions = self.flurophoreobj.state_history[self.current_global_time][2]
+        if not transitions:
+            self.fluorescent_state_history[
+                self.flurophoreobj.fluorophore.states[
+                    self.flurophoreobj.state_history[self.current_global_time][0].name
+                ]
+            ][0] += self.time_duration
+            return self.flurophoreobj.fluorophore.states[
+                self.flurophoreobj.state_history[self.current_global_time][0].name
+            ], ErnoMsg(success=True)
         final_state_name = transitions[0].from_state
         laser_intensities = self._initialize_state_hist(
             self.current_global_time, time + self.current_global_time_s
@@ -71,8 +80,22 @@ class StateTransitionCalculator:
                 for state_transitions in transitions
             ]  # 1/s
             if not stateTransitionMatrixR:
+                if (
+                    self.flurophoreobj.fluorophore.states[final_state_name].state_type
+                    == StateType.FLUORESCENT
+                ):
+                    self.fluorescent_state_history[
+                        self.flurophoreobj.fluorophore.states[final_state_name].name
+                    ][0] += self.time_duration
                 break
             if sum(stateTransitionMatrixR) == 0:
+                if (
+                    self.flurophoreobj.fluorophore.states[final_state_name].state_type
+                    == StateType.FLUORESCENT
+                ):
+                    self.fluorescent_state_history[
+                        self.flurophoreobj.fluorophore.states[final_state_name].name
+                    ][0] += self.time_duration
                 break
 
             # print(final_state_name)

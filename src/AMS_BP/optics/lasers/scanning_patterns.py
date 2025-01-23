@@ -4,6 +4,8 @@ from typing import Callable, List, Tuple
 
 import numpy as np
 
+"""Currently unused module"""
+
 
 def plane_point_scan(
     x_lims: List[float],
@@ -56,7 +58,7 @@ def confocal_pointscan_time_z(
     y_lims: List[float],
     step_xy: float,  # can be defined as the beam width at the focus plane
     frame_exposure_time: float,  # s
-) -> Callable[[float, float], Tuple[float, float, float]]:
+) -> Tuple[Callable[[float, float], Tuple[float, float, float]], float]:
     scan_pattern = plane_point_scan(x_lims=x_lims, y_lims=y_lims, step_xy=step_xy)
     scan_pattern_len = len(scan_pattern)
 
@@ -70,7 +72,7 @@ def confocal_pointscan_time_z(
         # print(index_frame, ind)
         return (*scan_pattern[ind], z_position)
 
-    return return_laser_position
+    return return_laser_position, dwell_time
 
 
 def confocal_pointscan_time_z0(
@@ -79,7 +81,7 @@ def confocal_pointscan_time_z0(
     step_xy: float,  # can be defined as the beam width at the focus plane
     frame_exposure_time: float,  # s
     z_val: float,  # um
-) -> Callable[[float], Tuple[float, float, float]]:
+) -> Tuple[Callable[[float], Tuple[float, float, float]], float]:
     """
     Create a generator for a point scanning pattern for a confocal microscope plane scan which takes in a time and returns the postion of the laser.
 
@@ -92,6 +94,9 @@ def confocal_pointscan_time_z0(
 
     Returns:
         Callable[time]: (x,y,z) position of the laser
+        dwell_time (float): the dwell time per position
     """
-    func = confocal_pointscan_time_z(x_lims, y_lims, step_xy, frame_exposure_time)
-    return partial(func, z_val)
+    func, dwell_time = confocal_pointscan_time_z(
+        x_lims, y_lims, step_xy, frame_exposure_time
+    )
+    return partial(func, z_val), dwell_time

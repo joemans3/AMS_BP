@@ -54,7 +54,7 @@ Sets the power of the lasers. Raises a `ValueError` if the provided power exceed
 
 Sets the positions of the lasers.
 
-#### `run_sim(self, z_val: float, laser_power:Dict[str, Union[float, Callable[[float], float]], xyoffset: Tuple[float, float], laser_position: Optional[Dict[str, Union[Tuple[float, float, float], Callable[[float], Tuple[float, float, float]]]]] = None, duration_total: Optional[int] = None, exposure_time: Optional[int] = None, interval_time: Optional[int] = None) -> Tuple[np.ndarray, MetaData]`
+#### `run_sim(self, z_val: float, laser_power:Dict[str, Union[float, Callable[[float], float]], xyoffset: Tuple[float, float], laser_position: Optional[Dict[str, Union[Tuple[float, float, float], Callable[[float], Tuple[float, float, float]]]]] = None, duration_total: Optional[int] = None, exposure_time: Optional[int] = None, interval_time: Optional[int] = None, scanning: Optional[bool] = False) -> Tuple[np.ndarray, MetaData]`
 
 Runs the simulation for the given parameters and returns the resulting image stack and metadata.
 

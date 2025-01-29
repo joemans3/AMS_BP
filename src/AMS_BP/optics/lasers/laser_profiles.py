@@ -235,7 +235,7 @@ class LaserProfile(ABC):
 class GaussianBeam(LaserProfile):
     """3D Gaussian laser beam profile with time dependence."""
 
-    def calculate_intensity(
+    def calculate_intensity_(
         self,
         x: np.ndarray | float,
         y: np.ndarray | float,
@@ -274,7 +274,7 @@ class GaussianBeam(LaserProfile):
             # * np.cos(phase_terms)
         )
 
-    def calculate_intensity_(
+    def calculate_intensity(
         self,
         x: np.ndarray | float,
         y: np.ndarray | float,
@@ -312,7 +312,7 @@ class GaussianBeam(LaserProfile):
         w_z = self.get_beam_width(z_shifted)
 
         # Calculate peak intensity (z-dependent)
-        I0 = 2 * power / (np.pi * (self.params.beam_width / 2.0) ** 2)
+        I0 = 2 * power / (np.pi * (self.params.beam_width) ** 2)
         I0_z = I0 * (self.params.beam_width / w_z) ** 2
 
         # Calculate phase terms if needed
@@ -504,7 +504,7 @@ class HiLoBeam(LaserProfile):
         z_shifted = z - pos[2]
 
         # Calculate radial distance from optical axis
-        r = np.sqrt(x_shifted**2 + y_shifted**2)
+        r_squared = x_shifted**2 + y_shifted**2
 
         # Base beam parameters
         w0 = self.params.beam_width  # Beam waist
@@ -524,7 +524,7 @@ class HiLoBeam(LaserProfile):
         intensity = (
             I0
             * (w0 / w_z) ** 2  # Beam width scaling
-            * np.exp(-2 * r**2 / w_z**2)  # Gaussian radial profile
+            * np.exp(-2 * r_squared / w_z**2)  # Gaussian radial profile
         )
 
         # Lamination effect: attenuate out-of-focus regions

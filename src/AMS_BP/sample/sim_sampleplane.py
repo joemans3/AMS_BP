@@ -207,23 +207,23 @@ class SamplePlane:
         trajectory: Optional[Dict[int, Tuple[float, float, float]]] = None,
     ) -> bool:
         """Add a fluorescent object to the sample plane"""
-        # Verify position is within sample space
-        if not self._space.contains_position(position):
-            return False
+        # # Verify position is within sample space
+        # if not self._space.contains_position(position):
+        #     return False
+        #
+        # # Verify initial position is within FOV
+        # if not self.is_within_fov(position):
+        #     return False
 
-        # Verify initial position is within FOV
-        if not self.is_within_fov(position):
-            return False
-
-        # If trajectory provided, verify all positions
-        if trajectory is not None:
-            if not all(
-                self._space.contains_position(pos) for pos in trajectory.values()
-            ):
-                return False
-            if not all(self.is_within_fov(pos) for pos in trajectory.values()):
-                return False
-
+        # # If trajectory provided, verify all positions
+        # if trajectory is not None:
+        #     if not all(
+        #         self._space.contains_position(pos) for pos in trajectory.values()
+        #     ):
+        #         return False
+        #     if not all(self.is_within_fov(pos) for pos in trajectory.values()):
+        #         return False
+        #
         if object_id in self._objects:
             return False
 
@@ -239,11 +239,11 @@ class SamplePlane:
         obj = FluorescentObject(object_id, position, fluorophore, trajectory)
         self._objects[object_id] = obj
 
-        # Update spatial index for all time points
-        for t in self.time_points:
-            pos = trajectory[t]
-            self._update_spatial_index(object_id, pos, t)
-
+        # # Update spatial index for all time points
+        # for t in self.time_points:
+        #     pos = trajectory[t]
+        #     self._update_spatial_index(object_id, pos, t)
+        #
         return True
 
     def get_all_objects(self) -> List[FluorescentObject]:

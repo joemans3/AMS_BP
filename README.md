@@ -152,4 +152,6 @@ from AMS_BP.configio.saving import save_config_frames
 save_config_frames(metadata, frames, setup_config["base_config"].OutputParameters)
 ```
 
+## API Reference and Docs
+Find detailed API references for the library at: [joemans3/github.io/AMS_BP](https://joemans3.github.io/AMS_BP/)
 > A more detailed example is provided in the jupyter notebook in the examples. For starters refer to the [VisualizingIndividualModules](examples/VisualizingIndividualModules/modules_explained.ipynb). Then head over to the [laser modulation module](examples/VisualizingIndividualModules/laser_modulation.ipynb) which will show how to change the laser power over time in the simulations. Then view an example of a complex experiment setup for [FRAP](examples/QuantitativeExperiments/FRAP_methods.ipynb) which is possible by the use of compositions of modules in this simulation library.

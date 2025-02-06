@@ -104,7 +104,8 @@ diffusion_unit = "um^2/s" # diffusion coefficient units
 
 ## Running Experiments
 
-AMS-BP supports two types of experiments:
+AMS-BP's CLI currently supports two types of experiments:
+> (however this can be extended when used as a library) 
 
 ### 1. Time Series
 ```toml

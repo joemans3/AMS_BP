@@ -49,6 +49,12 @@ run_AMS_BP runsim CONFIG_FILE
 - `-o, --output_path PATH`: Specify the output directory for the configuration file
 - `-r, --recursive_o`: Create output directory if it doesn't exist
 
+
+## Overview of Simulation Workflow
+![Overview Schematic](./assets/figures/Fig1_Schema.svg)
+*A ground truth is created, **a**, with $`f_{n}`$ fluorophore types of $`N_{f_{n}}`$ molecules each. If applicable, the motion of these molecules is modelled using a 3D bounded FBM with fluctuating generalized diffusion coefficients and Hurst parameters. Variations are modelled as a Markov Chain and require rate constants as parameters. Different fluorophores can have different motion models. The resolution of the motion models is $`\Delta t`$ and cannot be smaller than 1 ms (for computational efficiency). Given the microscope parameters specific to the experimental procedure to simulate, at every time $`t_{j}`$, the excitation intensity for each channel (**b**) is calculated at each fluorophore's location, **c**. For $`t_{j} \rightarrow t_{j+\Delta t}`$, the photophysical state trajectory of the fluorophore is simulated using the light intensity at the molecule's location as input for any light-dependent transition rates, **d**. For the duration that the shutter is open and light is emitted from the sample, emission filters for each channel are applied before the convolution with PSF models, **e**. The incident photons on the detector are then converted to photoelectrons and finally to digital units using the detector models provided, **f**.*
+
+
 ## Configuration File
 
 The configuration file (sim_config.toml) is divided into several key sections:
@@ -157,6 +163,18 @@ When using AMS-BP as a library, you can create custom experiment types by:
 2. Implementing custom scanning patterns
 3. Defining new molecule behaviors
 4. Creating specialized analysis routines
+
+## API Reference and Docs
+Find detailed API references for the library at: [joemans3/github.io/AMS_BP](https://joemans3.github.io/AMS_BP/)
+> A more detailed example is provided in the jupyter notebook in the examples. For starters refer to the [VisualizingIndividualModules](examples/VisualizingIndividualModules/modules_explained.ipynb). Then head over to the [laser modulation module](examples/VisualizingIndividualModules/laser_modulation.ipynb) which will show how to change the laser power over time in the simulations. Then view an example of a complex experiment setup for [FRAP](examples/QuantitativeExperiments/FRAP_methods.ipynb) which is possible by the use of compositions of modules in this simulation library.
+
+## High Priority Features
+1. Irregular cell shapes with motion models
+2. Stimulated Emission models
+3. STORM workflow examples
+4. CTRW motion models
+5. Simpler configurations
+
 
 ## Tips and Best Practices
 

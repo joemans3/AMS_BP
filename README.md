@@ -59,6 +59,14 @@ run_AMS_BP runsim CONFIG_FILE
 - `-o, --output_path PATH`: Specify the output directory for the configuration file
 - `-r, --recursive_o`: Create output directory if it doesn't exist
 
+## Overview of Simulation Workflow
+![Overview Schematic](./docs/assets/figures/Fig1_Schema.svg)
+*Overview of the AMS workflow. A ground truth is created, \textbf{a}, with $f_{n}$ fluorophore types of $N_{f_{n}}$ molecules each. If applicable, the motion of these molecules is modelled using a 3D bounded FBM with fluctuating generalized diffusion coefficients and Hurst parameters. Variations are modelled as a Markov Chain and require rate constants as parameters. Different fluorophores can have different motion models. The resolution of the motion models is $\Delta t$ and cannot be smaller than 1 ms (for computational efficiency). Given the microscope parameters specific to the experimental procedure to simulate, at every time $t_{j}$, the excitation intensity for each channel (\textbf{b}) is calculated at each fluorophore's location, \textbf{c}. For $t_{j} \rightarrow t_{j+\Delta t}$, the photophysical state trajectory of the fluorophore is simulated using the light intensity at the molecule's location as input for any light-dependent transition rates, \textbf{d}. For the duration that the shutter is open and light is emitted from the sample, emission filters for each channel are applied before the convolution with PSF models, \textbf{e}. The incident photons on the detector are then converted to photoelectrons and finally to digital units using the detector models provided, \textbf{f}.*
+
+
+
+
+
 ## Configuration File
 
 The configuration file (sim_config.toml) is divided into several key sections:

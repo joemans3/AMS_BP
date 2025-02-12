@@ -41,70 +41,20 @@ Note:
 After initialization, do not change the parameters directly. Use the update_parameters method to modify any values.
 """
 
-import numpy as np
+from collections.abc import Callable
 from typing import Union
-from ..cells.spherical_cell import SphericalCell
-from ..cells.rod_cell import RodCell
+
+import numpy as np
+
 from ..cells.rectangular_cell import RectangularCell
+from ..cells.rod_cell import RodCell
+from ..cells.spherical_cell import SphericalCell
 
 CellType = Union[SphericalCell, RodCell, RectangularCell]
 
 
-def generate_points(
-    pdf: callable,
-    total_points: int,
-    min_x: float,
-    max_x: float,
-    center: np.ndarray,
-    radius: float,
-    bias_subspace_x: float,
-    space_prob: float,
-    density_dif: float,
-) -> np.ndarray:
-    """
-    Generates random (x, y) points using the accept/reject method based on a given distribution.
-
-    Parameters:
-    -----------
-    pdf : callable
-        Probability density function to sample from.
-    total_points : int
-        Number of points to generate.
-    min_x : float
-        Minimum x value for sampling.
-    max_x : float
-        Maximum x value for sampling.
-    center : np.ndarray
-        Coordinates of the center of the top-hat distribution.
-    radius : float
-        Radius of the top-hat region.
-    bias_subspace_x : float
-        Probability at the top of the top-hat.
-    space_prob : float
-        Probability outside the top-hat region.
-    density_dif : float
-        Scaling factor for density differences.
-
-    Returns:
-    --------
-    np.ndarray
-        Array of generated points.
-    """
-    xy_coords = []
-    while len(xy_coords) < total_points:
-        # generate candidate variable
-        var = np.random.uniform([min_x, min_x], [max_x, max_x])
-        # generate varibale to condition var1
-        var2 = np.random.uniform(0, 1)
-        # apply condition
-        pdf_val = pdf(var, center, radius, bias_subspace_x, space_prob)
-        if var2 < ((1.0 / density_dif) * (max_x - min_x) ** 2) * pdf_val:
-            xy_coords.append(var)
-    return np.array(xy_coords)
-
-
 def generate_points_from_cls(
-    pdf: callable,
+    pdf: Callable,
     total_points: int,
     min_x: float,
     max_x: float,

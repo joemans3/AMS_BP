@@ -1,7 +1,9 @@
 from dataclasses import dataclass
-import numpy as np
-from .base_cell import BaseCell
 from typing import Tuple
+
+import numpy as np
+
+from .base_cell import BaseCell
 
 
 @dataclass

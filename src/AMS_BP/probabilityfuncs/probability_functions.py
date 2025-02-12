@@ -31,7 +31,7 @@ prob_func = multiple_top_hat_probability(
     subspace_centers=np.array([[1, 1], [2, 2], [3, 3]]),
     subspace_radius=np.array([1.0, 0.5, 0.75]),
     density_dif=0.2,
-    space_size=np.array([10, 10])
+    cell=BaseCell type
 )
 
 prob = prob_func(np.array([1.5, 1.5]))

@@ -1,5 +1,6 @@
 import numpy as np
 
+from ...cells.base_cell import BaseCell
 from ...probabilityfuncs.markov_chain import MCMC_state_selection
 from .boundary_conditions import _absorbing_boundary, _refecting_boundary
 
@@ -22,7 +23,7 @@ class FBM_BP:
     n : int
         Number of time steps in the simulation.
     dt : float
-        Time step duration in milliseconds.
+        Time step duration in seconds.
     diffusion_parameters : np.ndarray
         Array of diffusion coefficients for the FBM simulation.
     hurst_parameters : np.ndarray
@@ -35,8 +36,8 @@ class FBM_BP:
         Initial probabilities of different diffusion states.
     state_probability_hurst : np.ndarray
         Initial probabilities of different Hurst states.
-    space_lim : np.ndarray
-        Space limits (min, max) for the FBM.
+    cell: BaseCell
+        BaseCell Object or derivative
 
     Methods:
     --------
@@ -60,10 +61,10 @@ class FBM_BP:
         hurst_parameter_transition_matrix: np.ndarray,
         state_probability_diffusion: np.ndarray,
         state_probability_hurst: np.ndarray,
-        space_lim: np.ndarray,
+        cell: BaseCell,
     ):
         self.n = int(n)
-        self.dt = dt  # ms
+        self.dt = dt
         self.diffusion_parameter = diffusion_parameters
         self.hurst_parameter = hurst_parameters
         # state probability of the diffusion parameter
@@ -76,8 +77,6 @@ class FBM_BP:
         self.state_probability_diffusion = state_probability_diffusion
         # probability of the initial state, this approximates the population distribution
         self.state_probability_hurst = state_probability_hurst
-        # space lim (min, max) for the FBM
-        self.space_lim = np.array(space_lim, dtype=float)
         # initialize the autocovariance matrix and the diffusion parameter
         self._setup()
 
@@ -144,40 +143,107 @@ class FBM_BP:
         for i in range(self.n):
             self._cov[i] = self._autocovariance(i, self._hurst_n[i])
 
-    def fbm(self) -> np.ndarray:
+    def fbm(self, dims=3) -> np.ndarray:
         """
-        Simulates fractional Brownian motion (FBM) over `n` time steps.
+        Simulates 3D fractional Brownian motion (FBM) over `n` time steps using coroutines.
 
-        If the Hurst exponent is 0.5 for all time steps, it performs a simple Gaussian
-        random walk. Otherwise, it uses the precomputed autocovariance matrix to generate
-        fractional Gaussian noise (fGn) and simulates FBM.
+        This implementation uses a coroutine approach to:
+        1. Generate candidate positions for each dimension independently
+        2. Combine them into a 3D position vector
+        3. Check boundary conditions in 3D space
+        4. Send accepted positions back to the generators
+
+        Parameters:
+        -----------
+        dims : int, default=3
+            Number of dimensions for the FBM (default: 3 for x,y,z)
 
         Returns:
         --------
         np.ndarray
-            An array representing the simulated FBM positions over time.
+            An array of shape (n, dims) representing the simulated FBM positions over time.
         """
+        # Initialize storage for the trajectory
+        fbm_store = np.zeros((self.n, dims))
+
+        # Create coroutines for each dimension
+        dimension_generators = [self._fbm_dimension_generator() for _ in range(dims)]
+
+        # Initialize all generators
+        next_candidates = []
+        for gen in dimension_generators:
+            next(gen)  # Prime the generator
+            next_candidates.append(gen.send(None))  # Get first position
+
+        # Set initial position
+        fbm_store[0] = np.zeros(dims)
+
+        # Run the simulation
+        for i in range(1, self.n):
+            # Get candidate positions for each dimension
+            candidate_pos = np.array(next_candidates)
+            prev_pos = fbm_store[i - 1]
+
+            # Check if the candidate position is within boundaries
+            if self._is_within_boundaries(candidate_pos):
+                accepted_pos = candidate_pos
+            else:
+                # Apply boundary condition in 3D
+                accepted_pos = self._apply_3d_boundary_condition(
+                    prev_pos, candidate_pos, self.space_lim, "reflecting"
+                )
+
+            # Store the accepted position
+            fbm_store[i] = accepted_pos
+
+            # Send the accepted position back to each generator and get next candidates
+            for d, gen in enumerate(dimension_generators):
+                next_candidates[d] = gen.send(accepted_pos[d])
+
+        return fbm_store
+
+    def _fbm_dimension_generator(self):
+        """
+        Generator for a single dimension of FBM.
+
+        Yields candidate positions and receives accepted positions.
+
+
+        Yields:
+        -------
+        float
+            Next candidate position for this dimension
+        """
+        # Initialize for this dimension
         fgn = np.zeros(self.n)
-        fbm_store = np.zeros(self.n)
+        fbm_values = np.zeros(self.n)
         phi = np.zeros(self.n)
         psi = np.zeros(self.n)
-        # construct a gaussian noise vector
+
+        # Construct Gaussian noise vector for this dimension
         gn = np.random.normal(0, 1, self.n) * np.sqrt(
             2 * self._diff_a_n * (self.dt ** (2 * self._hurst_n))
         )
-        # catch is all hurst are 0.5 then use the gaussian noise vector corresponding to the scale defined by the diffusion parameter
-        if np.all(self._hurst_n == 0.5):
-            # each gn is then pulled from a normal distribution with mean 0 and standard deviation diff_a_n
-            # ignore the fbm calculations but keep the reflection
-            for i in range(1, self.n):
-                fbm_candidate = fbm_store[i - 1] + gn[i]
-                # check if this is outside the space limit by using the reflecting boundary condition
-                fbm_store[i] = _boundary_conditions(
-                    fbm_store[i - 1], fbm_candidate, self.space_lim, "reflecting"
-                )
-            return fbm_store
 
-        fbm_store[0] = 0
+        # First value is zero
+        fbm_values[0] = 0
+        accepted_pos = yield fbm_values[0]  # Initial yield and receive
+
+        # Fast path for Brownian motion (H=0.5)
+        if np.all(self._hurst_n == 0.5):
+            for i in range(1, self.n):
+                # Generate candidate
+                fbm_candidate = fbm_values[i - 1] + gn[i]
+                # Yield candidate and receive accepted position
+                accepted_pos = yield fbm_candidate
+                # Update based on accepted position
+                fbm_values[i] = accepted_pos
+                # Adjust noise if needed
+                if accepted_pos != fbm_candidate:
+                    gn[i] = accepted_pos - fbm_values[i - 1]
+            return
+
+        # Full FBM simulation
         fgn[0] = gn[0]
         v = 1
         phi[0] = 0
@@ -194,50 +260,79 @@ class FBM_BP:
             for j in range(i):
                 fgn[i] += phi[j] * fgn[i - j - 1]
             fgn[i] += np.sqrt(np.abs(v)) * gn[i]
-            # add to the fbm
-            fbm_candidate = fbm_store[i - 1] + fgn[i]
 
-            # check if this is outside the space limit by using the reflecting boundary condition
-            fbm_store[i] = _boundary_conditions(
-                fbm_store[i - 1], fbm_candidate, self.space_lim, "reflecting"
-            )
-            if fbm_store[i] != fbm_candidate:
-                # update the fgn based on the new difference
-                fgn[i] = fbm_store[i] - fbm_store[i - 1]
-        return fbm_store
+            # Generate candidate position
+            fbm_candidate = fbm_values[i - 1] + fgn[i]
 
+            # Yield candidate and receive accepted position
+            accepted_pos = yield fbm_candidate
 
-def _boundary_conditions(
-    fbm_store_last: float,
-    fbm_candidate: float,
-    space_lim: np.ndarray,
-    condition_type: str,
-) -> float:
-    """
-    Apply boundary conditions to the FBM simulation.
+            # Update stored values based on accepted position
+            fbm_values[i] = accepted_pos
 
-    Parameters:
-    -----------
-    fbm_store_last : float
-        The last value of the fractional Brownian motion (FBM) trajectory.
-    fbm_candidate : float
-        The candidate value for the next step in the FBM trajectory.
-    space_lim : np.ndarray
-        A 2-element array representing the minimum and maximum space limits.
-    condition_type : str
-        The type of boundary condition to apply, either "reflecting" or "absorbing".
+            # If position was modified, adjust the noise
+            if accepted_pos != fbm_candidate:
+                fgn[i] = accepted_pos - fbm_values[i - 1]
 
-    Returns:
-    --------
-    float
-        The new value for the FBM trajectory, adjusted by the specified boundary condition.
-    """
-    # check if the condition type is valid
-    if condition_type not in BOUNDARY_CONDITIONS:
-        raise ValueError(
-            "Invalid condition type: "
-            + condition_type
-            + "! Must be one of: "
-            + str(BOUNDARY_CONDITIONS.keys())
-        )
-    return BOUNDARY_CONDITIONS[condition_type](fbm_store_last, fbm_candidate, space_lim)
+    def _is_within_boundaries(self, position):
+        """
+        Check if a position is within the specified boundaries.
+
+        Parameters:
+        -----------
+        position : np.ndarray
+            Position vector to check
+
+        Returns:
+        --------
+        bool
+            True if position is within boundaries, False otherwise
+        """
+        # Assuming self.space_lim is now shape (dims, 2)
+        dims = len(position)
+        for d in range(dims):
+            if position[d] < self.space_lim[d, 0] or position[d] > self.space_lim[d, 1]:
+                return False
+        return True
+
+    def _apply_3d_boundary_condition(
+        self, prev_pos, candidate_pos, space_lim, condition_type="reflecting"
+    ):
+        """
+        Apply boundary conditions to 3D position.
+
+        Parameters:
+        -----------
+        prev_pos : np.ndarray
+            Previous position vector
+        candidate_pos : np.ndarray
+            Candidate position vector
+        space_lim : np.ndarray
+            Spatial boundaries for each dimension
+        condition_type : str
+            Type of boundary condition to apply
+
+        Returns:
+        --------
+        np.ndarray
+            Corrected position vector
+        """
+        if condition_type == "reflecting":
+            corrected_pos = candidate_pos.copy()
+            for d in range(len(candidate_pos)):
+                if candidate_pos[d] < space_lim[d, 0]:
+                    corrected_pos[d] = 2 * space_lim[d, 0] - candidate_pos[d]
+                elif candidate_pos[d] > space_lim[d, 1]:
+                    corrected_pos[d] = 2 * space_lim[d, 1] - candidate_pos[d]
+            return corrected_pos
+        elif condition_type == "absorbing":
+            # For absorbing boundaries, return previous position if any dimension crosses boundary
+            for d in range(len(candidate_pos)):
+                if (
+                    candidate_pos[d] < space_lim[d, 0]
+                    or candidate_pos[d] > space_lim[d, 1]
+                ):
+                    return prev_pos
+            return candidate_pos
+        else:
+            raise ValueError(f"Unknown boundary condition: {condition_type}")

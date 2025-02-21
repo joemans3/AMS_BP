@@ -28,6 +28,7 @@ dependencies = [
   "jsonschema>=4.23.0",
   "pydantic>=2.9.2",
   "tomli>=2.0.2",
+  "pyvista>=0.44.2",
 ]
 
 [project.urls]

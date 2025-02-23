@@ -1,11 +1,19 @@
+"""
+Deprecated module due to switching to the Pyvista model for 3D cell shapes.
+Removal Time: NDY (not determined yet)
+"""
+
 import numpy as np
 
-from ...utils.decorators import _catch_recursion_error
+from ...utils.decorators import _catch_recursion_error, deprecated
 
 # Reflecting boundary condition which is a recursive function so that even if the first candidate
 # is out of the space limit, the function will keep calling itself until the candidate is within the space limit
 
 
+@deprecated(
+    reason="Not used explicitly due to the use of Pyvista mesh objects to define shapes."
+)
 @_catch_recursion_error
 def _refecting_boundary(
     fbm_store_last: float, fbm_candidate: float, space_lim: np.ndarray
@@ -47,6 +55,9 @@ def _refecting_boundary(
 # Boundary condition where the step is set at the boundary limit if the candidate is out of the space limit
 
 
+@deprecated(
+    reason="Not used explicitly due to the use of Pyvista mesh objects to define shapes."
+)
 @_catch_recursion_error
 def _absorbing_boundary(
     fbm_store_last: float, fbm_candidate: float, space_lim: np.ndarray

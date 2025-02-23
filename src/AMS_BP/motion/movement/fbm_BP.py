@@ -2,12 +2,6 @@ import numpy as np
 
 from ...cells.base_cell import BaseCell
 from ...probabilityfuncs.markov_chain import MCMC_state_selection
-from .boundary_conditions import _absorbing_boundary, _refecting_boundary
-
-BOUNDARY_CONDITIONS = {
-    "reflecting": _refecting_boundary,
-    "absorbing": _absorbing_boundary,
-}
 
 
 class FBM_BP:
@@ -38,6 +32,8 @@ class FBM_BP:
         Initial probabilities of different Hurst states.
     cell: BaseCell
         BaseCell Object or derivative
+    initial_position: np.ndarray
+        initial position (x,y,z,...) of the trajectory in the sample space. This is used to reorient the fbm trajectory since it is simulated starting at 0 in this case.
 
     Methods:
     --------
@@ -62,6 +58,7 @@ class FBM_BP:
         state_probability_diffusion: np.ndarray,
         state_probability_hurst: np.ndarray,
         cell: BaseCell,
+        initial_position: np.ndarray,
     ):
         self.n = int(n)
         self.dt = dt
@@ -79,6 +76,10 @@ class FBM_BP:
         self.state_probability_hurst = state_probability_hurst
         # initialize the autocovariance matrix and the diffusion parameter
         self._setup()
+
+        # store cell and initial value for boundary effects
+        self.cell = cell
+        self.initial_position = initial_position
 
     def _autocovariance(self, k: int, hurst: float) -> float:
         """
@@ -185,12 +186,17 @@ class FBM_BP:
             prev_pos = fbm_store[i - 1]
 
             # Check if the candidate position is within boundaries
-            if self._is_within_boundaries(candidate_pos):
+            if self._is_within_boundaries(candidate_pos + self.initial_position):
                 accepted_pos = candidate_pos
             else:
                 # Apply boundary condition in 3D
-                accepted_pos = self._apply_3d_boundary_condition(
-                    prev_pos, candidate_pos, self.space_lim, "reflecting"
+                accepted_pos = (
+                    self._apply_3d_boundary_condition(
+                        prev_pos + self.initial_position,
+                        candidate_pos + self.initial_position,
+                        "reflecting",
+                    )
+                    - self.initial_position
                 )
 
             # Store the accepted position
@@ -288,15 +294,11 @@ class FBM_BP:
         bool
             True if position is within boundaries, False otherwise
         """
-        # Assuming self.space_lim is now shape (dims, 2)
-        dims = len(position)
-        for d in range(dims):
-            if position[d] < self.space_lim[d, 0] or position[d] > self.space_lim[d, 1]:
-                return False
-        return True
+
+        return self.cell.contains_point(*position)
 
     def _apply_3d_boundary_condition(
-        self, prev_pos, candidate_pos, space_lim, condition_type="reflecting"
+        self, prev_pos, candidate_pos, condition_type="reflecting"
     ):
         """
         Apply boundary conditions to 3D position.
@@ -307,8 +309,6 @@ class FBM_BP:
             Previous position vector
         candidate_pos : np.ndarray
             Candidate position vector
-        space_lim : np.ndarray
-            Spatial boundaries for each dimension
         condition_type : str
             Type of boundary condition to apply
 
@@ -318,21 +318,11 @@ class FBM_BP:
             Corrected position vector
         """
         if condition_type == "reflecting":
-            corrected_pos = candidate_pos.copy()
-            for d in range(len(candidate_pos)):
-                if candidate_pos[d] < space_lim[d, 0]:
-                    corrected_pos[d] = 2 * space_lim[d, 0] - candidate_pos[d]
-                elif candidate_pos[d] > space_lim[d, 1]:
-                    corrected_pos[d] = 2 * space_lim[d, 1] - candidate_pos[d]
-            return corrected_pos
+            return self.cell.reflecting_point(*prev_pos, *candidate_pos)
+
         elif condition_type == "absorbing":
-            # For absorbing boundaries, return previous position if any dimension crosses boundary
-            for d in range(len(candidate_pos)):
-                if (
-                    candidate_pos[d] < space_lim[d, 0]
-                    or candidate_pos[d] > space_lim[d, 1]
-                ):
-                    return prev_pos
-            return candidate_pos
+            raise NotImplementedError(
+                f"{condition_type} is not implimented yet, use reflecting conditions."
+            )
         else:
             raise ValueError(f"Unknown boundary condition: {condition_type}")

@@ -155,7 +155,7 @@ class multiple_top_hat_probability:
             raise TypeError("Position must be a numpy array.")
 
         # First check if point is within the cell
-        if not self.cell.contains_point(position):
+        if not self.cell.contains_point(*position):
             return 0.0
 
         # Then check if point is within any subspace

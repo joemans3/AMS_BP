@@ -1,7 +1,11 @@
 from dataclasses import dataclass
-import numpy as np
-from .base_cell import BaseCell
 from typing import Tuple
+
+import numpy as np
+import pyvista as pv
+from typing_extensions import List
+
+from .base_cell import BaseCell
 
 
 @dataclass
@@ -10,89 +14,64 @@ class RodCell(BaseCell):
     Represents a rod-like cell in 3D space.
 
     Attributes:
-        origin (np.ndarray): The (x, y) coordinates of the cell's origin in XY plane
-        length (float): Total length of the rod (including end caps)
+        center (np.ndarray): The (x, y, z) coordinates of the cell's center in XYZ plane
+        direction (np.ndarray): direction vector of the orientation of the RodCell
+        height (float): length of the rod, NOT including end caps
         radius (float): Radius of both the cylindrical body and hemispheres
+
+        +
+
+        pyvista mesh for the BaseCell
     """
 
-    length: float
+    center: np.ndarray | List[float] | Tuple
+    direction: np.ndarray | List[float] | Tuple
+    height: float
     radius: float
 
-    def _validate_specific(self) -> None:
-        """Validate rod-specific parameters."""
-        if self.length <= 0:
-            raise ValueError("Length must be positive")
-        if self.radius <= 0:
-            raise ValueError("Radius must be positive")
 
-    def _calculate_volume(self) -> float:
-        """Calculate the volume of the rod."""
-        cylinder_volume = np.pi * self.radius**2 * (self.length - 2 * self.radius)
-        sphere_volume = (4 / 3) * np.pi * self.radius**3
-        return cylinder_volume + sphere_volume
+def make_RodCell(
+    center: np.ndarray | List[float] | Tuple,
+    direction: np.ndarray | List[float] | Tuple,
+    height: float,
+    radius: float,
+) -> RodCell:
+    """
+    Create a capsule (cylinder with spherical caps) shape.
 
-    @property
-    def center(self) -> np.ndarray:
-        """Get the center point of the rod."""
-        return np.array([self.origin[0] + self.length / 2, self.origin[1], 0.0])
+    Args:
+        center: Center point of the capsule
+        direction: Direction vector of the capsule axis
+        radius: Radius of both cylinder and spherical caps
+        height: Height of the cylindrical portion (excluding caps)
 
-    def get_bounds(self) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Get the minimum and maximum points that define the rod's bounding box.
+    Returns:
+        PVShape3D: Capsule shape instance
+    """
+    # Normalize direction vector
+    direction = np.array(direction)
+    direction = direction / np.linalg.norm(direction)
 
-        Returns:
-            Tuple containing (min_point, max_point)
-        """
-        min_point = np.array(
-            [
-                self.origin[0],
-                self.origin[1] - self.radius,
-                -self.radius,  # Z extends downward from 0
-            ]
-        )
+    # Create cylinder for the body
+    cylinder = pv.Cylinder(
+        center=center, direction=direction, radius=radius, height=height
+    )
 
-        max_point = np.array(
-            [
-                self.origin[0] + self.length,
-                self.origin[1] + self.radius,
-                self.radius,  # Z extends upward from 0
-            ]
-        )
+    # Create spheres for the caps
+    half_height = height / 2
+    sphere1_center = np.array(center) + direction * half_height
+    sphere2_center = np.array(center) - direction * half_height
 
-        return min_point, max_point
+    sphere1 = pv.Sphere(radius=radius, center=sphere1_center)
 
-    def contains_point(self, point: np.ndarray) -> bool:
-        """
-        Check if a point lies within the rod.
+    sphere2 = pv.Sphere(radius=radius, center=sphere2_center)
 
-        Args:
-            point: A 3D point to check
-
-        Returns:
-            bool: True if the point is inside the rod, False otherwise
-        """
-        point = np.array(point)
-        if point.shape != (3,):
-            raise ValueError("Point must be a 3D point")
-
-        # Project point onto XY plane for cylinder check
-        x, y, z = point - np.array([self.origin[0], self.origin[1], 0])
-
-        # Check if point is within the length bounds
-        if x < 0 or x > self.length:
-            return False
-
-        # If point is within the cylindrical section
-        if self.radius <= x <= (self.length - self.radius):
-            # Check distance from central axis
-            return np.sqrt(y**2 + z**2) <= self.radius
-
-        # Check left hemisphere (if x < radius)
-        elif x < self.radius:
-            center = np.array([self.radius, 0, 0])
-            return np.linalg.norm(np.array([x, y, z]) - center) <= self.radius
-
-        # Check right hemisphere (if x > length - radius)
-        else:
-            center = np.array([self.length - self.radius, 0, 0])
-            return np.linalg.norm(np.array([x, y, z]) - center) <= self.radius
+    # Combine the shapes using boolean operations
+    capsule = cylinder.triangulate().boolean_union(sphere1).boolean_union(sphere2)
+    capsule = capsule.clean()
+    capsule = capsule.fill_holes(1)
+    edges = capsule.extract_feature_edges(feature_edges=False, manifold_edges=False)
+    assert edges.n_cells == 0, "Mesh has non-manifold edges"
+    return RodCell(
+        mesh=capsule, center=center, direction=direction, height=height, radius=radius
+    )

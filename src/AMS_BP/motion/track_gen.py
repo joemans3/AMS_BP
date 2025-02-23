@@ -51,23 +51,6 @@ class Track_generator:
     ) -> None:
         self.cell = cell
         self._allowable_cell_types()
-        min_point, max_point = self.cell.get_bounds()
-
-        # Extract space limits from cell bounds
-        self.min_x = min_point[0]
-        self.max_x = max_point[0]
-        self.min_y = min_point[1]
-        self.max_y = max_point[1]
-        self.min_z = min_point[2]
-        self.max_z = max_point[2]
-
-        self.space_lim = np.array(
-            [
-                [self.min_x, self.max_x],
-                [self.min_y, self.max_y],
-                [self.min_z, self.max_z],
-            ]
-        )
 
         self.cycle_count = cycle_count  # count of frames
         self.exposure_time = exposure_time  # in ms
@@ -79,10 +62,11 @@ class Track_generator:
 
     def _allowable_cell_types(self):
         # only allow rectangular cells for now
-        if not isinstance(self.cell, RectangularCell):
-            raise ValueError(
-                "Only rectangular cells are supported for track generation"
-            )
+        # if not isinstance(self.cell, RectangularCell):
+        #     raise ValueError(
+        #         "Only rectangular cells are supported for track generation"
+        #     )
+        pass
 
     def track_generation_no_transition(
         self,
@@ -118,11 +102,6 @@ class Track_generator:
         if np.shape(initials) == (2,):
             # change the shape to (3,)
             initials = np.array([initials[0], initials[1], 0])
-        # subtract each element of the first dimension of self.space_lim by the first element of initials
-        rel_space_lim = np.zeros((3, 2))
-        for i in range(3):
-            rel_space_lim[i] = self.space_lim[i] - initials[i]
-
         # convert the diffusion_coefficients
         # diffusion_coefficient = self._convert_diffcoef_um2s_um2xms(
         #     diffusion_coefficient
@@ -136,16 +115,10 @@ class Track_generator:
             hurst_parameter_transition_matrix=[1],
             state_probability_diffusion=[1],
             state_probability_hurst=[1],
-            space_lim=rel_space_lim[0],
+            cell=self.cell,
+            initial_position=initials,
         )
-        x = fbm.fbm()
-        # repeat for y,z
-        fbm.space_lim = rel_space_lim[1]
-        y = fbm.fbm()
-        fbm.space_lim = rel_space_lim[2]
-        z = fbm.fbm()
-        # convert to format [[x1,y1,z1],[x2,y2,z2],...]
-        xyz = np.stack((x, y, z), axis=-1)
+        xyz = fbm.fbm(dims=3)
         # make the times starting from the starting time
         track_times = np.arange(
             start_time,

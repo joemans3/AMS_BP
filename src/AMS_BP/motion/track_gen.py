@@ -185,9 +185,7 @@ class Track_generator:
             # change the shape to (3,)
             initials = np.array([initials[0], initials[1], 0])
         # subtract each element of the first dimension of self.space_lim by the first element of initials
-        rel_space_lim = np.zeros((3, 2))
-        for i in range(3):
-            rel_space_lim[i] = self.space_lim[i] - initials[i]
+
         # convert the diffusion_coefficients
         # diffusion_parameters = self._convert_diffcoef_um2s_um2xms(diffusion_parameters)
         # initialize the fbm class
@@ -200,16 +198,10 @@ class Track_generator:
             hurst_parameter_transition_matrix=hurst_transition_matrix,
             state_probability_diffusion=diffusion_state_probability,
             state_probability_hurst=hurst_state_probability,
-            space_lim=rel_space_lim[0],
+            cell=self.cell,
+            initial_position=initials,
         )
-        x = fbm.fbm()
-        # repeat for y,z
-        fbm.space_lim = rel_space_lim[1]
-        y = fbm.fbm()
-        fbm.space_lim = rel_space_lim[2]
-        z = fbm.fbm()
-        # convert to format [[x1,y1,z1],[x2,y2,z2],...]
-        xyz = np.stack((x, y, z), axis=-1)
+        xyz = fbm.fbm(dims=3)
         # make the times starting from the starting time
         track_times = np.arange(
             start_time,

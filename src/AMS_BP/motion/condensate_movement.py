@@ -25,8 +25,9 @@ from typing import Optional
 
 import numpy as np
 
+from ..cells import CellType
 from ..utils.decorators import cache
-from .track_gen import CellType, Track_generator
+from .track_gen import Track_generator
 
 
 def create_condensate_dict(

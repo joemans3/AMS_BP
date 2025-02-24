@@ -11,16 +11,12 @@ Classes:
 """
 
 import random
-from typing import Union, overload
+from typing import overload
 
 import numpy as np
 
-from ..cells.rectangular_cell import RectangularCell
-from ..cells.rod_cell import RodCell
-from ..cells.spherical_cell import SphericalCell
+from ..cells import CellType
 from .movement.fbm_BP import FBM_BP
-
-CellType = Union[SphericalCell, RodCell, RectangularCell]
 
 
 class Track_generator:

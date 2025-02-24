@@ -42,15 +42,10 @@ After initialization, do not change the parameters directly. Use the update_para
 """
 
 from collections.abc import Callable
-from typing import Union
 
 import numpy as np
 
-from ..cells.rectangular_cell import RectangularCell
-from ..cells.rod_cell import RodCell
-from ..cells.spherical_cell import SphericalCell
-
-CellType = Union[SphericalCell, RodCell, RectangularCell]
+from ..cells import CellType
 
 
 def generate_points_from_cls(
@@ -282,19 +277,9 @@ class multiple_top_hat_probability:
         if cell is not None:
             self.cell = cell
 
-        # Recalculate total volume based on cell type
-        if isinstance(self.cell, SphericalCell):
-            total_volume = (4 / 3) * np.pi * self.cell.radius**3
-        elif isinstance(self.cell, RodCell):
-            total_volume = self.cell.volume
-        elif isinstance(self.cell, RectangularCell):
-            total_volume = float(np.prod(self.cell.dimensions))
-        else:
-            raise ValueError("Unsupported cell type")
-
         self.subspace_probability = self._calculate_subspace_probability(
-            total_volume, self.density_dif
+            self.cell.volume, self.density_dif
         )
         self.non_subspace_probability = self._calculate_non_subspace_probability(
-            total_volume, self.density_dif, self.num_subspace, self.subspace_radius
+            self.cell.volume, self.density_dif, self.num_subspace, self.subspace_radius
         )

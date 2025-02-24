@@ -1,6 +1,6 @@
 import numpy as np
 
-from ...cells.base_cell import BaseCell
+from ...cells import CellType
 from ...probabilityfuncs.markov_chain import MCMC_state_selection
 
 
@@ -30,8 +30,8 @@ class FBM_BP:
         Initial probabilities of different diffusion states.
     state_probability_hurst : np.ndarray
         Initial probabilities of different Hurst states.
-    cell: BaseCell
-        BaseCell Object or derivative
+    cell: CellType
+        CellType Object or derivative
     initial_position: np.ndarray
         initial position (x,y,z,...) of the trajectory in the sample space. This is used to reorient the fbm trajectory since it is simulated starting at 0 in this case.
 
@@ -57,7 +57,7 @@ class FBM_BP:
         hurst_parameter_transition_matrix: np.ndarray,
         state_probability_diffusion: np.ndarray,
         state_probability_hurst: np.ndarray,
-        cell: BaseCell,
+        cell: CellType,
         initial_position: np.ndarray,
     ):
         self.n = int(n)

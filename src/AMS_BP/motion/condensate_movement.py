@@ -15,16 +15,18 @@ Usage:
             "units_position":'um',
             "condensate_id":0,
             "initial_scale":0,
+            "oversample_motion_time":20,
         })
     Call the class object as follows to get the position and scale of the condensate at a given time:
         condensate(times, time_unit) -> dict{"Position":np.ndarray, "Scale":float}
 """
 
+from typing import Optional
+
 import numpy as np
 
-from ..cells.rectangular_cell import RectangularCell
 from ..utils.decorators import cache
-from .track_gen import Track_generator as sf
+from .track_gen import CellType, Track_generator
 
 
 def create_condensate_dict(
@@ -32,7 +34,7 @@ def create_condensate_dict(
     initial_scale: np.ndarray,
     diffusion_coefficient: np.ndarray,
     hurst_exponent: np.ndarray,
-    cell: RectangularCell,
+    cell: CellType,
     **kwargs,
 ) -> dict:
     """
@@ -48,10 +50,13 @@ def create_condensate_dict(
         Array of shape (num_condensates, 2) representing the diffusion coefficients of the condensates.
     hurst_exponent : np.ndarray
         Array of shape (num_condensates, 2) representing the Hurst exponents of the condensates.
-    cell : RectangularCell
-        The rectangular cell that contains the condensates.
+    cell : CellType
+        The cell that contains the condensates.
     **kwargs : dict
         Additional arguments passed to `Condensate` class.
+
+        oversample_motion_time : int
+            smallest time unit for motion (time resolution for motion) (ms)
 
     Returns:
     --------
@@ -99,8 +104,10 @@ class Condensate:
         ID of the condensate.
     initial_scale: float = 0
         Initial scale of the condensate.
-    cell: RectangularCell = None
-        The rectangular cell that contains the condensates.
+    cell: CellType = None
+        The cell that contains the condensates.
+    oversample_motion_time: int = None
+        motion resolution
 
     """
 
@@ -114,7 +121,8 @@ class Condensate:
         units_position: str = "um",
         condensate_id: int = 0,
         initial_scale: float = 0,
-        cell: RectangularCell = None,
+        cell: Optional[CellType] = None,
+        oversample_motion_time: Optional[int] = None,
     ):
         self.initial_position = (
             np.array(initial_position)
@@ -138,13 +146,11 @@ class Condensate:
         self.units_position = units_position
         self.condensate_id = condensate_id
         self.initial_scale = initial_scale
-        if cell is None:
-            cell = RectangularCell(
-                origin=np.array([0, 0]), dimensions=np.array([0, 0, 0])
-            )
+
         self.cell = cell
         self.dim = self.initial_position.shape[0]
 
+        self.oversample_motion_time = oversample_motion_time
         # initialize the properties of the condensate
         self._initialize_properties()
 
@@ -261,28 +267,20 @@ class Condensate:
         # find the time difference
         time_difference = time - self.times[-1]
         # make a time array starting from the last time +1 and goin to the time inclusive
-        time_array = np.arange(self.times[-1] + 1, time + 1)
-        # Get cell bounds for track generator
-        min_bound, max_bound = self.cell.get_bounds()
-        cell_space = np.array(
-            [
-                [min_bound[0], max_bound[0]],  # x bounds
-                [min_bound[1], max_bound[1]],  # y bounds
-            ]
+        time_array = np.arange(
+            self.times[-1] + self.oversample_motion_time,
+            time + self.oversample_motion_time,
         )
-        cell_axial_range = (max_bound[2] - min_bound[2]) / 2.0
-        track_generator = sf.Track_generator(
-            cell_space=cell_space,
-            cell_axial_range=cell_axial_range,
-            cycle_count=500,
-            exposure_time=20,
-            interval_time=0,
+
+        track_generator = Track_generator(
+            cell=self.cell,
+            total_time=time,
             oversample_motion_time=20,
         )
         track = track_generator.track_generation_no_transition(
             diffusion_coefficient=self.diffusion_coefficient,
             hurst_exponent=self.hurst_exponent,
-            track_length=time_difference,
+            track_length=int(time_difference / self.oversample_motion_time),
             initials=self.condensate_positions[-1],
             start_time=self.times[-1],
         )

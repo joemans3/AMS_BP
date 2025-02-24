@@ -31,12 +31,6 @@ class Track_generator:
     -----------
     cell : CellType
         Cell object defining the space for track generation
-    cycle_count : int
-        The number of frames for the simulation.
-    exposure_time : int | float
-        Exposure time in milliseconds.
-    interval_time : int | float
-        Interval time between frames in milliseconds.
     oversample_motion_time : int | float
         Time for oversampling motion in milliseconds.
     """
@@ -44,21 +38,16 @@ class Track_generator:
     def __init__(
         self,
         cell: CellType,
-        cycle_count: int,
-        exposure_time: int | float,
-        interval_time: int | float,
+        total_time: int | float,
         oversample_motion_time: int | float,
     ) -> None:
         self.cell = cell
         self._allowable_cell_types()
 
-        self.cycle_count = cycle_count  # count of frames
-        self.exposure_time = exposure_time  # in ms
-        self.interval_time = interval_time  # in ms
         self.oversample_motion_time = oversample_motion_time  # in ms
         # total time in ms is the exposure time + interval time * (cycle_count) / oversample_motion_time
         # in ms
-        self.total_time = self._convert_frame_to_time(self.cycle_count)
+        self.total_time = total_time
 
     def _allowable_cell_types(self):
         # only allow rectangular cells for now
@@ -286,7 +275,9 @@ class Track_generator:
         else:
             raise TypeError(f"Unsupported type: {type(diffusion_coefficient)}")
 
-    def _convert_time_to_frame(self, time: int) -> int:
+    def _convert_time_to_frame(
+        self, time: int, exposure_time: int, interval_time: int
+    ) -> int:
         """
         Parameters:
         -----------
@@ -298,11 +289,12 @@ class Track_generator:
         int: frame number
         """
         return int(
-            (time * self.oversample_motion_time)
-            / (self.exposure_time + self.interval_time)
+            (time * self.oversample_motion_time) / (exposure_time + interval_time)
         )
 
-    def _convert_frame_to_time(self, frame: int) -> int:
+    def _convert_frame_to_time(
+        self, frame: int, exposure_time: int, interval_time: int
+    ) -> int:
         """
         Parameters:
         -----------
@@ -313,7 +305,7 @@ class Track_generator:
         --------
         int: time in ms
         """
-        return int((frame * (self.exposure_time + self.interval_time)))
+        return int((frame * (exposure_time + interval_time)))
 
 
 def _initialize_points_per_time(total_time: int, oversample_motion_time: int) -> dict:

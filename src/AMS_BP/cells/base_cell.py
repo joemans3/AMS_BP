@@ -142,6 +142,15 @@ class BaseCell(ABC):
         self._volume = self.mesh.volume
         return self._volume
 
+    def _calculate_bounds(self) -> Tuple[float, float, float, float, float, float]:
+        self._bounds = self.mesh.bounds
+        return self._bounds
+
+    @property
+    def bounds(self):
+        """The bounding box -> [xmin,xmax,ymin,ymax,zmin,zmax]"""
+        return self._bounds
+
     @property
     def volume(self) -> float:
         """Get the pre-calculated volume of the cell."""

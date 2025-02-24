@@ -42,6 +42,7 @@ After initialization, do not change the parameters directly. Use the update_para
 """
 
 from collections.abc import Callable
+from typing import List
 
 import numpy as np
 
@@ -51,12 +52,8 @@ from ..cells import CellType
 def generate_points_from_cls(
     pdf: Callable,
     total_points: int,
-    min_x: float,
-    max_x: float,
-    min_y: float,
-    max_y: float,
-    min_z: float,
-    max_z: float,
+    volume: float,
+    bounds: List[float],
     density_dif: float,
 ) -> np.ndarray:
     """
@@ -68,18 +65,21 @@ def generate_points_from_cls(
         Probability density function to sample from.
     total_points : int
         Number of points to generate.
-    min_x : float
-        Minimum x value for sampling.
-    max_x : float
-        Maximum x value for sampling.
-    min_y : float
-        Minimum y value for sampling.
-    max_y : float
-        Maximum y value for sampling.
-    min_z : float
-        Minimum z value for sampling.
-    max_z : float
-        Maximum z value for sampling.
+    bound : list with the following
+        min_x : float
+            Minimum x value for sampling.
+        max_x : float
+            Maximum x value for sampling.
+        min_y : float
+            Minimum y value for sampling.
+        max_y : float
+            Maximum y value for sampling.
+        min_z : float
+            Minimum z value for sampling.
+        max_z : float
+            Maximum z value for sampling.
+    volume : float,
+        volume of region sampling
     density_dif : float
         Scaling factor for density differences.
 
@@ -88,8 +88,8 @@ def generate_points_from_cls(
     np.ndarray
         Array of generated (x, y, z) points.
     """
+    min_x, max_x, min_y, max_y, min_z, max_z = bounds
     xyz_coords = []
-    area = (max_x - min_x) * (max_y - min_y) * (max_z - min_z)
     while len(xyz_coords) < total_points:
         # generate candidate variable
         var = np.random.uniform([min_x, min_y, min_z], [max_x, max_y, max_z])
@@ -97,7 +97,7 @@ def generate_points_from_cls(
         var2 = np.random.uniform(0, 1)
         # apply condition
         pdf_val = pdf(var)
-        if var2 < ((1.0 / density_dif) * area) * pdf_val:
+        if var2 < ((1.0 / density_dif) * volume) * pdf_val:
             xyz_coords.append(var)
     return np.array(xyz_coords)
 

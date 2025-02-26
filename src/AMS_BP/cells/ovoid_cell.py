@@ -4,6 +4,7 @@ import numpy as np
 import pyvista as pv
 
 from .base_cell import BaseCell
+from .typedefs import Vector3D
 
 
 @dataclass
@@ -46,3 +47,37 @@ def make_OvoidCell(
         yradius=yradius,
         zradius=zradius,
     )
+
+
+@dataclass
+class OvoidCellParams:
+    center: Vector3D
+    direction: Vector3D
+    xradius: float
+    yradius: float
+    zradius: float
+
+    @classmethod
+    def validate_center(cls, value):
+        if not isinstance(value, (list, tuple, np.ndarray)) or len(value) != 3:
+            raise ValueError("center must be a 3D vector")
+
+    @classmethod
+    def validate_direction(cls, value):
+        if not isinstance(value, (list, tuple, np.ndarray)) or len(value) != 3:
+            raise ValueError("direction must be a 3D vector")
+
+    @classmethod
+    def validate_xradius(cls, value):
+        if not isinstance(value, (int, float)) or value <= 0:
+            raise ValueError("xradius must be a positive number")
+
+    @classmethod
+    def validate_yradius(cls, value):
+        if not isinstance(value, (int, float)) or value <= 0:
+            raise ValueError("yradius must be a positive number")
+
+    @classmethod
+    def validate_zradius(cls, value):
+        if not isinstance(value, (int, float)) or value <= 0:
+            raise ValueError("zradius must be a positive number")

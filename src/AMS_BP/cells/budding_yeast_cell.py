@@ -5,6 +5,7 @@ import numpy as np
 import pyvista as pv
 
 from .base_cell import BaseCell
+from .typedefs import Vector3D
 
 
 @dataclass
@@ -137,3 +138,67 @@ def make_BuddingCell(
         bud_distance=bud_distance,
         neck_radius=neck_radius,
     )
+
+
+@dataclass
+class BuddingCellParams:
+    center: Vector3D
+    mother_radius_x: float
+    mother_radius_y: float
+    mother_radius_z: float
+    bud_radius_x: float
+    bud_radius_y: float
+    bud_radius_z: float
+    bud_angle: float
+    bud_distance: float
+    neck_radius: float
+
+    @classmethod
+    def validate_center(cls, value):
+        if not isinstance(value, (list, tuple, np.ndarray)) or len(value) != 3:
+            raise ValueError("center must be a 3D vector")
+
+    @classmethod
+    def validate_mother_radius_x(cls, value):
+        if not isinstance(value, (int, float)) or value <= 0:
+            raise ValueError("mother_radius_x must be a positive number")
+
+    @classmethod
+    def validate_mother_radius_y(cls, value):
+        if not isinstance(value, (int, float)) or value <= 0:
+            raise ValueError("mother_radius_y must be a positive number")
+
+    @classmethod
+    def validate_mother_radius_z(cls, value):
+        if not isinstance(value, (int, float)) or value <= 0:
+            raise ValueError("mother_radius_z must be a positive number")
+
+    @classmethod
+    def validate_bud_radius_x(cls, value):
+        if not isinstance(value, (int, float)) or value <= 0:
+            raise ValueError("bud_radius_x must be a positive number")
+
+    @classmethod
+    def validate_bud_radius_y(cls, value):
+        if not isinstance(value, (int, float)) or value <= 0:
+            raise ValueError("bud_radius_y must be a positive number")
+
+    @classmethod
+    def validate_bud_radius_z(cls, value):
+        if not isinstance(value, (int, float)) or value <= 0:
+            raise ValueError("bud_radius_z must be a positive number")
+
+    @classmethod
+    def validate_bud_angle(cls, value):
+        if not isinstance(value, (int, float)):
+            raise ValueError("bud_angle must be a number")
+
+    @classmethod
+    def validate_bud_distance(cls, value):
+        if not isinstance(value, (int, float)) or value <= 0:
+            raise ValueError("bud_distance must be a positive number")
+
+    @classmethod
+    def validate_neck_radius(cls, value):
+        if not isinstance(value, (int, float)) or value <= 0:
+            raise ValueError("neck_radius must be a positive number")

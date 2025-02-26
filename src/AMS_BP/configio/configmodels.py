@@ -1,16 +1,21 @@
-from typing import List, Literal
+from typing import Any, Dict, List, Literal, Union
 
 import numpy as np
 from pydantic import BaseModel, Field, field_validator
 
+from AMS_BP.cells.cell_factory import validate_cell_parameters
+
+from ..cells import CellType
+
 
 class CellParameters(BaseModel):
-    cell_space: List[List[float]] = Field(description="Cell space dimensions in um")
-    cell_axial_radius: float = Field(description="Axial radius in um")
+    cell_type: Union[str, CellType]
+    params: Dict[str, Any]
 
-    @field_validator("cell_space")
-    def convert_cell_space(cls, v):
-        return np.array(v)
+    def model_post_init(self, __context):
+        is_valid = validate_cell_parameters(self.cell_type, self.params)
+        if not is_valid:
+            raise ValueError(f"Cell model creation unsuccessful: {is_valid[1]}")
 
 
 class MoleculeParameters(BaseModel):

@@ -5,7 +5,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import tomli
 from pydantic import BaseModel
 
-from ..cells import RectangularCell
+from AMS_BP.cells.cell_factory import create_cell
+
 from ..cells.base_cell import BaseCell
 from ..motion import Track_generator, create_condensate_dict
 from ..motion.track_gen import (
@@ -672,7 +673,7 @@ class ConfigLoader:
         # make initial sample plane
         sample_plane = make_sample(
             global_params=base_config.GlobalParameters,
-            cell_params=base_config.CellParameters,
+            cell=cell,
         )
 
         # make condensates_dict
@@ -739,23 +740,19 @@ class ConfigLoader:
 
 def make_cell(cell_params) -> BaseCell:
     # make cell
-    cell_origin = (cell_params.cell_space[0][0], cell_params.cell_space[1][0])
-    cell_dimensions = (
-        cell_params.cell_space[0][1] - cell_params.cell_space[0][0],
-        cell_params.cell_space[1][1] - cell_params.cell_space[1][0],
-        cell_params.cell_axial_radius * 2,
-    )
-    cell = RectangularCell(origin=cell_origin, dimensions=cell_dimensions)
+
+    cell = create_cell(cell_params.cell_type, cell_params.params)
 
     return cell
 
 
-def make_sample(global_params, cell_params) -> SamplePlane:
+def make_sample(global_params: GlobalParameters, cell: BaseCell) -> SamplePlane:
+    bounds = cell.boundingbox
     sample_space = SampleSpace(
         x_max=global_params.sample_plane_dim[0],
         y_max=global_params.sample_plane_dim[1],
-        z_max=cell_params.cell_axial_radius,
-        z_min=-cell_params.cell_axial_radius,
+        z_max=bounds[-1],
+        z_min=bounds[-2],
     )
 
     # total time
@@ -769,7 +766,7 @@ def make_sample(global_params, cell_params) -> SamplePlane:
         fov=(
             (0, global_params.sample_plane_dim[0]),
             (0, global_params.sample_plane_dim[1]),
-            (-cell_params.cell_axial_radius, cell_params.cell_axial_radius),
+            (bounds[-2], bounds[-1]),
         ),  # simulates the whole simulation space to avoid the issue of PSF bleeding into FOV if the molecule's location is technically outside of the FOV dictated by the camera detector size and objective magnification.
         oversample_motion_time=global_params.oversample_motion_time,
         t_end=totaltime,
@@ -777,7 +774,9 @@ def make_sample(global_params, cell_params) -> SamplePlane:
     return sample_plane
 
 
-def make_condensatedict(condensate_params, cell) -> List[dict]:
+def make_condensatedict(
+    condensate_params: CondensateParameters, cell: BaseCell
+) -> List[dict]:
     condensates_dict = []
     for i in range(len(condensate_params.initial_centers)):
         condensates_dict.append(
@@ -807,26 +806,29 @@ def make_samplingfunction(condensate_params, cell) -> List[Callable]:
     return sampling_functions
 
 
-def gen_initial_positions(molecule_params, cell, condensate_params, sampling_functions):
+def gen_initial_positions(
+    molecule_params: MoleculeParameters,
+    cell: BaseCell,
+    condensate_params: CondensateParameters,
+    sampling_functions: List[Callable],
+) -> List:
     initials = []
     for i in range(len(molecule_params.num_molecules)):
         num_molecules = molecule_params.num_molecules[i]
         initial_positions = gen_points(
             pdf=sampling_functions[i],
             total_points=num_molecules,
-            min_x=cell.origin[0],
-            max_x=cell.origin[0] + cell.dimensions[0],
-            min_y=cell.origin[1],
-            max_y=cell.origin[1] + cell.dimensions[1],
-            min_z=-cell.dimensions[2] / 2,
-            max_z=cell.dimensions[2] / 2,
+            volume=cell.volume,
+            bounds=cell.boundingbox,
             density_dif=condensate_params.density_dif[i],
         )
         initials.append(initial_positions)
     return initials
 
 
-def create_track_generator(global_params, cell):
+def create_track_generator(
+    global_params: GlobalParameters, cell: BaseCell
+) -> Track_generator:
     totaltime = int(
         global_params.cycle_count
         * (global_params.exposure_time + global_params.interval_time)
@@ -834,15 +836,18 @@ def create_track_generator(global_params, cell):
     # make track generator
     track_generator = Track_generator(
         cell=cell,
-        cycle_count=totaltime / global_params.oversample_motion_time,
-        exposure_time=global_params.exposure_time,
-        interval_time=global_params.interval_time,
+        total_time=totaltime,
         oversample_motion_time=global_params.oversample_motion_time,
     )
     return track_generator
 
 
-def get_tracks(molecule_params, global_params, initial_positions, track_generator):
+def get_tracks(
+    molecule_params: MoleculeParameters,
+    global_params: GlobalParameters,
+    initial_positions: List,
+    track_generator: Track_generator,
+) -> Tuple[List, List]:
     totaltime = int(
         global_params.cycle_count
         * (global_params.exposure_time + global_params.interval_time)
@@ -897,7 +902,12 @@ def get_tracks(molecule_params, global_params, initial_positions, track_generato
     return tracks_collection, points_per_time_collection
 
 
-def add_tracks_to_sample(tracks, sample_plane, fluorophore, ID_counter=0):
+def add_tracks_to_sample(
+    tracks: List,
+    sample_plane: SamplePlane,
+    fluorophore: List[Fluorophore],
+    ID_counter=0,
+) -> SamplePlane:
     counter = ID_counter
     for track_type in range(len(tracks)):
         for j in tracks[track_type].values():

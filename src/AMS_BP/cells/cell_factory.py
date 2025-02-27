@@ -2,12 +2,15 @@ import inspect
 from enum import Enum
 from typing import Any, Callable, Dict, List, Tuple, Union
 
-from AMS_BP.cells.base_cell import BaseCell
+from .base_cell import BaseCell
 
 # Import cell creation functions and parameter classes
 from .budding_yeast_cell import BuddingCellParams, make_BuddingCell
 from .ovoid_cell import OvoidCellParams, make_OvoidCell
-from .rectangular_cell import RectangularCellParams, make_RectangularCell
+from .rectangular_cell import (
+    RectangularCellParams,
+    make_RectangularCell,
+)
 from .rod_cell import RodCellParams, make_RodCell
 from .spherical_cell import SphericalCellParams, make_SphericalCell
 
@@ -80,7 +83,7 @@ def _validate_parameters(
         return False, errors
 
     try:
-        param_class.validate(**params)
+        param_class(**params)
         return True, []
     except ValueError as e:
         return False, str(e).split("\n")

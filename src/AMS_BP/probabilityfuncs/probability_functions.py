@@ -42,18 +42,18 @@ After initialization, do not change the parameters directly. Use the update_para
 """
 
 from collections.abc import Callable
-from typing import List
+from typing import Tuple
 
 import numpy as np
 
-from ..cells import CellType
+from ..cells.base_cell import BaseCell
 
 
 def generate_points_from_cls(
     pdf: Callable,
     total_points: int,
     volume: float,
-    bounds: List[float],
+    bounds: Tuple[float, float, float, float, float, float],
     density_dif: float,
 ) -> np.ndarray:
     """
@@ -111,7 +111,7 @@ class multiple_top_hat_probability:
         subspace_centers: np.ndarray,
         subspace_radius: np.ndarray,
         density_dif: float,
-        cell: CellType,
+        cell: BaseCell,
     ) -> None:
         """
         Initialize the probability function.
@@ -126,7 +126,7 @@ class multiple_top_hat_probability:
             Radius of each subspace
         density_dif : float
             Difference in density between subspaces and non-subspaces
-        cell : CellType
+        cell : BaseCell
             Cell object defining the boundary
         """
         self.num_subspace = num_subspace
@@ -230,14 +230,12 @@ class multiple_top_hat_probability:
         self._density_dif = value
 
     @property
-    def cell(self) -> CellType:
+    def cell(self) -> BaseCell:
         """Returns the cell object."""
         return self._cell
 
     @cell.setter
-    def cell(self, value: CellType) -> None:
-        if not isinstance(value, CellType):
-            raise TypeError("Cell must be a valid cell object.")
+    def cell(self, value: BaseCell) -> None:
         self._cell = value
 
     @property
@@ -263,7 +261,7 @@ class multiple_top_hat_probability:
         subspace_centers: np.ndarray | None = None,
         subspace_radius: np.ndarray | None = None,
         density_dif: float | None = None,
-        cell: CellType | None = None,
+        cell: BaseCell | None = None,
     ) -> None:
         """Updates the parameters of the probability function."""
         if num_subspace is not None:

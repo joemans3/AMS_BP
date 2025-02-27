@@ -1,6 +1,6 @@
 import numpy as np
 
-from ...cells import CellType
+from ...cells.base_cell import BaseCell
 from ...probabilityfuncs.markov_chain import MCMC_state_selection
 
 
@@ -30,8 +30,8 @@ class FBM_BP:
         Initial probabilities of different diffusion states.
     state_probability_hurst : np.ndarray
         Initial probabilities of different Hurst states.
-    cell: CellType
-        CellType Object or derivative
+    cell: BaseCell
+        BaseCell Object or derivative
     initial_position: np.ndarray
         initial position (x,y,z,...) of the trajectory in the sample space. This is used to reorient the fbm trajectory since it is simulated starting at 0 in this case.
 
@@ -57,7 +57,7 @@ class FBM_BP:
         hurst_parameter_transition_matrix: np.ndarray,
         state_probability_diffusion: np.ndarray,
         state_probability_hurst: np.ndarray,
-        cell: CellType,
+        cell: BaseCell,
         initial_position: np.ndarray,
     ):
         self.n = int(n)
@@ -143,6 +143,10 @@ class FBM_BP:
             )
         for i in range(self.n):
             self._cov[i] = self._autocovariance(i, self._hurst_n[i])
+        if np.all(self._hurst_n == 0.5):
+            self.randomwalkers = True
+        else:
+            self.randomwalkers = False
 
     def fbm(self, dims=3) -> np.ndarray:
         """
@@ -203,10 +207,15 @@ class FBM_BP:
             fbm_store[i] = accepted_pos
 
             # Send the accepted position back to each generator and get next candidates
+
+            if (
+                i == (self.n - 1)
+            ):  # ensure that the last accepted position does not get sent back since the generator is exhausted.
+                break
             for d, gen in enumerate(dimension_generators):
                 next_candidates[d] = gen.send(accepted_pos[d])
 
-        return fbm_store
+        return fbm_store + self.initial_position
 
     def _fbm_dimension_generator(self):
         """
@@ -236,49 +245,46 @@ class FBM_BP:
         accepted_pos = yield fbm_values[0]  # Initial yield and receive
 
         # Fast path for Brownian motion (H=0.5)
-        if np.all(self._hurst_n == 0.5):
+        if self.randomwalkers:
             for i in range(1, self.n):
                 # Generate candidate
                 fbm_candidate = fbm_values[i - 1] + gn[i]
                 # Yield candidate and receive accepted position
+
                 accepted_pos = yield fbm_candidate
                 # Update based on accepted position
+
                 fbm_values[i] = accepted_pos
-                # Adjust noise if needed
+
+        else:
+            # Full FBM simulation
+            fgn[0] = gn[0]
+            v = 1
+            phi[0] = 0
+
+            for i in range(1, self.n):
+                phi[i - 1] = self._cov[i]
+                for j in range(i - 1):
+                    psi[j] = phi[j]
+                    phi[i - 1] -= psi[j] * self._cov[i - j - 1]
+                phi[i - 1] /= v
+                for j in range(i - 1):
+                    phi[j] = psi[j] - phi[i - 1] * psi[i - j - 2]
+                v *= 1 - phi[i - 1] * phi[i - 1]
+                for j in range(i):
+                    fgn[i] += phi[j] * fgn[i - j - 1]
+                fgn[i] += np.sqrt(np.abs(v)) * gn[i]
+
+                # Generate candidate position
+                fbm_candidate = fbm_values[i - 1] + fgn[i]
+                # Yield candidate and receive accepted position
+                accepted_pos = yield fbm_candidate
+                # Update stored values based on accepted position
+                fbm_values[i] = accepted_pos
+
+                # If position was modified, adjust the noise
                 if accepted_pos != fbm_candidate:
-                    gn[i] = accepted_pos - fbm_values[i - 1]
-            return
-
-        # Full FBM simulation
-        fgn[0] = gn[0]
-        v = 1
-        phi[0] = 0
-
-        for i in range(1, self.n):
-            phi[i - 1] = self._cov[i]
-            for j in range(i - 1):
-                psi[j] = phi[j]
-                phi[i - 1] -= psi[j] * self._cov[i - j - 1]
-            phi[i - 1] /= v
-            for j in range(i - 1):
-                phi[j] = psi[j] - phi[i - 1] * psi[i - j - 2]
-            v *= 1 - phi[i - 1] * phi[i - 1]
-            for j in range(i):
-                fgn[i] += phi[j] * fgn[i - j - 1]
-            fgn[i] += np.sqrt(np.abs(v)) * gn[i]
-
-            # Generate candidate position
-            fbm_candidate = fbm_values[i - 1] + fgn[i]
-
-            # Yield candidate and receive accepted position
-            accepted_pos = yield fbm_candidate
-
-            # Update stored values based on accepted position
-            fbm_values[i] = accepted_pos
-
-            # If position was modified, adjust the noise
-            if accepted_pos != fbm_candidate:
-                fgn[i] = accepted_pos - fbm_values[i - 1]
+                    fgn[i] = accepted_pos - fbm_values[i - 1]
 
     def _is_within_boundaries(self, position):
         """
@@ -295,7 +301,9 @@ class FBM_BP:
             True if position is within boundaries, False otherwise
         """
 
-        return self.cell.contains_point(*position)
+        return self.cell.contains_point(
+            *position, tolerance=self.cell.tolerance_generator()
+        )
 
     def _apply_3d_boundary_condition(
         self, prev_pos, candidate_pos, condition_type="reflecting"

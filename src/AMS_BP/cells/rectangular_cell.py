@@ -30,11 +30,8 @@ def make_RectangularCell(bounds: np.ndarray) -> RectangularCell:
     --------
     RectangularCell object
     """
-    # valudate bounds
-    assert bounds.shape == (3, 2)
-    for j in bounds:
-        assert j[1] > j[0]
-    pv_bounds = bounds.flatten()
+
+    pv_bounds = np.asarray(bounds).flatten()
     rec = pv.Box(bounds=pv_bounds)
     return RectangularCell(mesh=rec, bounds=bounds)
 
@@ -53,12 +50,12 @@ class RectangularCellParams:
             value = np.array(value)
 
         # Check shape
-        if value.shape != (2, 3):
-            raise ValueError("bounds must be a 2x3 array (min and max points)")
+        if value.shape != (3, 2):
+            raise ValueError("bounds must be a 3x2 array (min and max points)")
 
         # Check min < max
         for i in range(3):
-            if value[0, i] >= value[1, i]:
+            if value[i, 0] >= value[i, 1]:
                 raise ValueError(
                     f"Min bound must be less than max bound for dimension {i}"
                 )

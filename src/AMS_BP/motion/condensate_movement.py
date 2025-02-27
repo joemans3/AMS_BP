@@ -25,7 +25,7 @@ from typing import Optional
 
 import numpy as np
 
-from ..cells import CellType
+from ..cells.base_cell import BaseCell
 from ..utils.decorators import cache
 from .track_gen import Track_generator
 
@@ -35,7 +35,7 @@ def create_condensate_dict(
     initial_scale: np.ndarray,
     diffusion_coefficient: np.ndarray,
     hurst_exponent: np.ndarray,
-    cell: CellType,
+    cell: BaseCell,
     **kwargs,
 ) -> dict:
     """
@@ -51,7 +51,7 @@ def create_condensate_dict(
         Array of shape (num_condensates, 2) representing the diffusion coefficients of the condensates.
     hurst_exponent : np.ndarray
         Array of shape (num_condensates, 2) representing the Hurst exponents of the condensates.
-    cell : CellType
+    cell : BaseCell
         The cell that contains the condensates.
     **kwargs : dict
         Additional arguments passed to `Condensate` class.
@@ -105,7 +105,7 @@ class Condensate:
         ID of the condensate.
     initial_scale: float = 0
         Initial scale of the condensate.
-    cell: CellType = None
+    cell: BaseCell = None
         The cell that contains the condensates.
     oversample_motion_time: int = None
         motion resolution
@@ -122,7 +122,7 @@ class Condensate:
         units_position: str = "um",
         condensate_id: int = 0,
         initial_scale: float = 0,
-        cell: Optional[CellType] = None,
+        cell: Optional[BaseCell] = None,
         oversample_motion_time: Optional[int] = None,
     ):
         self.initial_position = (

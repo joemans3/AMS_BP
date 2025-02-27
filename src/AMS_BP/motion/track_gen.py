@@ -15,7 +15,7 @@ from typing import overload
 
 import numpy as np
 
-from ..cells import CellType
+from ..cells.base_cell import BaseCell
 from .movement.fbm_BP import FBM_BP
 
 
@@ -25,7 +25,7 @@ class Track_generator:
 
     Parameters:
     -----------
-    cell : CellType
+    cell : BaseCell
         Cell object defining the space for track generation
     oversample_motion_time : int | float
         Time for oversampling motion in milliseconds.
@@ -33,7 +33,7 @@ class Track_generator:
 
     def __init__(
         self,
-        cell: CellType,
+        cell: BaseCell,
         total_time: int | float,
         oversample_motion_time: int | float,
     ) -> None:

@@ -1,26 +1,31 @@
-version = "0.1"
+version = "0.2"
 length_unit = "um"        # always um.
 time_unit = "ms"          # always ms
 diffusion_unit = "um^2/s" # always um^2/s
 
 [Cell_Parameters]
-cell_space = [[4, 7], [3, 9]] # um ([[x_min, x_max], [y_min, y_max]])
-cell_axial_radius = 0.5       # um +/- from 0. Total z range = 2*cell_axial_radius
+cell_type = "RectangularCell" # any of RectangularCell, SphericalCell, OvoidCell, RodCell, BuddingCell
+[Cell_Parameters.params] # see docs for parameters for each cell type
+# center = [5, 5, 0]
+# direction = [1, 0, 0]
+# radius = 1.0
+# height = 4.0
+bounds = [[3, 7], [3, 9], [-1, 1]]
 
 [Molecule_Parameters]
 num_molecules = [
     5000,
     5000,
 ] # size of array tells the types of molecules (must be same as num_of_fluorophores below). All of the Molecule_Parameters are of the same first dimension as this.
-track_type = ["constant", "constant"] # "constant", "fbm"
+track_type = ["fbm", "fbm"] # "constant", "fbm"
 diffusion_coefficient = [
     [
-        0.0,
-        0.0,
+        0.2,
+        0.4,
     ],
     [
-        0.0,
-        0.0,
+        0.2,
+        0.4,
     ],
 ] # um^2/s, size of each index (eg. len(...[0]) is the # of diffusion coefficients the system can explore.
 

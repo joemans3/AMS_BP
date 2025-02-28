@@ -4,13 +4,13 @@ time_unit = "ms"          # always ms
 diffusion_unit = "um^2/s" # always um^2/s
 
 [Cell_Parameters]
-cell_type = "RectangularCell" # any of RectangularCell, SphericalCell, OvoidCell, RodCell, BuddingCell
+cell_type = "RodCell" # any of RectangularCell, SphericalCell, OvoidCell, RodCell, BuddingCell
 [Cell_Parameters.params] # see docs for parameters for each cell type
-# center = [5, 5, 0]
-# direction = [1, 0, 0]
-# radius = 1.0
-# height = 4.0
-bounds = [[3, 7], [3, 9], [-1, 1]]
+center = [5, 5, 0]
+direction = [1, 0, 0]
+radius = 1.0
+height = 4.0
+# bounds = [[3, 7], [3, 9], [-1, 1]]
 
 [Molecule_Parameters]
 num_molecules = [

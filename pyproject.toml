@@ -7,7 +7,7 @@ description = "Advanced Microscopy Simulations developed for the Weber Lab by Ba
 
 readme = "README.md"
 
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 
 
 keywords = ["SMS"]
@@ -29,6 +29,7 @@ dependencies = [
   "pydantic>=2.9.2",
   "tomli>=2.0.2",
   "pyvista>=0.44.2",
+  "boundedfbm>=0.1.0",
 ]
 
 [project.urls]

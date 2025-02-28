@@ -3,9 +3,8 @@ from typing import List, Tuple
 
 import numpy as np
 import pyvista as pv
-
-from .base_cell import BaseCell
-from .typedefs import Vector3D
+from boundedfbm.cells.base_cell import BaseCell
+from boundedfbm.cells.typedefs import Vector3D
 
 
 @dataclass

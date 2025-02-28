@@ -14,9 +14,9 @@ import random
 from typing import overload
 
 import numpy as np
+from boundedfbm.motion.FBM import FBM_BP
 
-from ..cells.base_cell import BaseCell
-from .movement.fbm_BP import FBM_BP
+from ..cells import BaseCell
 
 
 class Track_generator:
@@ -110,8 +110,7 @@ class Track_generator:
             (track_length) * self.oversample_motion_time,
             self.oversample_motion_time,
         )
-        # add back the initial position to the track
-        track_xyz = xyz + initials
+        track_xyz = xyz
         # create the dict
         track_data = {
             "xy": track_xyz,
@@ -193,8 +192,7 @@ class Track_generator:
             track_length * self.oversample_motion_time,
             self.oversample_motion_time,
         )
-        # add back the initial position to the track
-        track_xyz = xyz + initials
+        track_xyz = xyz
         # create the dict
         track_data = {
             "xy": track_xyz,

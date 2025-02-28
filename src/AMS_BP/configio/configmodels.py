@@ -3,9 +3,7 @@ from typing import Any, Dict, List, Literal, Union
 import numpy as np
 from pydantic import BaseModel, Field, field_validator
 
-from AMS_BP.cells.cell_factory import validate_cell_parameters
-
-from ..cells import CellType
+from ..cells import CellType, validate_cell_parameters
 
 
 class CellParameters(BaseModel):

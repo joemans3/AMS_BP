@@ -5,9 +5,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import tomli
 from pydantic import BaseModel
 
-from AMS_BP.cells.cell_factory import create_cell
-
-from ..cells.base_cell import BaseCell
+from ..cells import BaseCell, create_cell
 from ..motion import Track_generator, create_condensate_dict
 from ..motion.track_gen import (
     _convert_tracks_to_trajectory,

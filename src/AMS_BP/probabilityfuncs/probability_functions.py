@@ -46,7 +46,7 @@ from typing import Tuple
 
 import numpy as np
 
-from ..cells.base_cell import BaseCell
+from ..cells import BaseCell
 
 
 def generate_points_from_cls(

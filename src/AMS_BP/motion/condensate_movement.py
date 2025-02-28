@@ -25,7 +25,7 @@ from typing import Optional
 
 import numpy as np
 
-from ..cells.base_cell import BaseCell
+from ..cells import BaseCell
 from ..utils.decorators import cache
 from .track_gen import Track_generator
 
@@ -276,7 +276,7 @@ class Condensate:
         track_generator = Track_generator(
             cell=self.cell,
             total_time=time,
-            oversample_motion_time=20,
+            oversample_motion_time=self.oversample_motion_time,
         )
         track = track_generator.track_generation_no_transition(
             diffusion_coefficient=self.diffusion_coefficient,

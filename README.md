@@ -84,7 +84,6 @@ diffusion_unit = "um^2/s" # diffusion coefficient units
 
 1. **Cell Parameters**
    - Define cell space dimensions
-   - Set cell axial radius
 
 2. **Molecule Parameters**
    - Number of molecules per type

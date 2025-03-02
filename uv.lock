@@ -3,10 +3,9 @@ requires-python = ">=3.12"
 
 [[package]]
 name = "ams-bp"
-version = "0.0.33"
+version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "boundedfbm" },
     { name = "jsonschema" },
     { name = "numpy" },
     { name = "pydantic" },
@@ -31,7 +30,6 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "boundedfbm", specifier = ">=0.1.2" },
     { name = "jsonschema", specifier = ">=4.23.0" },
     { name = "numpy", specifier = ">=1.21.2" },
     { name = "pydantic", specifier = ">=2.9.2" },
@@ -190,21 +188,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/76/9a/0e33f5054c54d349ea62c277191c020c2d6ef1d65ab2cb1993f91ec846d1/bleach-6.2.0.tar.gz", hash = "sha256:123e894118b8a599fd80d3ec1a6d4cc7ce4e5882b1317a7e1ba69b56e95f991f", size = 203083 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fc/55/96142937f66150805c25c4d0f31ee4132fd33497753400734f9dfdcbdc66/bleach-6.2.0-py3-none-any.whl", hash = "sha256:117d9c6097a7c3d22fd578fcd8d35ff1e125df6736f554da4e432fdd63f31e5e", size = 163406 },
-]
-
-[[package]]
-name = "boundedfbm"
-version = "0.1.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-    { name = "pyvista" },
-    { name = "scipy" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/a0/7d/84f0c3693cd0f550306dfe8c640f919472d47d8a2cd5726094e22fa980b7/boundedfbm-0.1.2.tar.gz", hash = "sha256:7218b40ca01c495632b8ee08dc9b07a64e1f1c65270735ff1f22fd7328cdab15", size = 45201 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ad/77/269240c694c9b750e5d445102cb65ce6acf4dacfb78540bdd7631654124d/boundedfbm-0.1.2-py3-none-any.whl", hash = "sha256:fc351a41d43057abe2280f47c9c4d9c4ea6baf048d1b0a926056d968f3c9f365", size = 19236 },
 ]
 
 [[package]]

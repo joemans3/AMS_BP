@@ -37,6 +37,77 @@ class BuddingCell(BaseCell):
     bud_distance: float
     neck_radius: float
 
+    def is_point_inside(
+        self, x: float, y: float, z: float, tolerance: float = 1e-3
+    ) -> bool:
+        """
+        Determines if a given point is inside the BuddingCell.
+        A point is inside if it's within the mother cell, the bud, or the neck region.
+
+        Args:
+            point (np.ndarray | List[float] | Tuple): The (x, y, z) coordinates of the point to check
+
+        Returns:
+            bool: True if the point is inside the cell, False otherwise
+        """
+        # Ensure point is a numpy array for vector operations
+        point = np.array([x, y, z])
+        mother_center = np.array(self.center)
+
+        # Calculate bud center based on angle and distance
+        bud_x = mother_center[0] + self.bud_distance * np.cos(self.bud_angle)
+        bud_y = mother_center[1] + self.bud_distance * np.sin(self.bud_angle)
+        bud_center = np.array([bud_x, bud_y, mother_center[2]])
+
+        # Check if point is inside the mother cell (scaled ellipsoid)
+        x, y, z = point - mother_center
+        mother_distance_squared = (
+            (x / self.mother_radius_x) ** 2
+            + (y / self.mother_radius_y) ** 2
+            + (z / self.mother_radius_z) ** 2
+        )
+        if mother_distance_squared <= 1:
+            return True
+
+        # Check if point is inside the bud (scaled ellipsoid)
+        x, y, z = point - bud_center
+        bud_distance_squared = (
+            (x / self.bud_radius_x) ** 2
+            + (y / self.bud_radius_y) ** 2
+            + (z / self.bud_radius_z) ** 2
+        )
+        if bud_distance_squared <= 1:
+            return True
+
+        # Check if point is inside the neck region
+        # First, project the point onto the line between mother and bud centers
+        mother_to_bud_vec = bud_center - mother_center
+        mother_to_bud_length = np.linalg.norm(mother_to_bud_vec)
+        mother_to_bud_unit = mother_to_bud_vec / mother_to_bud_length
+
+        mother_to_point_vec = point - mother_center
+        projection_length = np.dot(mother_to_point_vec, mother_to_bud_unit)
+
+        # Calculate minimum distance from point to the center line
+        if 0 <= projection_length <= mother_to_bud_length:
+            projection_point = mother_center + projection_length * mother_to_bud_unit
+            distance_to_line = np.linalg.norm(point - projection_point)
+
+            # The neck is modeled as a truncated cone
+            # Interpolate the radius at this point along the neck
+            if projection_length <= self.mother_radius_x:
+                # Within mother cell radius from the center
+                local_radius = self.neck_radius
+            elif projection_length >= mother_to_bud_length - self.bud_radius_x:
+                # Within bud cell radius from the bud center
+                local_radius = self.neck_radius
+            else:
+                local_radius = self.neck_radius
+
+            return distance_to_line <= local_radius
+
+        return False
+
 
 def make_BuddingCell(
     center: np.ndarray | List[float] | Tuple,

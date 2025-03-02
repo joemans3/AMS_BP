@@ -98,12 +98,12 @@ Creates cell instance from parameters.
 
 ### `make_sample`
 ```python
-def make_sample(global_params, cell_params) -> SamplePlane
+def make_sample(global_params, cell) -> SamplePlane
 ```
 Creates sample plane from parameters.
 - **Parameters:**
   - `global_params`: Global parameters
-  - `cell_params`: Cell parameters
+  - `cell`: Instance of BaseCell
 - **Returns:** SamplePlane instance
 
 ### `make_condensatedict`

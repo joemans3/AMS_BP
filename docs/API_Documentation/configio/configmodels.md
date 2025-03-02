@@ -13,14 +13,51 @@ class CellParameters(BaseModel)
 ```
 
 #### Fields
-- `cell_space: List[List[float]]`
-  - Description: Cell space dimensions in micrometers
-  - Format: 2D array defining spatial boundaries
-  - Automatically converted to numpy array
+- `cell_type: Union[str, CellType]`
+  - Type of cell. 
+  - Supported: RectangularCell, SphericalCell, OvoidCell, RodCell, BuddingCell
 
-- `cell_axial_radius: float`
-  - Description: Axial radius in micrometers
-  - Defines the cell's axial dimension
+- `params: Dict[str, Any]`
+  - Key value pairs of the parameters of the specified cell.
+
+```python
+# SphericalCell
+params = {
+    "center": [0, 0, 0],   # 3D center coordinates
+    "radius": 10.0         # Radius of sphere
+}
+```
+
+
+```python
+# RodCell
+params = {
+    "center": [0, 0, 0],       # 3D center coordinates
+    "direction": [0, 0, 1],    # Direction vector (will be normalized)
+    "height": 20.0,            # Length of the rod
+    "radius": 5.0              # Radius of the rod
+}
+```
+
+
+```python
+# RectangularCell
+params = {
+    "bounds": [-10, 10, -10, 10, -10, 10]  # [xmin, xmax, ymin, ymax, zmin, zmax]
+}
+```
+
+
+```python
+# OvoidCell
+params = {
+    "center": [0, 0, 0],       # 3D center coordinates
+    "direction": [0, 0, 1],    # Direction vector (will be normalized)
+    "xradius": 10.0,           # Radius in x-direction
+    "yradius": 15.0,           # Radius in y-direction
+    "zradius": 20.0            # Radius in z-direction
+}
+```
 
 ### MoleculeParameters
 Defines parameters for molecular motion and behavior simulation.

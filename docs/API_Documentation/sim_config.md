@@ -30,14 +30,54 @@ This document provides a detailed explanation of the TOML configuration file use
 
 ## 2. **Cell Parameters**
 
-### `cell_space`
-- **Type**: Array of Arrays of Numbers
-- **Shape**: `[[x_min, x_max], [y_min, y_max]]`
-- **Description**: Defines the spatial boundaries of the cell in micrometers (`um`).
+### `cell_type`
+- **Type**: Union[str, CellType]
+- **Description**: Defines the type of the cell to simulate.
+  - Supported: RectangularCell, SphericalCell, OvoidCell, RodCell, BuddingCell
 
-### `cell_axial_radius`
-- **Type**: Number
-- **Description**: The axial radius of the cell in either direction from 0 (focal plane) in micrometers (`um`). The total z-range is `2 * cell_axial_radius`.
+### `params`
+- **Type**: dictionary of parameter names (String) and values (Any)
+- **Description**: Values for the cell_type specified above. The following the general structure:
+
+```python
+# SphericalCell
+params = {
+    "center": [0, 0, 0],   # 3D center coordinates
+    "radius": 10.0         # Radius of sphere
+}
+```
+
+
+```python
+# RodCell
+params = {
+    "center": [0, 0, 0],       # 3D center coordinates
+    "direction": [0, 0, 1],    # Direction vector (will be normalized)
+    "height": 20.0,            # Length of the rod
+    "radius": 5.0              # Radius of the rod
+}
+```
+
+
+```python
+# RectangularCell
+params = {
+    "bounds": [-10, 10, -10, 10, -10, 10]  # [xmin, xmax, ymin, ymax, zmin, zmax]
+}
+```
+
+
+```python
+# OvoidCell
+params = {
+    "center": [0, 0, 0],       # 3D center coordinates
+    "direction": [0, 0, 1],    # Direction vector (will be normalized)
+    "xradius": 10.0,           # Radius in x-direction
+    "yradius": 15.0,           # Radius in y-direction
+    "zradius": 20.0            # Radius in z-direction
+}
+```
+
 
 ---
 

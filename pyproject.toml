@@ -29,6 +29,7 @@ dependencies = [
   "pydantic>=2.9.2",
   "tomli>=2.0.2",
   "pyvista>=0.44.2",
+  "boundedfbm>=0.2.0",
 ]
 
 [project.urls]
@@ -53,7 +54,6 @@ dev-dependencies = [
 
 [tool.uv.sources]
 sms-bp-adv = { workspace = true }
-boundedfbm = { path = "../boundedfbm", editable = true }
 
 [build-system]
 requires = ["hatchling"]

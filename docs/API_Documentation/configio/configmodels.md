@@ -5,6 +5,7 @@ The configuration models module defines Pydantic BaseModel classes for validatin
 
 ## Models
 
+
 ### CellParameters
 Defines the physical parameters of the cell being simulated.
 

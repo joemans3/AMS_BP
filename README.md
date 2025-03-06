@@ -133,7 +133,17 @@ laser_names_active = ["red", "blue"]
 laser_powers_active = [0.5, 0.05]
 laser_positions_active = [[5, 5, 0], [5, 5, 0]]
 ```
-
+To run the default configuration:
+1. Make sure you followed the uv tool installation.
+2. Make a copy of the default configuration file using the command:
+```bash
+run_AMS_BP config
+```
+3. Run the sim:
+```bash
+run_AMS_BP runsim sim_config.toml
+```
+4. View the results in the newly created folder, whose name is defined in the config file.
 ## Advanced Usage
 
 ### Using AMS-BP as a Library

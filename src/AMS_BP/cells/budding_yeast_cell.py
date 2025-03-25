@@ -37,7 +37,7 @@ class BuddingCell(BaseCell):
     bud_distance: float
     neck_radius: float
 
-    def is_point_inside(
+    def contains_point_fallback(
         self, x: float, y: float, z: float, tolerance: float = 1e-3
     ) -> bool:
         """

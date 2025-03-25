@@ -71,7 +71,6 @@ params = {
 # OvoidCell
 params = {
     "center": [0, 0, 0],       # 3D center coordinates
-    "direction": [0, 0, 1],    # Direction vector (will be normalized)
     "xradius": 10.0,           # Radius in x-direction
     "yradius": 15.0,           # Radius in y-direction
     "zradius": 20.0            # Radius in z-direction

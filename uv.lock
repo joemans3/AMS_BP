@@ -3,7 +3,7 @@ requires-python = ">=3.12"
 
 [[package]]
 name = "ams-bp"
-version = "0.1.0"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "boundedfbm" },
@@ -31,7 +31,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "boundedfbm", specifier = ">=0.2.0" },
+    { name = "boundedfbm", specifier = ">=0.4.0" },
     { name = "jsonschema", specifier = ">=4.23.0" },
     { name = "numpy", specifier = ">=1.21.2" },
     { name = "pydantic", specifier = ">=2.9.2" },
@@ -194,7 +194,7 @@ wheels = [
 
 [[package]]
 name = "boundedfbm"
-version = "0.2.0"
+version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
@@ -202,9 +202,9 @@ dependencies = [
     { name = "scipy" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4e/71/70b054865babc599a8478005717734be0846b80fc1294f74467475d55d5a/boundedfbm-0.2.0.tar.gz", hash = "sha256:11d5252d2263fa1d2895b3c3a50f60ffb40c95c6e3728287fda4bc792c4e640e", size = 46239 }
+sdist = { url = "https://files.pythonhosted.org/packages/44/b5/413ce35916157ec938b184e8c3832b32f055292470478a44b6dcd9410f19/boundedfbm-0.4.0.tar.gz", hash = "sha256:f448497cde2b84bd47aae49861b8de074015615d3bec3cb6b6f0214ce640f9bf", size = 45873 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/87/f1/76849ff27af5a14f3c878515688744eb184b81d27f8414107db70366c174/boundedfbm-0.2.0-py3-none-any.whl", hash = "sha256:172f3d29bf724651dc9bf4aa8e38436594cbbf089582a7b5ef52c1c677362873", size = 20704 },
+    { url = "https://files.pythonhosted.org/packages/90/19/7dbecdb765656fc8e0af00fa1008dd776b6a00f0ba48cdcc5a4b9cc16034/boundedfbm-0.4.0-py3-none-any.whl", hash = "sha256:6301e644161eaf85f1a9eb5b81fd085ff49b097c8401261c55fa265a2e021dbb", size = 20288 },
 ]
 
 [[package]]

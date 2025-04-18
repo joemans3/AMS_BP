@@ -288,7 +288,7 @@
        transform="matrix(0.31749999,0,0,0.31749999,-11.164709,82.079385)"
        style="stroke-linecap:butt;stroke-linejoin:round">
       <rect
-         style="fill:#ffffff;fill-opacity:0.27843139;stroke:#c56a6a;stroke-width:3.07596;stroke-linecap:butt;stroke-linejoin:round;stroke-dasharray:none;paint-order:fill markers stroke"
+         style="fill:#ffffff;fill-opacity:1;stroke:#c56a6a;stroke-width:3.07596;stroke-linecap:butt;stroke-linejoin:round;stroke-dasharray:none;paint-order:fill markers stroke"
          id="rect14471"
          width="393.62967"
          height="187.02661"

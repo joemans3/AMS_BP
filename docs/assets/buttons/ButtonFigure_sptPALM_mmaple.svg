@@ -26,14 +26,14 @@
      inkscape:document-units="mm"
      showgrid="false"
      inkscape:zoom="0.49947056"
-     inkscape:cx="280.2968"
-     inkscape:cy="411.43566"
-     inkscape:window-width="1470"
-     inkscape:window-height="863"
+     inkscape:cx="146.15476"
+     inkscape:cy="462.48972"
+     inkscape:window-width="1309"
+     inkscape:window-height="456"
      inkscape:window-x="0"
      inkscape:window-y="37"
      inkscape:window-maximized="0"
-     inkscape:current-layer="g406788" />
+     inkscape:current-layer="svg32725" />
   <defs
      id="defs32722">
     <clipPath
@@ -1031,6 +1031,15 @@
        d="m 513,0 v 4581 h 606 V 2700 h 2381 v 1881 h 606 V 0 H 3500 V 2159 H 1119 V 0 Z"
        transform="scale(0.015625)" />
   </defs>
+  <rect
+     style="stroke-linecap:butt;stroke-linejoin:round;fill:#ffffff;fill-opacity:1;stroke:#c56a6a;stroke-width:5.70204;stroke-dasharray:none;paint-order:fill markers stroke"
+     id="rect14471"
+     width="723.77765"
+     height="533.9696"
+     x="-158.71298"
+     y="473.00082"
+     ry="0"
+     transform="matrix(0.35277777,0,0,0.35277777,55.990413,-166.86417)" />
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
@@ -2104,14 +2113,6 @@
          id="g406788"
          transform="translate(394.79527,-491.9454)"
          style="stroke-linecap:butt;stroke-linejoin:round">
-        <rect
-           style="fill:#ffffff;fill-opacity:0.27843139;stroke:#c56a6a;stroke-width:5.70204;stroke-linecap:butt;stroke-linejoin:round;stroke-dasharray:none;paint-order:fill markers stroke"
-           id="rect14471"
-           width="723.77765"
-           height="533.9696"
-           x="-158.71298"
-           y="473.00082"
-           ry="0" />
         <g
            id="g10021"
            transform="translate(237.14791,228.46977)"

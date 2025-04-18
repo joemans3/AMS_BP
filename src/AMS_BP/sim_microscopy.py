@@ -132,8 +132,8 @@ class VirtualMicroscope:
             self._set_laser_positions(laser_positions=laser_position)
 
         duration_total, exposure_time, interval_time = timeValidator(
-            self.config.GlobalParameters.exposure_time,
-            self.config.GlobalParameters.interval_time,
+            self.config.GlobalParameter.exposure_time,
+            self.config.GlobalParameter.interval_time,
             self.sample_plane.dt,
             self.sample_plane.t_end,
             self._time,

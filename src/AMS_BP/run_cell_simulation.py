@@ -196,7 +196,7 @@ def run_cell_simulation(
 
         # save
         save_config_frames(
-            metadata, frames, setup_config["base_config"].OutputParameters
+            metadata, frames, setup_config["base_config"].OutputParameter
         )
 
         progress.update(task_2, completed=None)

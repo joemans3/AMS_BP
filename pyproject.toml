@@ -42,7 +42,11 @@ venv = ".venv"
 
 [tool.uv]
 dev-dependencies = [
+  "cluster-detection>=0.2.1",
+  "journalplots>=0.1.21",
   "matplotlib>=3.10.0",
+  "matplotlib-scalebar>=0.9.0",
+  "microfilm>=0.3.0",
   "mkdocs-material==9.5.40",
   "mkdocstrings-python>=1.12.2",
   "notebook>=7.3.2",
@@ -50,6 +54,8 @@ dev-dependencies = [
   "pyright>=1.1.384",
   "pytest>=8.3.3",
   "ruff>=0.6.9",
+  "smrecon>=0.1.0",
+  "sptanalysis>=0.2.0",
 ]
 
 [tool.uv.sources]

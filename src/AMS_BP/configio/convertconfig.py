@@ -647,11 +647,11 @@ class ConfigLoader:
         # base config
         self.populate_dataclass_schema()
         base_config = ConfigList(
-            CellParameters=self.cell_params,
-            MoleculeParameters=self.molecule_params,
-            GlobalParameters=self.global_params,
-            CondensateParameters=self.condensate_params,
-            OutputParameters=self.output_params,
+            CellParameter=self.cell_params,
+            MoleculeParameter=self.molecule_params,
+            GlobalParameter=self.global_params,
+            CondensateParameter=self.condensate_params,
+            OutputParameter=self.output_params,
         )
 
         # fluorophore config
@@ -666,41 +666,41 @@ class ConfigLoader:
         detector, qe = self.create_detector_from_config(self.config)
 
         # make cell
-        cell = make_cell(cell_params=base_config.CellParameters)
+        cell = make_cell(cell_params=base_config.CellParameter)
 
         # make initial sample plane
         sample_plane = make_sample(
-            global_params=base_config.GlobalParameters,
+            global_params=base_config.GlobalParameter,
             cell=cell,
         )
 
         # make condensates_dict
         condensates_dict = make_condensatedict(
-            condensate_params=base_config.CondensateParameters, cell=cell
+            condensate_params=base_config.CondensateParameter, cell=cell
         )
 
         # make sampling function
         sampling_functions = make_samplingfunction(
-            condensate_params=base_config.CondensateParameters, cell=cell
+            condensate_params=base_config.CondensateParameter, cell=cell
         )
 
         # create initial positions
         initial_molecule_positions = gen_initial_positions(
-            molecule_params=base_config.MoleculeParameters,
+            molecule_params=base_config.MoleculeParameter,
             cell=cell,
-            condensate_params=base_config.CondensateParameters,
+            condensate_params=base_config.CondensateParameter,
             sampling_functions=sampling_functions,
         )
 
         # create the track generator
         track_generators = create_track_generator(
-            global_params=base_config.GlobalParameters, cell=cell
+            global_params=base_config.GlobalParameter, cell=cell
         )
 
         # get all the tracks
         tracks, points_per_time = get_tracks(
-            molecule_params=base_config.MoleculeParameters,
-            global_params=base_config.GlobalParameters,
+            molecule_params=base_config.MoleculeParameter,
+            global_params=base_config.GlobalParameter,
             initial_positions=initial_molecule_positions,
             track_generator=track_generators,
         )

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Literal, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 import numpy as np
 from pydantic import BaseModel, Field, field_validator
@@ -85,8 +85,8 @@ class OutputParameters(BaseModel):
 
 
 class ConfigList(BaseModel):
-    CellParameters: CellParameters
-    MoleculeParameters: MoleculeParameters
-    GlobalParameters: GlobalParameters
-    CondensateParameters: CondensateParameters
-    OutputParameters: OutputParameters
+    CellParameter: Optional[CellParameters] = None
+    MoleculeParameter: Optional[MoleculeParameters] = None
+    GlobalParameter: GlobalParameters
+    CondensateParameter: Optional[CondensateParameters] = None
+    OutputParameter: Optional[OutputParameters] = None

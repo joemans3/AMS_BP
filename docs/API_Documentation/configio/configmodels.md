@@ -204,30 +204,30 @@ All models include automatic validation and conversion:
 ```python
 # Create configuration instance
 config = ConfigList(
-    CellParameters=CellParameters(
+    CellParameter=CellParameters(
         cell_space=[[0, 10], [0, 10]],
         cell_axial_radius=5.0
     ),
-    MoleculeParameters=MoleculeParameters(
+    MoleculeParameter=MoleculeParameters(
         num_molecules=[100],
         track_type=["fbm"],
         # ... other required fields ...
     ),
-    GlobalParameters=GlobalParameters(
+    GlobalParameter=GlobalParameters(
         sample_plane_dim=[20.0, 20.0],
         cycle_count=100,
         exposure_time=100,
         interval_time=100,
         oversample_motion_time=10
     ),
-    CondensateParameters=CondensateParameters(
+    CondensateParameter=CondensateParameters(
         initial_centers=[[[5.0, 5.0]]],
         initial_scale=[[2.0]],
         diffusion_coefficient=[[0.1]],
         hurst_exponent=[[0.7]],
         density_dif=[2]
     ),
-    OutputParameters=OutputParameters(
+    OutputParameter=OutputParameters(
         output_path="./output",
         output_name="simulation",
         subsegment_type="uniform",

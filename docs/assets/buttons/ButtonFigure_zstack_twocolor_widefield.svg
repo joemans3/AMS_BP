@@ -26,12 +26,12 @@
      inkscape:document-units="mm"
      showgrid="false"
      inkscape:zoom="1.0705071"
-     inkscape:cx="191.49803"
-     inkscape:cy="123.77312"
-     inkscape:window-width="1470"
-     inkscape:window-height="863"
+     inkscape:cx="78.000417"
+     inkscape:cy="144.79119"
+     inkscape:window-width="1309"
+     inkscape:window-height="456"
      inkscape:window-x="0"
-     inkscape:window-y="38"
+     inkscape:window-y="37"
      inkscape:window-maximized="0"
      inkscape:current-layer="layer1" />
   <defs
@@ -1012,7 +1012,7 @@
          x="86.603134"
          y="100.1396">Two-Color Widefield Z-Stack</tspan></text>
     <rect
-       style="fill:#e47a7a;fill-opacity:0.121723;stroke:#c56a6a;stroke-width:0.950664;stroke-linecap:butt;stroke-linejoin:round;stroke-dasharray:none;paint-order:fill markers stroke"
+       style="fill:#ffffff;fill-opacity:0.27745664;stroke:#c56a6a;stroke-width:0.950664;stroke-linecap:butt;stroke-linejoin:round;stroke-dasharray:none;paint-order:fill markers stroke"
        id="rect14471"
        width="124.74778"
        height="59.147781"

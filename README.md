@@ -8,7 +8,7 @@
 AMS-BP is a powerful simulation tool for advanced fluorescence microscopy experiments. This guide covers both command-line usage and library integration.
 
 ## Overview of Simulation Workflow
-<img align = "left" src="./docs/assets/figures/Fig1_Schema.svg" width="300"/>
+<img align = "left" src="./docs/assets/figures/Fig1_Schema.svg" width="500"/>
 
 *A ground truth is created, **a**, with $`f_{n}`$ fluorophore types of $`N_{f_{n}}`$ molecules each. If applicable, the motion of these molecules is modelled using a 3D bounded FBM with fluctuating generalized diffusion coefficients and Hurst parameters. Variations are modelled as a Markov Chain and require rate constants as parameters. Different fluorophores can have different motion models. The resolution of the motion models is $`\Delta t`$ and cannot be smaller than 1 ms (for computational efficiency). Given the microscope parameters specific to the experimental procedure to simulate, at every time $`t_{j}`$, the excitation intensity for each channel (**b**) is calculated at each fluorophore's location, **c**. For $`t_{j} \rightarrow t_{j+\Delta t}`$, the photophysical state trajectory of the fluorophore is simulated using the light intensity at the molecule's location as input for any light-dependent transition rates, **d**. For the duration that the shutter is open and light is emitted from the sample, emission filters for each channel are applied before the convolution with PSF models, **e**. The incident photons on the detector are then converted to photoelectrons and finally to digital units using the detector models provided, **f**.*
 

@@ -26,10 +26,10 @@
      inkscape:document-units="mm"
      showgrid="false"
      inkscape:zoom="1.5024123"
-     inkscape:cx="63.231644"
-     inkscape:cy="129.45847"
-     inkscape:window-width="1470"
-     inkscape:window-height="863"
+     inkscape:cx="184.70296"
+     inkscape:cy="73.215588"
+     inkscape:window-width="1309"
+     inkscape:window-height="456"
      inkscape:window-x="0"
      inkscape:window-y="37"
      inkscape:window-maximized="0"
@@ -865,17 +865,6 @@
            x="362.26099"
            y="-116.79861"
            style="fill:#000000;fill-opacity:1;stroke-width:3.17165">Merge</tspan></text>
-      <text
-         xml:space="preserve"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.7778px;line-height:10.625px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:3.17165;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
-         x="224.67836"
-         y="-154.53268"
-         id="text12429-9-1-4-7"><tspan
-           sodipodi:role="line"
-           id="tspan15929-9"
-           x="224.67836"
-           y="-154.53268"
-           style="stroke-width:3.17165">Two-Color Confocal Z-Stack</tspan></text>
       <path
          style="fill:none;stroke:#696969;stroke-width:1.49;stroke-dasharray:5.96, 1.49;stroke-dashoffset:0;stroke-opacity:0.599589;marker-start:url(#Stop);marker-end:url(#marker25097);paint-order:fill markers stroke"
          d="M 50.886521,-127.38535 H 261.51437"
@@ -1037,6 +1026,17 @@
            x="200.9238"
            y="-166.71378"
            style="stroke-width:3.17165" /></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.7778px;line-height:10.625px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:3.17165;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+         x="224.67836"
+         y="-154.53268"
+         id="text12429-9-1-4-7"><tspan
+           sodipodi:role="line"
+           id="tspan15929-9"
+           x="224.67836"
+           y="-154.53268"
+           style="stroke-width:3.17165">Two-Color Confocal Z-Stack</tspan></text>
     </g>
   </g>
 </svg>

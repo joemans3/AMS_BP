@@ -26,10 +26,10 @@
      inkscape:document-units="mm"
      showgrid="false"
      inkscape:zoom="0.49947056"
-     inkscape:cx="135.1431"
-     inkscape:cy="698.73988"
-     inkscape:window-width="1309"
-     inkscape:window-height="456"
+     inkscape:cx="280.2968"
+     inkscape:cy="411.43566"
+     inkscape:window-width="1470"
+     inkscape:window-height="863"
      inkscape:window-x="0"
      inkscape:window-y="37"
      inkscape:window-maximized="0"
@@ -2104,6 +2104,14 @@
          id="g406788"
          transform="translate(394.79527,-491.9454)"
          style="stroke-linecap:butt;stroke-linejoin:round">
+        <rect
+           style="fill:#ffffff;fill-opacity:0.27843139;stroke:#c56a6a;stroke-width:5.70204;stroke-linecap:butt;stroke-linejoin:round;stroke-dasharray:none;paint-order:fill markers stroke"
+           id="rect14471"
+           width="723.77765"
+           height="533.9696"
+           x="-158.71298"
+           y="473.00082"
+           ry="0" />
         <g
            id="g10021"
            transform="translate(237.14791,228.46977)"
@@ -3120,14 +3128,6 @@
              style="stroke-width:1.41732"
              x="180.72659"
              y="487.54825" /></text>
-        <rect
-           style="fill:#ffffff;fill-opacity:0.27843139;stroke:#c56a6a;stroke-width:5.70204;stroke-linecap:butt;stroke-linejoin:round;stroke-dasharray:none;paint-order:fill markers stroke"
-           id="rect14471"
-           width="723.77765"
-           height="533.9696"
-           x="-158.71298"
-           y="473.00082"
-           ry="0" />
         <text
            xml:space="preserve"
            style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:36px;line-height:13.9091px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:0.807116;stroke:none;stroke-width:1.41732;paint-order:fill markers stroke"

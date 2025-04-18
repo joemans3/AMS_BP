@@ -26,13 +26,13 @@
      inkscape:document-units="mm"
      showgrid="false"
      inkscape:zoom="1.0705071"
-     inkscape:cx="78.000417"
-     inkscape:cy="144.79119"
-     inkscape:window-width="1309"
-     inkscape:window-height="456"
+     inkscape:cx="145.25826"
+     inkscape:cy="130.31207"
+     inkscape:window-width="1470"
+     inkscape:window-height="863"
      inkscape:window-x="0"
      inkscape:window-y="37"
-     inkscape:window-maximized="0"
+     inkscape:window-maximized="1"
      inkscape:current-layer="layer1" />
   <defs
      id="defs19370">
@@ -283,6 +283,13 @@
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(-17.740285,-93.279564)">
+    <rect
+       style="fill:#ffffff;fill-opacity:0.27745664;stroke:#c56a6a;stroke-width:0.950664;stroke-linecap:butt;stroke-linejoin:round;stroke-dasharray:none;paint-order:fill markers stroke"
+       id="rect14471"
+       width="124.74778"
+       height="59.147781"
+       x="17.992504"
+       y="93.531784" />
     <g
        id="figure_1"
        style="stroke-linecap:butt;stroke-linejoin:round"
@@ -1011,12 +1018,5 @@
          id="tspan15929-9"
          x="86.603134"
          y="100.1396">Two-Color Widefield Z-Stack</tspan></text>
-    <rect
-       style="fill:#ffffff;fill-opacity:0.27745664;stroke:#c56a6a;stroke-width:0.950664;stroke-linecap:butt;stroke-linejoin:round;stroke-dasharray:none;paint-order:fill markers stroke"
-       id="rect14471"
-       width="124.74778"
-       height="59.147781"
-       x="17.992504"
-       y="93.531784" />
   </g>
 </svg>

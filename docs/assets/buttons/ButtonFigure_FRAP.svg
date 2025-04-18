@@ -26,10 +26,10 @@
      inkscape:document-units="mm"
      showgrid="false"
      inkscape:zoom="1.6461747"
-     inkscape:cx="17.920334"
-     inkscape:cy="41.307888"
-     inkscape:window-width="1309"
-     inkscape:window-height="456"
+     inkscape:cx="18.224068"
+     inkscape:cy="41.611622"
+     inkscape:window-width="1470"
+     inkscape:window-height="863"
      inkscape:window-x="0"
      inkscape:window-y="37"
      inkscape:window-maximized="0"
@@ -253,6 +253,13 @@
        id="figure_1"
        style="stroke-linecap:butt;stroke-linejoin:round"
        transform="matrix(0.20831174,0,0,0.20831174,2.0291093,1.685217)">
+      <rect
+         style="fill:#ffffff;fill-opacity:0.27843139;stroke:#c56a6a;stroke-width:2.40195;stroke-dasharray:none;paint-order:fill markers stroke"
+         id="rect14471"
+         width="356.02982"
+         height="124.2684"
+         x="12.964865"
+         y="130.06302" />
       <g
          id="axes_1"
          style="stroke-linecap:butt;stroke-linejoin:round">
@@ -850,13 +857,6 @@
            x="183.82301"
            y="158.94441"
            id="tspan4503">After Photobleaching (FRAP)</tspan></text>
-      <rect
-         style="fill:#ffffff;fill-opacity:0.27843139;stroke:#c56a6a;stroke-width:2.40195;stroke-dasharray:none;paint-order:fill markers stroke"
-         id="rect14471"
-         width="356.02982"
-         height="124.2684"
-         x="12.964865"
-         y="130.06302" />
     </g>
   </g>
 </svg>

@@ -26,10 +26,10 @@
      inkscape:document-units="mm"
      showgrid="false"
      inkscape:zoom="0.60906981"
-     inkscape:cx="-77.987776"
-     inkscape:cy="198.6636"
-     inkscape:window-width="1309"
-     inkscape:window-height="456"
+     inkscape:cx="-77.166852"
+     inkscape:cy="199.48452"
+     inkscape:window-width="1470"
+     inkscape:window-height="863"
      inkscape:window-x="0"
      inkscape:window-y="37"
      inkscape:window-maximized="0"
@@ -384,6 +384,14 @@
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(-2.6064336)">
+    <rect
+       style="fill:#ffffff;stroke-width:1;stroke-opacity:1;paint-order:fill markers stroke;fill-opacity:0.27843139;stroke:#c56a6a;stroke-dasharray:none"
+       id="rect11816"
+       width="184.6846"
+       height="76.028908"
+       x="2.6064336"
+       y="0"
+       ry="0" />
     <g
        id="g8193"
        transform="matrix(0.35277777,0,0,0.35277777,-35.455133,-30.617969)"
@@ -1128,13 +1136,5 @@
          style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:7.76111px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:4.064"
          x="101.87067"
          y="7.0336761">fPALM  and Reconstructions</tspan></text>
-    <rect
-       style="fill:#ffffff;stroke-width:1;stroke-opacity:1;paint-order:fill markers stroke;fill-opacity:0.27843139;stroke:#c56a6a;stroke-dasharray:none"
-       id="rect11816"
-       width="184.6846"
-       height="76.028908"
-       x="2.6064336"
-       y="0"
-       ry="0" />
   </g>
 </svg>

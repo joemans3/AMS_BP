@@ -16,7 +16,9 @@ AMS-BP is a powerful simulation tool for advanced fluorescence microscopy experi
 Find detailed API references for the library at: [joemans3/github.io/AMS_BP](https://joemans3.github.io/AMS_BP/)
 > A more detailed example is provided in the jupyter notebook in the examples. For starters refer to the [VisualizingIndividualModules](examples/VisualizingIndividualModules/modules_explained.ipynb). Then head over to the [laser modulation module](examples/VisualizingIndividualModules/laser_modulation.ipynb) which will show how to change the laser power over time in the simulations. Then view an example of a complex experiment setup for [FRAP](examples/QuantitativeExperiments/FRAP/FRAP_methods.ipynb) which is possible by the use of compositions of modules in this simulation library.
 
-## Examples:
+## Examples (Click on the image buttons to be taken to the Jupyter notebooks):
+
+> !!ATTENTION!! - Please note that you NEED to install the developmental dependencies to run the examples in full. This is mainly for installing the Jupyter notebook extensions, matplotlib and other visualization packages.
 
 [<img src="./docs/assets/buttons/ButtonFigure_FRAP.svg" width="300" height="120"/>](./examples/QuantitativeExperiments/FRAP/FRAP_methods.ipynb) [<img src="./docs/assets/buttons/ButtonFigure_fPALM_NPC.svg" width="300"/>](./examples/QuantitativeExperiments/FRAP/FRAP_methods.ipynb)
 

@@ -8,14 +8,21 @@
 AMS-BP is a powerful simulation tool for advanced fluorescence microscopy experiments. This guide covers both command-line usage and library integration.
 
 ## Overview of Simulation Workflow
-![Overview Schematic](./docs/assets/figures/Fig1_Schema.svg)
-*A ground truth is created, **a**, with $`f_{n}`$ fluorophore types of $`N_{f_{n}}`$ molecules each. If applicable, the motion of these molecules is modelled using a 3D bounded FBM with fluctuating generalized diffusion coefficients and Hurst parameters. Variations are modelled as a Markov Chain and require rate constants as parameters. Different fluorophores can have different motion models. The resolution of the motion models is $`\Delta t`$ and cannot be smaller than 1 ms (for computational efficiency). Given the microscope parameters specific to the experimental procedure to simulate, at every time $`t_{j}`$, the excitation intensity for each channel (**b**) is calculated at each fluorophore's location, **c**. For $`t_{j} \rightarrow t_{j+\Delta t}`$, the photophysical state trajectory of the fluorophore is simulated using the light intensity at the molecule's location as input for any light-dependent transition rates, **d**. For the duration that the shutter is open and light is emitted from the sample, emission filters for each channel are applied before the convolution with PSF models, **e**. The incident photons on the detector are then converted to photoelectrons and finally to digital units using the detector models provided, **f**.*
+<img align = "left" src="./docs/assets/figures/Fig1_Schema.svg" width="300"/>
 
+*A ground truth is created, **a**, with $`f_{n}`$ fluorophore types of $`N_{f_{n}}`$ molecules each. If applicable, the motion of these molecules is modelled using a 3D bounded FBM with fluctuating generalized diffusion coefficients and Hurst parameters. Variations are modelled as a Markov Chain and require rate constants as parameters. Different fluorophores can have different motion models. The resolution of the motion models is $`\Delta t`$ and cannot be smaller than 1 ms (for computational efficiency). Given the microscope parameters specific to the experimental procedure to simulate, at every time $`t_{j}`$, the excitation intensity for each channel (**b**) is calculated at each fluorophore's location, **c**. For $`t_{j} \rightarrow t_{j+\Delta t}`$, the photophysical state trajectory of the fluorophore is simulated using the light intensity at the molecule's location as input for any light-dependent transition rates, **d**. For the duration that the shutter is open and light is emitted from the sample, emission filters for each channel are applied before the convolution with PSF models, **e**. The incident photons on the detector are then converted to photoelectrons and finally to digital units using the detector models provided, **f**.*
 
 ## API Reference and Docs
 Find detailed API references for the library at: [joemans3/github.io/AMS_BP](https://joemans3.github.io/AMS_BP/)
-> A more detailed example is provided in the jupyter notebook in the examples. For starters refer to the [VisualizingIndividualModules](examples/VisualizingIndividualModules/modules_explained.ipynb). Then head over to the [laser modulation module](examples/VisualizingIndividualModules/laser_modulation.ipynb) which will show how to change the laser power over time in the simulations. Then view an example of a complex experiment setup for [FRAP](examples/QuantitativeExperiments/FRAP_methods.ipynb) which is possible by the use of compositions of modules in this simulation library.
+> A more detailed example is provided in the jupyter notebook in the examples. For starters refer to the [VisualizingIndividualModules](examples/VisualizingIndividualModules/modules_explained.ipynb). Then head over to the [laser modulation module](examples/VisualizingIndividualModules/laser_modulation.ipynb) which will show how to change the laser power over time in the simulations. Then view an example of a complex experiment setup for [FRAP](examples/QuantitativeExperiments/FRAP/FRAP_methods.ipynb) which is possible by the use of compositions of modules in this simulation library.
 
+## Examples:
+
+[<img src="./docs/assets/buttons/ButtonFigure_FRAP.svg" width="300" height="120"/>](./examples/QuantitativeExperiments/FRAP/FRAP_methods.ipynb) [<img src="./docs/assets/buttons/ButtonFigure_fPALM_NPC.svg" width="300"/>](./examples/QuantitativeExperiments/FRAP/FRAP_methods.ipynb)
+
+[<img src="./docs/assets/buttons/ButtonFigure_zstack_twocolor_widefield.svg" width="300"/>](./examples/QuantitativeExperiments/TwoColor/Widefield/widefield_twocolor.ipynb) [<img src="./docs/assets/buttons/ButtonFigure_zstack_twocolor_confocal.svg" width="300"/>](./examples/QuantitativeExperiments/TwoColor/Confocal/confocal_twocolor.ipynb)
+
+[<img align="middle" src="./docs/assets/buttons/ButtonFigure_sptPALM_mmaple.svg" width="300"/>](./examples/QuantitativeExperiments/PALM/sptPALM/motionmodels_sptmmaple.ipynb)
 ## Table of Contents
 - [Installation](#installation)
 - [Command Line Interface](#command-line-interface)
@@ -169,9 +176,6 @@ frames, metadata = function_exp(microscope=microscope, config=config_exp)
 from AMS_BP.configio.saving import save_config_frames
 save_config_frames(metadata, frames, setup_config["base_config"].OutputParameters)
 ```
-
-
-
 > **_NOTE:_** Please note that this application DOES NOT currently model the process of stimulated emission, and as such is not suitable for simulating stimulated emission microscopy ([STED](https://en.wikipedia.org/wiki/STED_microscopy))-type experiments. Work in this area is ongoing.
 
 ## High Priority Features

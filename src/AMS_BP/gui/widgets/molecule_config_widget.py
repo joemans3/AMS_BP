@@ -26,7 +26,6 @@ class MoleculeConfigWidget(QWidget):
 
     def __init__(self):
         super().__init__()
-        self._updating_molecule_count = False
 
         self.main_layout = QVBoxLayout()
         self.setLayout(self.main_layout)
@@ -58,17 +57,16 @@ class MoleculeConfigWidget(QWidget):
         self.update_molecule_types(1)
 
     def _on_molecule_count_changed(self, count):
-        """Handle molecule count change internally and emit signal"""
-        if not self._updating_molecule_count:
-            self.update_molecule_types(count)
-            # Emit signal to notify other widgets
-            self.molecule_count_changed.emit(count)
+        self.update_molecule_types(count)
+        self.molecule_count_changed.emit(count)
 
     def set_molecule_count(self, count):
-        """Public method to be called by other widgets to update molecule count"""
-        self._updating_molecule_count = True
-        self.update_molecule_types(count)
-        self._updating_molecule_count = False
+        if self.num_types_spinner.value() != count:
+            self.num_types_spinner.blockSignals(True)
+            self.num_types_spinner.setValue(count)
+            self.num_types_spinner.blockSignals(False)
+            self.update_molecule_types(count)
+            self.molecule_count_changed.emit(count)
 
     def update_molecule_types(self, num_types):
         # Store current data if any
@@ -86,8 +84,8 @@ class MoleculeConfigWidget(QWidget):
             self.molecule_type_widgets.append(molecule_widget)
             self.tabs.addTab(molecule_widget, f"Molecule Type {i+1}")
 
-        # Restore data if available
-        if current_data:
+        # Restore data only if tab count matches current data
+        if current_data and len(current_data["num_molecules"]) == num_types:
             self.set_data(current_data)
 
     def validate(self) -> bool:
@@ -106,57 +104,56 @@ class MoleculeConfigWidget(QWidget):
             return False
 
     def get_data(self):
-        data = {
-            "num_molecules": [],
-            "track_type": [],
-            "diffusion_coefficient": [],
-            "diffusion_track_amount": [],
-            "hurst_exponent": [],
-            "hurst_track_amount": [],
-            "allow_transition_probability": [],
-            "transition_matrix_time_step": [],
-            "diffusion_transition_matrix": [],
-            "hurst_transition_matrix": [],
-            "state_probability_diffusion": [],
-            "state_probability_hurst": [],
-        }
+        num_molecules = []
+        track_type = []
+        diffusion_coefficient = []
+        hurst_exponent = []
+        allow_transition_probability = []
+        transition_matrix_time_step = []
+        diffusion_transition_matrix = []
+        hurst_transition_matrix = []
+        state_probability_diffusion = []
+        state_probability_hurst = []
 
         for widget in self.molecule_type_widgets:
             type_data = widget.get_data()
-            data["num_molecules"].append(type_data["num_molecules"])
-            data["track_type"].append(type_data["track_type"])
-            data["diffusion_coefficient"].append(type_data["diffusion_coefficient"])
-            data["diffusion_track_amount"].append(type_data["diffusion_track_amount"])
-            data["hurst_exponent"].append(type_data["hurst_exponent"])
-            data["hurst_track_amount"].append(type_data["hurst_track_amount"])
-            data["allow_transition_probability"].append(
+
+            num_molecules.append(type_data["num_molecules"])
+            track_type.append(type_data["track_type"])
+            diffusion_coefficient.append(type_data["diffusion_coefficient"])
+            hurst_exponent.append(type_data["hurst_exponent"])
+            allow_transition_probability.append(
                 type_data["allow_transition_probability"]
             )
-            data["transition_matrix_time_step"].append(
-                type_data["transition_matrix_time_step"]
-            )
-            data["diffusion_transition_matrix"].append(
-                type_data["diffusion_transition_matrix"]
-            )
-            data["hurst_transition_matrix"].append(type_data["hurst_transition_matrix"])
-            data["state_probability_diffusion"].append(
-                type_data["state_probability_diffusion"]
-            )
-            data["state_probability_hurst"].append(type_data["state_probability_hurst"])
+            transition_matrix_time_step.append(type_data["transition_matrix_time_step"])
+            diffusion_transition_matrix.append(type_data["diffusion_transition_matrix"])
+            hurst_transition_matrix.append(type_data["hurst_transition_matrix"])
+            state_probability_diffusion.append(type_data["state_probability_diffusion"])
+            state_probability_hurst.append(type_data["state_probability_hurst"])
 
-        return data
+        return {
+            "num_molecules": num_molecules,
+            "track_type": track_type,
+            "diffusion_coefficient": diffusion_coefficient,
+            "hurst_exponent": hurst_exponent,
+            "allow_transition_probability": allow_transition_probability,
+            "transition_matrix_time_step": transition_matrix_time_step,
+            "diffusion_transition_matrix": diffusion_transition_matrix,
+            "hurst_transition_matrix": hurst_transition_matrix,
+            "state_probability_diffusion": state_probability_diffusion,
+            "state_probability_hurst": state_probability_hurst,
+        }
 
     def set_data(self, data):
         num_types = min(len(data["num_molecules"]), len(self.molecule_type_widgets))
+        self.num_types_spinner.setValue(num_types)
 
         for i in range(num_types):
             type_data = {
                 "num_molecules": data["num_molecules"][i],
                 "track_type": data["track_type"][i],
                 "diffusion_coefficient": data["diffusion_coefficient"][i],
-                "diffusion_track_amount": data["diffusion_track_amount"][i],
                 "hurst_exponent": data["hurst_exponent"][i],
-                "hurst_track_amount": data["hurst_track_amount"][i],
                 "allow_transition_probability": data["allow_transition_probability"][i],
                 "transition_matrix_time_step": data["transition_matrix_time_step"][i],
                 "diffusion_transition_matrix": data["diffusion_transition_matrix"][i],
@@ -486,33 +483,41 @@ class MoleculeTypeWidget(QWidget):
                             amount.blockSignals(False)
 
     def get_data(self):
-        # Get diffusion coefficients and amounts
+        # Get diffusion coefficients and state probabilities
         diff_coeff = [spin.value() for spin in self.diffusion_coefficients]
-        diff_amount = [spin.value() for spin in self.diffusion_amounts]
+        diff_prob = [spin.value() for spin in self.diffusion_amounts]
 
-        # Get Hurst exponents and amounts
-        hurst_exp = [spin.value() for spin in self.hurst_exponents]
-        hurst_amount = [spin.value() for spin in self.hurst_amounts]
+        # Get Hurst exponents and state probabilities (only if visible)
+        hurst_exp = (
+            [spin.value() for spin in self.hurst_exponents]
+            if self.hurst_group.isVisible()
+            else []
+        )
+        hurst_prob = (
+            [spin.value() for spin in self.hurst_amounts]
+            if self.hurst_group.isVisible()
+            else []
+        )
 
-        # Get diffusion transition matrix
+        # Transition matrices
         diff_matrix = self.diffusion_matrix_widget.get_matrix()
-
-        # Get Hurst transition matrix
-        hurst_matrix = self.hurst_matrix_widget.get_matrix()
+        hurst_matrix = (
+            self.hurst_matrix_widget.get_matrix()
+            if self.hurst_group.isVisible()
+            else []
+        )
 
         return {
             "num_molecules": self.num_molecules.value(),
             "track_type": self.track_type.currentText(),
             "diffusion_coefficient": diff_coeff,
-            "diffusion_track_amount": diff_amount,
             "hurst_exponent": hurst_exp,
-            "hurst_track_amount": hurst_amount,
             "allow_transition_probability": self.allow_transition.isChecked(),
             "transition_matrix_time_step": self.transition_time_step.value(),
             "diffusion_transition_matrix": diff_matrix,
             "hurst_transition_matrix": hurst_matrix,
-            "state_probability_diffusion": diff_amount,  # Initial state probability is same as track amount
-            "state_probability_hurst": hurst_amount,  # Initial state probability is same as track amount
+            "state_probability_diffusion": diff_prob,
+            "state_probability_hurst": hurst_prob,
         }
 
     def set_data(self, data):
@@ -525,7 +530,7 @@ class MoleculeTypeWidget(QWidget):
         self.allow_transition.setChecked(data["allow_transition_probability"])
         self.transition_time_step.setValue(data["transition_matrix_time_step"])
 
-        # Update diffusion coefficients
+        # Diffusion Coefficients
         diff_count = len(data["diffusion_coefficient"])
         self.diffusion_count.setValue(diff_count)
         for i in range(diff_count):
@@ -533,21 +538,27 @@ class MoleculeTypeWidget(QWidget):
                 self.diffusion_coefficients[i].setValue(
                     data["diffusion_coefficient"][i]
                 )
-                self.diffusion_amounts[i].setValue(data["diffusion_track_amount"][i])
+                self.diffusion_amounts[i].setValue(
+                    data["state_probability_diffusion"][i]
+                )
 
-        # Update Hurst exponents
-        hurst_count = len(data["hurst_exponent"])
-        self.hurst_count.setValue(hurst_count)
-        for i in range(hurst_count):
-            if i < len(self.hurst_exponents):
-                self.hurst_exponents[i].setValue(data["hurst_exponent"][i])
-                self.hurst_amounts[i].setValue(data["hurst_track_amount"][i])
+        # Hurst Exponents (only if track_type == "fbm")
+        if data["track_type"] == "fbm":
+            hurst_count = len(data["hurst_exponent"])
+            self.hurst_count.setValue(hurst_count)
+            for i in range(hurst_count):
+                if i < len(self.hurst_exponents):
+                    self.hurst_exponents[i].setValue(data["hurst_exponent"][i])
+                    self.hurst_amounts[i].setValue(data["state_probability_hurst"][i])
 
-        # Set transition matrices
+            self.hurst_matrix_widget.set_matrix(data["hurst_transition_matrix"])
+        else:
+            self.hurst_count.setValue(0)
+
+        # Set diffusion matrix
         self.diffusion_matrix_widget.set_matrix(data["diffusion_transition_matrix"])
-        self.hurst_matrix_widget.set_matrix(data["hurst_transition_matrix"])
 
-        # Update visibility
+        # Refresh UI visibility
         self.update_visibility()
 
 

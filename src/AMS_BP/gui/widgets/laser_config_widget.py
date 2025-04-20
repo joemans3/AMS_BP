@@ -35,7 +35,7 @@ class LaserConfigWidget(QWidget):
         self.num_lasers.valueChanged.connect(self.update_laser_tabs)
         form.addRow("Number of Lasers:", self.num_lasers)
 
-        self.active_lasers = []
+        self.laser_widgets = []
 
         self.laser_tabs = QTabWidget()
         self.update_laser_tabs()
@@ -109,76 +109,74 @@ class LaserConfigWidget(QWidget):
         self.laser_names_updated.emit([n for n in names if n])
 
     def update_laser_tabs(self):
-        # Update the number of lasers based on user input
-        num_lasers = self.num_lasers.value()
+        self.laser_tabs.clear()
+        self.laser_widgets = []
 
-        # Add tabs for each laser
-        while self.laser_tabs.count() < num_lasers:
-            self.add_laser_tab(self.laser_tabs.count())
+        for i in range(self.num_lasers.value()):
+            self.add_laser_tab(i)
 
-        while self.laser_tabs.count() > num_lasers:
-            self.laser_tabs.removeTab(self.laser_tabs.count() - 1)
-
-        self.laser_tabs.setCurrentIndex(0)
-        self.laser_name_widgets = self.laser_name_widgets[:num_lasers]  # Sync
         self.emit_active_lasers()
 
     def add_laser_tab(self, index):
         tab = QWidget()
         layout = QFormLayout()
 
-        # Laser name
+        # Create widgets
         laser_name = QLineEdit()
-        layout.addRow(f"Laser {index + 1} Name:", laser_name)
-        self.laser_name_widgets.append(laser_name)
-        laser_name.textChanged.connect(self.emit_active_lasers)
-
-        # Laser type
         laser_type = QComboBox()
         laser_type.addItems(["widefield", "gaussian", "hilo"])
-        layout.addRow(f"Laser {index + 1} Type:", laser_type)
-
-        # Laser preset
         laser_preset = QLineEdit()
-        layout.addRow(f"Laser {index + 1} Preset:", laser_preset)
-
-        # Laser-specific parameters
         power = QDoubleSpinBox()
-        power.setRange(0, 100)
-        layout.addRow(f"Laser {index + 1} Power (W):", power)
-
+        power.setRange(0, 100000)
         wavelength = QSpinBox()
         wavelength.setRange(100, 10000)
-        layout.addRow(f"Laser {index + 1} Wavelength (nm):", wavelength)
-
         beam_width = QDoubleSpinBox()
         beam_width.setRange(0, 1000)
-        layout.addRow(f"Laser {index + 1} Beam Width (µm):", beam_width)
-
         numerical_aperture = QDoubleSpinBox()
         numerical_aperture.setRange(0, 2)
-        layout.addRow(f"Laser {index + 1} Numerical Aperture:", numerical_aperture)
-
         refractive_index = QDoubleSpinBox()
         refractive_index.setRange(1, 2)
-        layout.addRow(f"Laser {index + 1} Refractive Index:", refractive_index)
-
-        # Inclination angle (only for HiLo laser type)
         inclination_angle = QDoubleSpinBox()
         inclination_angle.setRange(0, 90)
-        inclination_angle.setEnabled(False)  # Initially disabled
+        inclination_angle.setEnabled(False)
+
+        # Form layout
+        layout.addRow(f"Laser {index + 1} Name:", laser_name)
+        layout.addRow(f"Laser {index + 1} Type:", laser_type)
+        layout.addRow(f"Laser {index + 1} Preset:", laser_preset)
+        layout.addRow(f"Laser {index + 1} Power (W):", power)
+        layout.addRow(f"Laser {index + 1} Wavelength (nm):", wavelength)
+        layout.addRow(f"Laser {index + 1} Beam Width (µm):", beam_width)
+        layout.addRow(f"Laser {index + 1} Numerical Aperture:", numerical_aperture)
+        layout.addRow(f"Laser {index + 1} Refractive Index:", refractive_index)
         layout.addRow(f"Laser {index + 1} Inclination Angle (°):", inclination_angle)
 
-        # Enable/disable inclination angle based on laser type
-        laser_type.currentIndexChanged.connect(
-            lambda: self.toggle_inclination(laser_type, inclination_angle)
+        # Logic for hilo
+        laser_type.currentTextChanged.connect(
+            lambda val: inclination_angle.setEnabled(val == "hilo")
         )
+        inclination_angle.setEnabled(laser_type.currentText() == "hilo")
 
         tab.setLayout(layout)
         self.laser_tabs.addTab(tab, f"Laser {index + 1}")
 
-        # Store widget references for later validation
-        self.active_lasers.append(laser_name)
+        # Track widgets
+        self.laser_widgets.append(
+            {
+                "name": laser_name,
+                "type": laser_type,
+                "preset": laser_preset,
+                "power": power,
+                "wavelength": wavelength,
+                "beam_width": beam_width,
+                "numerical_aperture": numerical_aperture,
+                "refractive_index": refractive_index,
+                "inclination_angle": inclination_angle,
+            }
+        )
+
+        # Update signal
+        laser_name.textChanged.connect(self.emit_active_lasers)
 
     def toggle_inclination(self, laser_type, inclination_angle):
         """Enable or disable inclination angle field based on laser type."""
@@ -187,36 +185,40 @@ class LaserConfigWidget(QWidget):
         else:
             inclination_angle.setEnabled(False)
 
-    def get_data(self):
-        lasers_data = []
+    def get_data(self) -> dict:
+        lasers_section = {}
+        active_names = []
 
-        for i in range(self.num_lasers.value()):
-            laser_data = {
-                "name": self.laser_tabs.widget(i).findChild(QLineEdit).text(),
-                "type": self.laser_tabs.widget(i).findChild(QComboBox).currentText(),
-                "preset": self.laser_tabs.widget(i).findChild(QLineEdit).text(),
-                "parameters": {
-                    "power": self.laser_tabs.widget(i)
-                    .findChild(QDoubleSpinBox)
-                    .value(),
-                    "wavelength": self.laser_tabs.widget(i).findChild(QSpinBox).value(),
-                    "beam_width": self.laser_tabs.widget(i)
-                    .findChild(QDoubleSpinBox)
-                    .value(),
-                    "numerical_aperture": self.laser_tabs.widget(i)
-                    .findChild(QDoubleSpinBox)
-                    .value(),
-                    "refractive_index": self.laser_tabs.widget(i)
-                    .findChild(QDoubleSpinBox)
-                    .value(),
-                    "inclination_angle": self.laser_tabs.widget(i)
-                    .findChild(QDoubleSpinBox)
-                    .value(),
-                },
+        for widgets in self.laser_widgets:
+            name = widgets["name"].text().strip()
+            if not name:
+                raise ValueError("All lasers must have a name.")
+
+            active_names.append(name)
+
+            laser_type = widgets["type"].currentText()
+            preset = widgets["preset"].text().strip()
+
+            params = {
+                "power": widgets["power"].value(),
+                "wavelength": widgets["wavelength"].value(),
+                "beam_width": widgets["beam_width"].value(),
+                "numerical_aperture": widgets["numerical_aperture"].value(),
+                "refractive_index": widgets["refractive_index"].value(),
             }
-            lasers_data.append(laser_data)
+
+            if laser_type == "hilo":
+                params["inclination_angle"] = widgets["inclination_angle"].value()
+
+            lasers_section[name] = {
+                "type": laser_type,
+                "preset": preset,
+                "parameters": params,
+            }
 
         return {
-            "active": [laser.name for laser in self.active_lasers],
-            "lasers": lasers_data,
+            "lasers": {
+                "active": active_names,
+                **lasers_section,
+            }
         }

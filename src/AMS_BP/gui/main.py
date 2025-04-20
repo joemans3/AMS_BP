@@ -1,5 +1,7 @@
+import tomlkit
 from PyQt6.QtWidgets import (
     QComboBox,
+    QFileDialog,
     QHBoxLayout,
     QLabel,
     QMessageBox,
@@ -164,12 +166,35 @@ class ConfigEditor(QWidget):
                     "condensate": condensate_data,
                 }
 
-                print("Config to save:", config)
-                # TODO: Replace with actual file saving code
-
-                QMessageBox.information(
-                    self, "Success", "Configuration has been saved successfully."
+                # Open the file dialog to select where to save the file
+                file_path, _ = QFileDialog.getSaveFileName(
+                    self, "Save Configuration", "", "TOML Files (*.toml);;All Files (*)"
                 )
+
+                if file_path:
+                    # Ensure the file has a .toml extension
+                    if not file_path.endswith(".toml"):
+                        file_path += ".toml"
+
+                    # Use tomlkit to write the configuration to the file
+                    # Create a TOML document with the provided configuration
+                    toml_doc = tomlkit.document()
+                    for key, value in config.items():
+                        toml_doc[key] = value
+
+                    # Write to the file
+                    with open(file_path, "w") as f:
+                        tomlkit.dump(toml_doc, f)
+
+                    QMessageBox.information(
+                        self, "Success", "Configuration has been saved successfully."
+                    )
+                else:
+                    QMessageBox.warning(
+                        self,
+                        "Save Error",
+                        "No file selected. The configuration was not saved.",
+                    )
             else:
                 QMessageBox.warning(
                     self,

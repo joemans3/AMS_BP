@@ -525,7 +525,7 @@ def create_base_config(
 
 
 # Function to create sample plane
-def create_sample_plane(global_params: GlobalParameters, cell: BaseCell) -> SamplePlane:
+def make_sample(global_params: GlobalParameters, cell: BaseCell) -> SamplePlane:
     bounds = cell.boundingbox
     sample_space = SampleSpace(
         x_max=global_params.sample_plane_dim[0],
@@ -555,13 +555,13 @@ def create_sample_plane(global_params: GlobalParameters, cell: BaseCell) -> Samp
 
 
 # Function to create cell
-def create_cell_from_params(cell_params) -> BaseCell:
+def make_cell(cell_params) -> BaseCell:
     cell = create_cell(cell_params.cell_type, cell_params.params)
     return cell
 
 
 # Function to create condensates dict
-def create_condensates_dict(
+def make_condensatedict(
     condensate_params: CondensateParameters, cell: BaseCell
 ) -> List[dict]:
     condensates_dict = []
@@ -579,7 +579,7 @@ def create_condensates_dict(
 
 
 # Function to create sampling functions
-def create_sampling_functions(condensate_params, cell) -> List[Callable]:
+def make_samplingfunction(condensate_params, cell) -> List[Callable]:
     sampling_functions = []
     for i in range(len(condensate_params.initial_centers)):
         sampling_functions.append(
@@ -595,7 +595,7 @@ def create_sampling_functions(condensate_params, cell) -> List[Callable]:
 
 
 # Function to generate initial positions for molecules
-def generate_initial_positions(
+def gen_initial_positions(
     molecule_params: MoleculeParameters,
     cell: BaseCell,
     condensate_params: CondensateParameters,
@@ -735,21 +735,19 @@ def setup_microscope(config: Dict[str, Any]) -> dict:
     detector, qe = create_detector_from_config(config)
 
     # make cell
-    cell = create_cell_from_params(base_config.CellParameter)
+    cell = make_cell(base_config.CellParameter)
 
     # make initial sample plane
-    sample_plane = create_sample_plane(base_config.GlobalParameter, cell)
+    sample_plane = make_sample(base_config.GlobalParameter, cell)
 
     # make condensates_dict
-    condensates_dict = create_condensates_dict(base_config.CondensateParameter, cell)
+    condensates_dict = make_condensatedict(base_config.CondensateParameter, cell)
 
     # make sampling function
-    sampling_functions = create_sampling_functions(
-        base_config.CondensateParameter, cell
-    )
+    sampling_functions = make_samplingfunction(base_config.CondensateParameter, cell)
 
     # create initial positions
-    initial_molecule_positions = generate_initial_positions(
+    initial_molecule_positions = gen_initial_positions(
         base_config.MoleculeParameter,
         cell,
         base_config.CondensateParameter,

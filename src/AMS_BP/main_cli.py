@@ -1,5 +1,5 @@
 """
-run_cell_simulation.py
+main_cli.py
 
 This file contains the command-line interface (CLI) for the AMS_BP package.
 
@@ -16,16 +16,14 @@ Main Components:
 - run_gui(): runs the GUI
 
 Usage:
-- To generate a config file: python run_cell_simulation.py config [OPTIONS]
-- To run a simulation: python run_cell_simulation.py runsim [CONFIG_FILE]
+- To generate a config file: python main_cli.py config [OPTIONS]
+- To run a simulation: python main_cli.py runsim [CONFIG_FILE]
 
 The file uses Rich for enhanced console output and progress tracking.
 """
 
-import os
 import shutil
 import sys
-import time
 from pathlib import Path
 from typing import Optional
 
@@ -36,9 +34,8 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from typing_extensions import Annotated
 
 from . import __version__
-from .configio.converconfig import load_config, setup_microscope
-from .configio.saving import save_config_frames
 from .gui.main import MainWindow
+from .run_sim_util import run_simulation_from_file
 
 cli_help_doc = str(
     """
@@ -149,74 +146,11 @@ def generate_config(
         rich.print(f"Config file saved to {output_path.resolve()}")
 
 
-# second command to run the simulation using the config file path as argument
 @typer_app_asms_bp.command(name="runsim")
 def run_cell_simulation(
     config_file: Annotated[Path, typer.Argument(help="Path to the configuration file")],
 ) -> None:
-    """
-    Run the cell simulation using the configuration file provided.
-    """
-    from contextlib import contextmanager
-
-    @contextmanager
-    def progress_context():
-        progress = Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            transient=True,
-        )
-        try:
-            with progress:
-                yield progress
-        finally:
-            progress.stop()
-
-    # Use in functions
-    with progress_context() as progress:
-        start_task_1 = time.time()
-        task_1 = progress.add_task(
-            description="Processing request to run the simulation ...", total=10
-        )
-
-        # check if the config file is a valid file
-        if not os.path.isfile(config_file):
-            rich.print("FileNotFoundError: Configuration file not found.")
-            raise typer.Abort()
-
-        # config_inator = ConfigLoader(config_path=config_file)
-        loadedconfig = load_config(config_file)
-        if "version" in loadedconfig:
-            version = loadedconfig["version"]
-            rich.print(f"Using config version: [bold]{version}[/bold]")
-
-        setup_config = setup_microscope(loadedconfig)
-        microscope = setup_config["microscope"]
-        configEXP = setup_config["experiment_config"]
-        functionEXP = setup_config["experiment_func"]
-
-        # complete last progress
-        progress.update(task_1, completed=10)
-        rich.print(
-            "Prep work done in {:.2f} seconds.".format(time.time() - start_task_1)
-        )
-
-        time_task_2 = time.time()
-        task_2 = progress.add_task(description="Running the simulation ...", total=None)
-
-        # run the simulation
-
-        frames, metadata = functionEXP(microscope=microscope, config=configEXP)
-
-        # save
-        save_config_frames(
-            metadata, frames, setup_config["base_config"].OutputParameter
-        )
-
-        progress.update(task_2, completed=None)
-        rich.print(
-            "Simulation completed in {:.2f} seconds.".format(time.time() - time_task_2)
-        )
+    run_simulation_from_file(config_file)
 
 
 def validate_config(config: dict) -> None:

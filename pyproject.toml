@@ -73,4 +73,4 @@ build-backend = "hatchling.build"
 path = "src/AMS_BP/__init__.py"
 
 [project.scripts]
-run_AMS_BP = "AMS_BP.run_cell_simulation:typer_app_asms_bp"
+run_AMS_BP = "AMS_BP.main_cli:typer_app_asms_bp"

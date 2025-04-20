@@ -3,7 +3,7 @@ from pathlib import Path
 
 import napari
 import tifffile
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QThread
 from PyQt6.QtGui import QPainter, QPixmap
 from PyQt6.QtSvg import QSvgRenderer
 from PyQt6.QtWidgets import (
@@ -16,6 +16,8 @@ from PyQt6.QtWidgets import (
 )
 
 from .configuration_window import ConfigEditor
+from .logging_window import LogWindow
+from .sim_worker import SimulationWorker
 
 LOGO_PATH = str(Path(__file__).parent / "assets" / "drawing.svg")
 
@@ -57,10 +59,57 @@ class MainWindow(QMainWindow):
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
 
+        # Button to run simulation with a TOML config file
+        self.run_sim_button = QPushButton("Run Simulation from Config")
+        self.run_sim_button.clicked.connect(self.run_simulation_from_config)
+        layout.addWidget(self.run_sim_button)
+
         # Button to open Napari viewer
-        self.view_button = QPushButton("Visualize Microscopy Data")
+        self.view_button = QPushButton("Visualize Microscopy Data (Napari)")
         self.view_button.clicked.connect(self.open_napari_viewer)
         layout.addWidget(self.view_button)
+
+    def run_simulation_from_config(self):
+        config_path_str, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select Configuration File",
+            "",
+            "TOML Files (*.toml);;All Files (*)",
+        )
+
+        if config_path_str:
+            config_path = Path(config_path_str)
+
+            # Create and show log window
+            self.log_window = LogWindow(self)
+            self.log_window.show()
+
+            # Set up thread + worker
+            self.sim_thread = QThread()
+            self.sim_worker = SimulationWorker(config_path, self.log_window)
+            self.sim_worker.moveToThread(self.sim_thread)
+
+            # Connect thread/worker signals
+            self.sim_thread.started.connect(self.sim_worker.run)
+            self.sim_worker.finished.connect(self.sim_thread.quit)
+            self.sim_worker.finished.connect(self.sim_worker.deleteLater)
+            self.sim_thread.finished.connect(self.sim_thread.deleteLater)
+
+            self.sim_worker.log_message.connect(self.log_window.append_text)
+            self.sim_worker.error_occurred.connect(self.log_window.append_text)
+
+            # Auto-close log window and reset on completion
+            def cleanup():
+                self.log_window.progress.setRange(0, 1)
+                self.log_window.progress.setValue(1)
+                self.log_window.cancel_button.setText("Close")
+                self.log_window.cancel_button.clicked.disconnect()
+                self.log_window.cancel_button.clicked.connect(self.log_window.close)
+
+            self.sim_worker.finished.connect(cleanup)
+
+            # Start the simulation
+            self.sim_thread.start()
 
     def open_napari_viewer(self):
         """Open a file dialog to select a microscopy image and visualize it with Napari."""

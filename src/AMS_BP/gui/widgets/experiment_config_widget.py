@@ -53,10 +53,23 @@ class ExperimentConfigWidget(QWidget):
         form.addRow("Experiment Type:", self.type_field)
 
         # Z Position (just one for time-series)
-        self.z_position_field = QDoubleSpinBox()
-        self.z_position_field.setRange(-1e5, 1e5)
-        form.addRow("Z Position:", self.z_position_field)
+        self.z_position_inputs: List[QDoubleSpinBox] = []
 
+        self.z_position_container = QWidget()
+        self.z_position_layout = QVBoxLayout()
+        self.z_position_container.setLayout(self.z_position_layout)
+        form.addRow("Z Position(s):", self.z_position_container)
+
+        self.add_z_button = QPushButton("Add Z-Position")
+        self.remove_z_button = QPushButton("Remove Z-Position")
+        self.remove_z_button.clicked.connect(self.remove_z_position_field)
+        self.add_z_button.clicked.connect(self.add_z_position_field)
+        self.type_field.currentTextChanged.connect(self.update_z_position_mode)
+        self.update_z_position_mode(self.type_field.currentText())
+        z_button_row = QHBoxLayout()
+        z_button_row.addWidget(self.add_z_button)
+        z_button_row.addWidget(self.remove_z_button)
+        layout.addLayout(z_button_row)
         # XY Offset
         self.xyoffset = [QDoubleSpinBox() for _ in range(2)]
         for box in self.xyoffset:
@@ -85,6 +98,47 @@ class ExperimentConfigWidget(QWidget):
         layout.addWidget(self.validate_button)
 
         self.setLayout(layout)
+
+    def update_z_position_mode(self, mode: str):
+        # Clear existing
+        for i in reversed(range(self.z_position_layout.count())):
+            item = self.z_position_layout.itemAt(i).widget()
+            if item:
+                item.setParent(None)
+        self.z_position_inputs.clear()
+
+        if mode == "time-series":
+            # One input only
+            z_input = QDoubleSpinBox()
+            z_input.setRange(-1e5, 1e5)
+            self.z_position_inputs.append(z_input)
+            self.z_position_layout.addWidget(z_input)
+            self.add_z_button.setVisible(False)
+            self.add_z_button.setVisible(False)
+            self.remove_z_button.setVisible(False)
+        else:
+            # Start with two for z-stack
+            for _ in range(2):
+                self.add_z_position_field()
+            self.add_z_button.setVisible(True)
+            self.add_z_button.setVisible(True)
+            self.remove_z_button.setVisible(True)
+
+    def remove_z_position_field(self):
+        if len(self.z_position_inputs) > 1:
+            z_widget = self.z_position_inputs.pop()
+            self.z_position_layout.removeWidget(z_widget)
+            z_widget.setParent(None)
+        else:
+            QMessageBox.warning(
+                self, "Cannot Remove", "At least one Z-position is required."
+            )
+
+    def add_z_position_field(self):
+        z_input = QDoubleSpinBox()
+        z_input.setRange(-1e5, 1e5)
+        self.z_position_inputs.append(z_input)
+        self.z_position_layout.addWidget(z_input)
 
     def _hbox(self, widgets):
         box = QHBoxLayout()
@@ -125,7 +179,7 @@ class ExperimentConfigWidget(QWidget):
             "name": self.name_field.text(),
             "description": self.desc_field.text(),
             "experiment_type": self.type_field.currentText(),
-            "z_position": [self.z_position_field.value()],
+            "z_position": [z.value() for z in self.z_position_inputs],
             "laser_names_active": list(self.laser_power_widgets.keys()),
             "laser_powers_active": [
                 w.value() for w in self.laser_power_widgets.values()

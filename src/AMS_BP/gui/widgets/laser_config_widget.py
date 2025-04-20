@@ -1,4 +1,5 @@
 from pydantic import ValidationError
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
@@ -16,8 +17,11 @@ from ...optics.lasers.laser_profiles import LaserParameters
 
 
 class LaserConfigWidget(QWidget):
+    laser_names_updated = pyqtSignal(list)
+
     def __init__(self):
         super().__init__()
+        self.laser_name_widgets = []
         layout = QVBoxLayout()
         form = QFormLayout()
 
@@ -35,6 +39,7 @@ class LaserConfigWidget(QWidget):
 
         self.laser_tabs = QTabWidget()
         self.update_laser_tabs()
+        self.emit_active_lasers()
 
         layout.addLayout(form)
         layout.addWidget(self.laser_tabs)
@@ -94,6 +99,15 @@ class LaserConfigWidget(QWidget):
             QMessageBox.critical(self, "Validation Error", str(e))
             return False
 
+    def emit_active_lasers(self):
+        names = []
+        for i in range(self.laser_tabs.count()):
+            tab = self.laser_tabs.widget(i)
+            name_field = tab.findChild(QLineEdit)
+            if name_field:
+                names.append(name_field.text())
+        self.laser_names_updated.emit([n for n in names if n])
+
     def update_laser_tabs(self):
         # Update the number of lasers based on user input
         num_lasers = self.num_lasers.value()
@@ -106,6 +120,8 @@ class LaserConfigWidget(QWidget):
             self.laser_tabs.removeTab(self.laser_tabs.count() - 1)
 
         self.laser_tabs.setCurrentIndex(0)
+        self.laser_name_widgets = self.laser_name_widgets[:num_lasers]  # Sync
+        self.emit_active_lasers()
 
     def add_laser_tab(self, index):
         tab = QWidget()
@@ -114,6 +130,8 @@ class LaserConfigWidget(QWidget):
         # Laser name
         laser_name = QLineEdit()
         layout.addRow(f"Laser {index + 1} Name:", laser_name)
+        self.laser_name_widgets.append(laser_name)
+        laser_name.textChanged.connect(self.emit_active_lasers)
 
         # Laser type
         laser_type = QComboBox()

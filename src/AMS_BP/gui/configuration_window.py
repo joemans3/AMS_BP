@@ -90,10 +90,36 @@ class ConfigEditor(QWidget):
         self.laser_tab = LaserConfigWidget()
         self.channel_tab = ChannelConfigWidget()
         self.detector_tab = CameraConfigWidget()
-        self.experiment_config_widget = ExperimentConfigWidget()
+        self.experiment_tab = ExperimentConfigWidget()
 
         # connections
+        # PSF -> confocal -> lasers
         self.psf_tab.confocal_mode_changed.connect(self.laser_tab.set_confocal_mode)
+        # === Molecule -> Fluorophore & Condensate ===
+        self.molecule_tab.molecule_count_changed.connect(
+            self.fluorophore_tab.set_mfluorophore_count
+        )
+        self.molecule_tab.molecule_count_changed.connect(
+            self.condensate_tab.set_molecule_count
+        )
+        # === Fluorophore -> Molecule & Condensate ===
+        self.fluorophore_tab.mfluorophore_count_changed.connect(
+            self.molecule_tab.set_molecule_count
+        )
+        self.fluorophore_tab.mfluorophore_count_changed.connect(
+            self.condensate_tab.set_molecule_count
+        )
+        # === Condensate -> Molecule & Fluorophore ===
+        self.condensate_tab.molecule_count_changed.connect(
+            self.molecule_tab.set_molecule_count
+        )
+        self.condensate_tab.molecule_count_changed.connect(
+            self.fluorophore_tab.set_mfluorophore_count
+        )
+        # === Laser -> Experiment
+        self.laser_tab.laser_names_updated.connect(
+            self.experiment_tab.set_active_lasers
+        )
 
         # Add each tab's widget to the stacked widget
         self.stacked_widget.addWidget(self.general_tab)
@@ -107,7 +133,7 @@ class ConfigEditor(QWidget):
         self.stacked_widget.addWidget(self.laser_tab)
         self.stacked_widget.addWidget(self.channel_tab)
         self.stacked_widget.addWidget(self.output_tab)
-        self.stacked_widget.addWidget(self.experiment_config_widget)
+        self.stacked_widget.addWidget(self.experiment_tab)
 
         # Set the stacked widget as the central widget
         layout.addWidget(self.stacked_widget)

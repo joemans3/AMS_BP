@@ -40,8 +40,47 @@ class LaserConfigWidget(QWidget):
         layout.addWidget(self.laser_tabs)
         self.setLayout(layout)
 
+    def set_confocal_mode(self, enabled: bool):
+        for i in range(self.laser_tabs.count()):
+            tab = self.laser_tabs.widget(i)
+
+            laser_type: QComboBox = tab.findChild(QComboBox)
+            beam_width: QDoubleSpinBox = tab.findChildren(QDoubleSpinBox)[
+                1
+            ]  # Assumes 2nd spinbox is beam_width
+
+            if enabled:
+                # Force laser type to "gaussian" and disable editing
+                laser_type.setCurrentText("gaussian")
+                laser_type.setEnabled(False)
+
+                # Hide beam width
+                beam_width.hide()
+                label = tab.layout().labelForField(beam_width)
+                if label:
+                    label.hide()
+            else:
+                # Enable laser type editing
+                laser_type.setEnabled(True)
+
+                # Show beam width
+                beam_width.show()
+                label = tab.layout().labelForField(beam_width)
+                if label:
+                    label.show()
+
     def validate(self) -> bool:
         try:
+            confocal_on = any(
+                not tab.findChild(QComboBox).isEnabled()
+                and tab.findChild(QComboBox).currentText() != "gaussian"
+                for tab in [
+                    self.laser_tabs.widget(i) for i in range(self.laser_tabs.count())
+                ]
+            )
+            if confocal_on:
+                raise ValueError("Only Gaussian lasers are allowed in confocal mode.")
+
             data = self.get_data()
             validated = LaserParameters(**data)
             QMessageBox.information(

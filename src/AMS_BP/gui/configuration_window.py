@@ -92,6 +92,9 @@ class ConfigEditor(QWidget):
         self.detector_tab = CameraConfigWidget()
         self.experiment_config_widget = ExperimentConfigWidget()
 
+        # connections
+        self.psf_tab.confocal_mode_changed.connect(self.laser_tab.set_confocal_mode)
+
         # Add each tab's widget to the stacked widget
         self.stacked_widget.addWidget(self.general_tab)
         self.stacked_widget.addWidget(self.global_tab)

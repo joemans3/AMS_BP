@@ -1,4 +1,5 @@
 from pydantic import ValidationError
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -16,6 +17,8 @@ from ...optics.psf.psf_engine import PSFParameters
 
 
 class PSFConfigWidget(QWidget):
+    confocal_mode_changed = pyqtSignal(bool)
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -37,6 +40,7 @@ class PSFConfigWidget(QWidget):
         # Confocal toggle
         self.confocal_checkbox = QCheckBox("Confocal (Enable pinhole)")
         self.confocal_checkbox.toggled.connect(self.toggle_pinhole_visibility)
+        self.confocal_checkbox.toggled.connect(self._on_confocal_toggled)
         psf_form.addRow(self.confocal_checkbox)
 
         # PSF Parameters
@@ -62,6 +66,10 @@ class PSFConfigWidget(QWidget):
 
         self.psf_group.setLayout(psf_form)
         layout.addWidget(self.psf_group)
+
+    def _on_confocal_toggled(self, enabled: bool):
+        self.toggle_pinhole_visibility(enabled)
+        self.confocal_mode_changed.emit(enabled)
 
     def toggle_pinhole_visibility(self, enabled: bool):
         self.pinhole_diameter.setVisible(enabled)

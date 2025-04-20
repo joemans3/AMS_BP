@@ -80,22 +80,32 @@ class MainWindow(QMainWindow):
     def package_logs(self):
         log_dir = Path.home() / "AMS_runs"
 
-        # Step 1: Open file dialog to select multiple .log files
-        file_paths, _ = QFileDialog.getOpenFileNames(
+        # Step 1: Open dialog to select folders
+        folder_paths = QFileDialog.getExistingDirectory(
             self,
-            "Select Log Files to Package",
+            "Select Folder Containing Run Logs",
             str(log_dir),
-            "Log Files (*.log)",
+            QFileDialog.Option.ShowDirsOnly | QFileDialog.Option.DontResolveSymlinks,
         )
 
-        if not file_paths:
-            return  # user cancelled
+        if not folder_paths:
+            return
 
-        # Step 2: Ask for save location of the .zip archive
+        # QFileDialog.getExistingDirectory() returns a single path.
+        # For now, let's treat this as a single run_* folder being selected.
+
+        run_dir = Path(folder_paths)
+        if not run_dir.is_dir() or not run_dir.name.startswith("run_"):
+            QMessageBox.warning(
+                self, "Invalid Selection", "Please select a valid run_* folder."
+            )
+            return
+
+        # Step 2: Ask for destination .zip archive
         zip_path_str, _ = QFileDialog.getSaveFileName(
             self,
-            "Save Zipped Logs As",
-            str(log_dir / "logs_package.zip"),
+            "Save Zipped Folder As",
+            str(log_dir / f"{run_dir.name}.zip"),
             "Zip Archive (*.zip)",
         )
 
@@ -108,18 +118,17 @@ class MainWindow(QMainWindow):
 
         try:
             with ZipFile(zip_path, "w") as archive:
-                for file in file_paths:
-                    file_path = Path(file)
-                    archive.write(file_path, arcname=file_path.name)
+                for path in run_dir.rglob("*"):
+                    archive.write(path, arcname=path.relative_to(run_dir.parent))
 
             QMessageBox.information(
                 self,
                 "Logs Packaged",
-                f"{len(file_paths)} log file(s) successfully packaged to:\n{zip_path}",
+                f"Folder '{run_dir.name}' successfully packaged to:\n{zip_path}",
             )
 
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to package logs:\n{e}")
+            QMessageBox.critical(self, "Error", f"Failed to package folder:\n{e}")
 
     def run_simulation_from_config(self):
         config_path_str, _ = QFileDialog.getOpenFileName(

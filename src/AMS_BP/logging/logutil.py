@@ -1,3 +1,4 @@
+import shutil
 import sys
 
 # logutil.py (continued)
@@ -10,7 +11,7 @@ from PyQt6.QtCore import QObject, pyqtSignal
 
 def cleanup_old_logs(log_dir: Path, max_age_days: int = 7):
     """
-    Delete log files in `log_dir` older than `max_age_days`.
+    Deletes entire `run_*` directories in `log_dir` if their `sim.log` is older than `max_age_days`.
     """
     if not log_dir.exists():
         return
@@ -18,15 +19,17 @@ def cleanup_old_logs(log_dir: Path, max_age_days: int = 7):
     now = time.time()
     max_age = max_age_days * 86400  # seconds in a day
 
-    for file in log_dir.glob("*.log"):
-        try:
-            if file.is_file():
-                file_age = now - file.stat().st_mtime
-                if file_age > max_age:
-                    file.unlink()
-                    print(f"Deleted old log file: {file}")
-        except Exception as e:
-            print(f"Error while trying to delete {file}: {e}")
+    for run_dir in log_dir.iterdir():
+        if run_dir.is_dir() and run_dir.name.startswith("run_"):
+            log_file = run_dir / "sim.log"
+            try:
+                if log_file.exists():
+                    file_age = now - log_file.stat().st_mtime
+                    if file_age > max_age:
+                        shutil.rmtree(run_dir)
+                        print(f"Deleted old run directory: {run_dir}")
+            except Exception as e:
+                print(f"Error while trying to delete {run_dir}: {e}")
 
 
 class LogEmitter(QObject):

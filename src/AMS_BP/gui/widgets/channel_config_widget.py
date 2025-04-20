@@ -89,7 +89,7 @@ class ChannelConfigWidget(QWidget):
         # Excitation Filter
         exc_name = QLineEdit()
         exc_type = QComboBox()
-        exc_type.addItems(["allow_all", "bandpass"])
+        exc_type.addItems(["bandpass", "allow_all"])
         exc_points = QSpinBox()
         exc_center = QSpinBox()
         exc_bandwidth = QSpinBox()
@@ -118,7 +118,7 @@ class ChannelConfigWidget(QWidget):
         # Emission Filter
         em_name = QLineEdit()
         em_type = QComboBox()
-        em_type.addItems(["allow_all", "bandpass"])
+        em_type.addItems(["bandpass", "allow_all"])
         em_center = QSpinBox()
         em_center.setRange(0, 10000)
         em_bandwidth = QSpinBox()

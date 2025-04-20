@@ -1,10 +1,19 @@
 import webbrowser
 from pathlib import Path
 
+import napari
+import tifffile
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPainter, QPixmap
 from PyQt6.QtSvg import QSvgRenderer
-from PyQt6.QtWidgets import QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import (
+    QFileDialog,
+    QLabel,
+    QMainWindow,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from .configuration_window import ConfigEditor
 
@@ -47,6 +56,34 @@ class MainWindow(QMainWindow):
         central_widget = QWidget()
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
+
+        # Button to open Napari viewer
+        self.view_button = QPushButton("Visualize Microscopy Data")
+        self.view_button.clicked.connect(self.open_napari_viewer)
+        layout.addWidget(self.view_button)
+
+    def open_napari_viewer(self):
+        """Open a file dialog to select a microscopy image and visualize it with Napari."""
+        # Allow user to select an image file
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Open Microscopy Image",
+            "",
+            "Image Files (*.tif *.tiff *.nd2 *.png *.jpg *.zarr);;All Files (*)",
+        )
+
+        if file_path:
+            try:
+                # Load the image (expand here if you want ND2 or Zarr support)
+                image = tifffile.imread(file_path)
+
+                # Open Napari viewer and display the image
+                viewer = napari.Viewer()
+                viewer.add_image(image, name=Path(file_path).stem)
+                napari.run()
+
+            except Exception as e:
+                print(f"Failed to open image: {e}")
 
     def set_svg_logo(self, svg_path):
         """Set an SVG logo to the QLabel, maintaining the aspect ratio."""

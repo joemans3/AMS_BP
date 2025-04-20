@@ -32,6 +32,8 @@ dependencies = [
   "boundedfbm>=0.4.0",
   "pyqt6>=6.9.0",
   "tomlkit>=0.13.2",
+  "napari[all]>=0.5.6",
+  "tifffile>=2024.12.12",
 ]
 
 [project.urls]

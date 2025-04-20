@@ -1,1 +1,0 @@
-{"notes": "Not implimented", "axes": "ZCTYX", "TimeIncrement": 100.0, "TimeIncrementUnit": "ms", "PhysicalSizeX": 6.5e-08, "PhysicalSizeXUnit": "m", "PhysicalSizeY": 6.5e-08, "PhysicalSizeYUnit": "m", "Channel": {"Name": ["red", "green"]}}

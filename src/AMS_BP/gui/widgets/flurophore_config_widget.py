@@ -315,9 +315,93 @@ class FluorophoreConfigWidget(QWidget):
             spectrum_data["wavelengths"] = dialog.wavelengths
             spectrum_data["intensities"] = dialog.intensities
 
-    def get_data(self):
-        # Placeholder: implement data collection matching your model
-        return {}
+    def get_data(self) -> dict:
+        data = {
+            "num_of_fluorophores": len(self.fluorophore_widgets),
+            "fluorophore_names": [],
+        }
+
+        for fluor in self.fluorophore_widgets:
+            name = fluor["name"].text().strip()
+            if not name:
+                raise ValueError("Each fluorophore must have a name.")
+
+            data["fluorophore_names"].append(name)
+
+            fluor_data = {
+                "name": name,
+                "initial_state": fluor["initial_state"].text().strip(),
+                "states": {},
+                "transitions": {},
+            }
+
+            # States
+            for state in fluor["states"]:
+                state_name = state["name"].text().strip()
+                state_type = state["type"].currentText()
+
+                state_data = {
+                    "name": state_name,
+                    "state_type": state_type,
+                }
+
+                if state_type == "fluorescent":
+                    state_data.update(
+                        {
+                            "quantum_yield": state["quantum_yield"].value(),
+                            "extinction_coefficient": state["extinction"].value(),
+                            "fluorescent_lifetime": state["lifetime"].value(),
+                            "excitation_spectrum": {
+                                "wavelengths": state["excitation_spectrum_data"][
+                                    "wavelengths"
+                                ],
+                                "intensities": state["excitation_spectrum_data"][
+                                    "intensities"
+                                ],
+                            },
+                            "emission_spectrum": {
+                                "wavelengths": state["emission_spectrum_data"][
+                                    "wavelengths"
+                                ],
+                                "intensities": state["emission_spectrum_data"][
+                                    "intensities"
+                                ],
+                            },
+                        }
+                    )
+
+                fluor_data["states"][state_name] = state_data
+
+            # Transitions
+            for trans in fluor["transitions"]:
+                from_state = trans["from_state"].text().strip()
+                to_state = trans["to_state"].text().strip()
+                key = f"{from_state}_to_{to_state}"
+
+                photon_dependent = trans["photon_dependent"].currentText() == "True"
+                transition_data = {
+                    "from_state": from_state,
+                    "to_state": to_state,
+                    "photon_dependent": photon_dependent,
+                }
+
+                if photon_dependent:
+                    transition_data["spectrum"] = {
+                        "wavelengths": trans["activation_spectrum_data"]["wavelengths"],
+                        "intensities": trans["activation_spectrum_data"]["intensities"],
+                        "extinction_coefficient": trans[
+                            "extinction_coefficient"
+                        ].value(),
+                        "quantum_yield": trans["quantum_yield"].value(),
+                    }
+                else:
+                    transition_data["base_rate"] = trans["base_rate"].value()
+
+                fluor_data["transitions"][key] = transition_data
+
+            data[name] = fluor_data
+
+        return {"fluorophores": data}
 
     def validate(self) -> bool:
         try:

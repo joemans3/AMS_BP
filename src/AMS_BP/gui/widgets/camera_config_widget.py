@@ -140,6 +140,18 @@ class CameraConfigWidget(QWidget):
             "sensitivity": self.sensitivity.value(),
             "base_adu": self.base_adu.value(),
             "binning_size": self.binning_size.value(),
-            "quantum_efficiency": self.quantum_efficiency_data,  # Use edited data here
+            "quantum_efficiency": convert_dict_to_2_list(
+                self.quantum_efficiency_data
+            ),  # Use edited data here
         }
         return camera_data
+
+
+def convert_dict_to_2_list(dict_c):
+    wl_qe = []
+    wl = dict_c["wavelengths"]
+    qe = dict_c["quantum_efficiency"]
+    for i in range(len(wl)):
+        lista = [wl[i], qe[i]]
+        wl_qe.append(lista)
+    return wl_qe

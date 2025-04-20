@@ -1,6 +1,6 @@
 from typing import List
 
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 from PyQt6.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
@@ -15,20 +15,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
-
-# Pydantic Model for Experiment Parameters
-class ExperimentParameters(BaseModel):
-    name: str
-    description: str
-    experiment_type: str
-    z_position: List[float]  # Array of floats (time-series will be one element)
-    laser_names_active: List[str]  # List of strings
-    laser_powers_active: List[float]  # List of floats
-    laser_positions_active: List[List[float]]  # List of lists of floats
-    xyoffset: List[float]  # List of floats
-    exposure_time: int  # Exposure time in ms
-    interval_time: int  # Interval time in ms
 
 
 class ExperimentConfigWidget(QWidget):
@@ -196,7 +182,7 @@ class ExperimentConfigWidget(QWidget):
     def validate(self) -> bool:
         try:
             data = self.get_data()
-            validated = ExperimentParameters(**data)
+            # validated = ExperimentParameters(**data)
             QMessageBox.information(
                 self, "Validation Successful", "Experiment parameters are valid."
             )

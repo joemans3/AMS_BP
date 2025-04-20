@@ -18,6 +18,8 @@ from ...optics.filters.channels.channelschema import Channels
 class ChannelConfigWidget(QWidget):
     def __init__(self):
         super().__init__()
+        self.channel_widgets = []
+
         layout = QVBoxLayout()
         form = QFormLayout()
 
@@ -30,9 +32,6 @@ class ChannelConfigWidget(QWidget):
         self.num_channels.setValue(2)
         self.num_channels.valueChanged.connect(self.update_channel_tabs)
         form.addRow("Number of Channels:", self.num_channels)
-
-        self.channel_names = []
-        self.split_efficiency = []
 
         self.channel_tabs = QTabWidget()
         self.update_channel_tabs()
@@ -49,23 +48,16 @@ class ChannelConfigWidget(QWidget):
                 self, "Validation Successful", "Channel parameters are valid."
             )
             return True
-        except ValidationError as e:
-            QMessageBox.critical(self, "Validation Error", str(e))
-            return False
-        except ValueError as e:
+        except (ValidationError, ValueError) as e:
             QMessageBox.critical(self, "Validation Error", str(e))
             return False
 
     def update_channel_tabs(self):
-        # Update the number of channels based on user input
-        num_channels = self.num_channels.value()
+        self.channel_tabs.clear()
+        self.channel_widgets = []
 
-        # Add tabs for each channel
-        while self.channel_tabs.count() < num_channels:
-            self.add_channel_tab(self.channel_tabs.count())
-
-        while self.channel_tabs.count() > num_channels:
-            self.channel_tabs.removeTab(self.channel_tabs.count() - 1)
+        for i in range(self.num_channels.value()):
+            self.add_channel_tab(i)
 
         self.channel_tabs.setCurrentIndex(0)
 
@@ -78,44 +70,32 @@ class ChannelConfigWidget(QWidget):
         layout.addRow(f"Channel {index + 1} Name:", channel_name)
 
         # Split efficiency
-        split_efficiency = QDoubleSpinBox()
-        split_efficiency.setRange(0, 1)
-        split_efficiency.setValue(1.0)
-        layout.addRow(f"Channel {index + 1} Split Efficiency:", split_efficiency)
+        split_eff = QDoubleSpinBox()
+        split_eff.setRange(0.0, 1.0)
+        split_eff.setValue(1.0)
+        layout.addRow(f"Channel {index + 1} Split Efficiency:", split_eff)
 
-        # Filter set configuration (Excitation and Emission filters)
-        filters_layout = QFormLayout()
-
-        # Excitation Filter
+        # Excitation filter
         exc_name = QLineEdit()
         exc_type = QComboBox()
         exc_type.addItems(["bandpass", "allow_all"])
-        exc_points = QSpinBox()
         exc_center = QSpinBox()
+        exc_center.setRange(0, 10000)
         exc_bandwidth = QSpinBox()
         exc_bandwidth.setRange(0, 10000)
-        exc_transmission = QDoubleSpinBox()
-        exc_transmission.setRange(0, 1)
-        exc_center.setRange(0, 10000)
+        exc_trans = QDoubleSpinBox()
+        exc_trans.setRange(0.0, 1.0)
+        exc_points = QSpinBox()
         exc_points.setRange(1, 10000)
-        exc_type.currentIndexChanged.connect(
-            lambda: self.toggle_filter_fields(
-                exc_type, exc_points, exc_center, exc_bandwidth, exc_transmission
-            )
-        )
-        layout.addRow(f"Excitation Filter Name (Channel {index + 1}):", exc_name)
-        layout.addRow(f"Excitation Filter Type (Channel {index + 1}):", exc_type)
-        layout.addRow(f"Excitation Filter Center (Channel {index + 1}):", exc_center)
-        layout.addRow(
-            f"Excitation Filter Bandwidth (Channel {index + 1}):", exc_bandwidth
-        )
-        layout.addRow(
-            f"Excitation Filter Transmission Peak (Channel {index + 1}):",
-            exc_transmission,
-        )
-        layout.addRow(f"Excitation Filter Points (Channel {index + 1}):", exc_points)
 
-        # Emission Filter
+        layout.addRow("Excitation Name:", exc_name)
+        layout.addRow("Excitation Type:", exc_type)
+        layout.addRow("Excitation Center (nm):", exc_center)
+        layout.addRow("Excitation Bandwidth (nm):", exc_bandwidth)
+        layout.addRow("Excitation Transmission Peak:", exc_trans)
+        layout.addRow("Excitation Points:", exc_points)
+
+        # Emission filter
         em_name = QLineEdit()
         em_type = QComboBox()
         em_type.addItems(["bandpass", "allow_all"])
@@ -123,89 +103,132 @@ class ChannelConfigWidget(QWidget):
         em_center.setRange(0, 10000)
         em_bandwidth = QSpinBox()
         em_bandwidth.setRange(0, 10000)
-        em_transmission = QDoubleSpinBox()
-        em_transmission.setRange(0, 1)
+        em_trans = QDoubleSpinBox()
+        em_trans.setRange(0.0, 1.0)
         em_points = QSpinBox()
         em_points.setRange(1, 10000)
-        em_type.currentIndexChanged.connect(
-            lambda: self.toggle_filter_fields(
-                em_type, em_points, em_center, em_bandwidth, em_transmission
+
+        exc_type.currentTextChanged.connect(
+            lambda val: self.toggle_filter_fields(
+                val, exc_center, exc_bandwidth, exc_trans, exc_points
             )
         )
-        layout.addRow(f"Emission Filter Name (Channel {index + 1}):", em_name)
-        layout.addRow(f"Emission Filter Type (Channel {index + 1}):", em_type)
-        layout.addRow(f"Emission Filter Center (Channel {index + 1}):", em_center)
-        layout.addRow(f"Emission Filter Bandwidth (Channel {index + 1}):", em_bandwidth)
-        layout.addRow(
-            f"Emission Filter Transmission Peak (Channel {index + 1}):", em_transmission
+        em_type.currentTextChanged.connect(
+            lambda val: self.toggle_filter_fields(
+                val, em_center, em_bandwidth, em_trans, em_points
+            )
         )
-        layout.addRow(f"Emission Filter Points (Channel {index + 1}):", em_points)
+
+        # Call once to initialize visibility
+        self.toggle_filter_fields(
+            exc_type.currentText(), exc_center, exc_bandwidth, exc_trans, exc_points
+        )
+        self.toggle_filter_fields(
+            em_type.currentText(), em_center, em_bandwidth, em_trans, em_points
+        )
+
+        layout.addRow("Emission Name:", em_name)
+        layout.addRow("Emission Type:", em_type)
+        layout.addRow("Emission Center (nm):", em_center)
+        layout.addRow("Emission Bandwidth (nm):", em_bandwidth)
+        layout.addRow("Emission Transmission Peak:", em_trans)
+        layout.addRow("Emission Points:", em_points)
 
         tab.setLayout(layout)
         self.channel_tabs.addTab(tab, f"Channel {index + 1}")
 
-        # Store the widget references for later validation
-        self.channel_names.append(channel_name)
-        self.split_efficiency.append(split_efficiency)
+        # Store all widget references
+        widgets = {
+            "channel_name": channel_name,
+            "split_efficiency": split_eff,
+            "exc_name": exc_name,
+            "exc_type": exc_type,
+            "exc_center": exc_center,
+            "exc_bandwidth": exc_bandwidth,
+            "exc_trans": exc_trans,
+            "exc_points": exc_points,
+            "em_name": em_name,
+            "em_type": em_type,
+            "em_center": em_center,
+            "em_bandwidth": em_bandwidth,
+            "em_trans": em_trans,
+            "em_points": em_points,
+        }
+
+        self.channel_widgets.append(widgets)
 
     def toggle_filter_fields(
         self,
         filter_type,
+        center_field,
+        bandwidth_field,
+        transmission_field,
         points_field,
-        center_field=None,
-        bandwidth_field=None,
-        transmission_field=None,
     ):
-        """Toggle visibility of filter fields based on selected filter type."""
-        is_allow_all = filter_type.currentText() == "allow_all"
-        if center_field:
-            center_field.setEnabled(not is_allow_all)
-        if bandwidth_field:
-            bandwidth_field.setEnabled(not is_allow_all)
-        if transmission_field:
-            transmission_field.setEnabled(not is_allow_all)
+        is_allow_all = filter_type == "allow_all"
+        center_field.setEnabled(not is_allow_all)
+        bandwidth_field.setEnabled(not is_allow_all)
+        transmission_field.setEnabled(not is_allow_all)
         points_field.setEnabled(not is_allow_all)
 
-    def get_data(self):
-        channels_data = []
+    def get_data(self) -> dict:
+        num_channels = self.num_channels.value()
+        data = {
+            "num_of_channels": num_channels,
+            "channel_names": [],
+            "split_efficiency": [],
+            "filters": {},
+        }
 
-        for i in range(self.num_channels.value()):
-            channel_data = {
-                "name": self.channel_names[i].text(),
-                "split_efficiency": self.split_efficiency[i].value(),
-                "filters": {
-                    "excitation": {
-                        "name": self.channel_tabs.widget(i).findChild(QLineEdit).text(),
-                        "type": self.channel_tabs.widget(i)
-                        .findChild(QComboBox)
-                        .currentText(),
-                        "points": self.channel_tabs.widget(i)
-                        .findChild(QSpinBox)
-                        .value(),
-                    },
-                    "emission": {
-                        "name": self.channel_tabs.widget(i)
-                        .findChild(QLineEdit, "em_name")
-                        .text(),
-                        "type": self.channel_tabs.widget(i)
-                        .findChild(QComboBox, "em_type")
-                        .currentText(),
-                        "center_wavelength": self.channel_tabs.widget(i)
-                        .findChild(QSpinBox, "em_center")
-                        .value(),
-                        "bandwidth": self.channel_tabs.widget(i)
-                        .findChild(QSpinBox, "em_bandwidth")
-                        .value(),
-                        "transmission_peak": self.channel_tabs.widget(i)
-                        .findChild(QDoubleSpinBox, "em_transmission")
-                        .value(),
-                        "points": self.channel_tabs.widget(i)
-                        .findChild(QSpinBox, "em_points")
-                        .value(),
-                    },
-                },
+        for i, widgets in enumerate(self.channel_widgets):
+            name = widgets["channel_name"].text().strip()
+            if not name:
+                raise ValueError(f"Channel {i + 1} name is required.")
+
+            data["channel_names"].append(name)
+            data["split_efficiency"].append(widgets["split_efficiency"].value())
+
+            # Excitation
+            exc_type = widgets["exc_type"].currentText()
+            excitation = {
+                "name": widgets["exc_name"].text(),
+                "type": exc_type,
+            }
+            if exc_type == "bandpass":
+                excitation.update(
+                    {
+                        "center_wavelength": widgets["exc_center"].value(),
+                        "bandwidth": widgets["exc_bandwidth"].value(),
+                        "transmission_peak": widgets["exc_trans"].value(),
+                        "points": widgets["exc_points"].value(),
+                    }
+                )
+            else:
+                excitation["points"] = widgets["exc_points"].value()
+
+            # Emission
+            em_type = widgets["em_type"].currentText()
+            emission = {
+                "name": widgets["em_name"].text(),
+                "type": em_type,
+            }
+            if em_type == "bandpass":
+                emission.update(
+                    {
+                        "center_wavelength": widgets["em_center"].value(),
+                        "bandwidth": widgets["em_bandwidth"].value(),
+                        "transmission_peak": widgets["em_trans"].value(),
+                        "points": widgets["em_points"].value(),
+                    }
+                )
+            else:
+                emission["points"] = widgets["em_points"].value()
+
+            data["filters"][name] = {
+                "filter_set_name": f"{name.capitalize()} Filter Set",
+                "filter_set_description": f"Sample {name.capitalize()} filter set configuration",
+                "excitation": excitation,
+                "emission": emission,
             }
 
-            channels_data.append(channel_data)
-
-        return {"num_of_channels": self.num_channels.value(), "channels": channels_data}
+        return {"channels": data}

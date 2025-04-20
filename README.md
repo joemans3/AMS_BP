@@ -153,32 +153,6 @@ run_AMS_BP config
 run_AMS_BP runsim sim_config.toml
 ```
 4. View the results in the newly created folder, whose name is defined in the config file.
-## Advanced Usage
-
-### Using AMS-BP as a Library
-
-For programmatic control, you can import and use AMS-BP as a Python library:
-
-```python
-from AMS_BP.configio.convertconfig import ConfigLoader
-
-# Configuration loader intialization
-config_loader = ConfigLoader(config_path="path/to/config.toml")
-
-# Setup microscope
-setup_config = config_loader.setup_microscope()
-microscope = setup_config["microscope"]
-config_exp = setup_config["experiment_config"]
-function_exp = setup_config["experiment_func"]
-
-# Run simulation
-frames, metadata = function_exp(microscope=microscope, config=config_exp)
-
-# Save results
-from AMS_BP.configio.saving import save_config_frames
-save_config_frames(metadata, frames, setup_config["base_config"].OutputParameters)
-```
-> **_NOTE:_** Please note that this application DOES NOT currently model the process of stimulated emission, and as such is not suitable for simulating stimulated emission microscopy ([STED](https://en.wikipedia.org/wiki/STED_microscopy))-type experiments. Work in this area is ongoing.
 
 ## High Priority Features
 ~~1. Irregular cell shapes with motion models~~ (supported with release of v0.2.0)
@@ -186,3 +160,6 @@ save_config_frames(metadata, frames, setup_config["base_config"].OutputParameter
 3. STORM workflow examples
 4. CTRW motion models
 5. Simpler configurations
+> **_NOTE:_** Please note that this application DOES NOT currently model the process of stimulated emission, and as such is not suitable for simulating stimulated emission microscopy ([STED](https://en.wikipedia.org/wiki/STED_microscopy))-type experiments. Work in this area is ongoing.
+
+

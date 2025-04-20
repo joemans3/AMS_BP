@@ -36,7 +36,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from typing_extensions import Annotated
 
 from . import __version__
-from .configio.convertconfig import ConfigLoader
+from .configio.converconfig import load_config, setup_microscope
 from .configio.saving import save_config_frames
 from .gui.main import MainWindow
 
@@ -184,13 +184,13 @@ def run_cell_simulation(
             rich.print("FileNotFoundError: Configuration file not found.")
             raise typer.Abort()
 
-        config_inator = ConfigLoader(config_path=config_file)
-        # find the version flag in the config file
-        if "version" in config_inator.config:
-            version = config_inator.config["version"]
+        # config_inator = ConfigLoader(config_path=config_file)
+        loadedconfig = load_config(config_file)
+        if "version" in loadedconfig:
+            version = loadedconfig["version"]
             rich.print(f"Using config version: [bold]{version}[/bold]")
 
-        setup_config = config_inator.setup_microscope()
+        setup_config = setup_microscope(loadedconfig)
         microscope = setup_config["microscope"]
         configEXP = setup_config["experiment_config"]
         functionEXP = setup_config["experiment_func"]

@@ -1,166 +1,193 @@
-# AMS_BP Configuration and Setup Documentation
+# Virtual Microscope Configuration Parser Documentation
 
-## ConfigLoader Class
+## Overview
 
-### Overview
-The `ConfigLoader` class handles loading and parsing configuration files for microscopy simulation setup. It manages the creation and configuration of various components including fluorophores, PSF engines, lasers, filters, and detectors.
+This module provides functionality to parse TOML configuration files and set up a virtual microscope simulation environment. It handles all aspects of configuration including global parameters, cell parameters, molecule parameters, condensate parameters, fluorophores, PSF (Point Spread Function), lasers, filters, channels, detectors, and experimental settings.
 
-### Constructor
-```python
-def __init__(self, config_path: Union[str, Path, dict])
-```
-- **Parameters:**
-  - `config_path`: Path to TOML configuration file or configuration dictionary
-- **Raises:**
-  - `FileNotFoundError`: If configuration file not found
+## Key Components
 
-### Methods
-
-#### `create_dataclass_schema`
-```python
-def create_dataclass_schema(self, dataclass_schema: type[BaseModel], config: Dict[str, Any]) -> BaseModel
-```
-Populates a dataclass schema with configuration data.
-- **Parameters:**
-  - `dataclass_schema`: Type of BaseModel to create
-  - `config`: Configuration dictionary
-- **Returns:** Populated BaseModel instance
-
-#### `create_experiment_from_config`
-```python
-def create_experiment_from_config(self, config: Dict[str, Any]) -> Tuple[BaseExpConfig, Callable]
-```
-Creates experiment configuration and associated callable function.
-- **Parameters:**
-  - `config`: Configuration dictionary
-- **Returns:** 
-  - Tuple containing experiment configuration and experiment function
-- **Raises:**
-  - `TypeError`: If experiment type not supported
-
-#### `create_fluorophores_from_config`
-```python
-def create_fluorophores_from_config(self, config: Dict[str, Any]) -> List[Fluorophore]
-```
-Creates fluorophore instances from configuration.
-- **Parameters:**
-  - `config`: Configuration dictionary
-- **Returns:** List of Fluorophore instances
-- **Raises:**
-  - `ValueError`: If no fluorophore configuration found
-
-#### `create_psf_from_config`
-```python
-def create_psf_from_config(self, config: Dict[str, Any]) -> Tuple[Callable, Dict[str, Any]]
-```
-Creates PSF engine instance from configuration.
-- **Parameters:**
-  - `config`: Configuration dictionary
-- **Returns:**
-  - Tuple containing PSF engine function and additional parameters
-- **Raises:**
-  - `ValueError`: If no PSF configuration found
-
-#### `create_laser_from_config`
-```python
-def create_laser_from_config(self, laser_config: Dict[str, Any], preset: str) -> LaserProfile
-```
-Creates laser profile instance from configuration.
-- **Parameters:**
-  - `laser_config`: Laser configuration dictionary
-  - `preset`: Laser preset name
-- **Returns:** LaserProfile instance
-- **Raises:**
-  - `ValueError`: If unsupported laser type specified
-
-## Utility Functions
-
-### `load_config`
-```python
-def load_config(config_path: Union[str, Path]) -> Dict[str, Any]
-```
-Loads and parses TOML configuration file.
-- **Parameters:**
-  - `config_path`: Path to configuration file
-- **Returns:** Parsed configuration dictionary
-- **Raises:**
-  - `FileNotFoundError`: If config file not found
-  - `tomli.TOMLDecodeError`: If TOML file invalid
-
-### `make_cell`
-```python
-def make_cell(cell_params) -> BaseCell
-```
-Creates cell instance from parameters.
-- **Parameters:**
-  - `cell_params`: Cell parameters
-- **Returns:** BaseCell instance
-
-### `make_sample`
-```python
-def make_sample(global_params, cell) -> SamplePlane
-```
-Creates sample plane from parameters.
-- **Parameters:**
-  - `global_params`: Global parameters
-  - `cell`: Instance of BaseCell
-- **Returns:** SamplePlane instance
-
-### `make_condensatedict`
-```python
-def make_condensatedict(condensate_params, cell) -> List[dict]
-```
-Creates condensate dictionaries from parameters.
-- **Parameters:**
-  - `condensate_params`: Condensate parameters
-  - `cell`: Cell instance
-- **Returns:** Condensate dictionaries
-
-### `get_tracks`
-```python
-def get_tracks(molecule_params, global_params, initial_positions, track_generator)
-```
-Generates molecular tracks based on parameters.
-- **Parameters:**
-  - `molecule_params`: Molecule parameters
-  - `global_params`: Global parameters
-  - `initial_positions`: Initial molecular positions
-  - `track_generator`: Track generator instance
-- **Returns:** Tuple of tracks collection and points per time collection
-
-## Dependencies
-
-- `tomli`: For TOML file parsing
-- `pydantic`: For data validation using BaseModel
-- `pathlib`: For path handling
-- Various internal modules:
-  - `AMS_BP.optics.filters`
-  - `AMS_BP.cells`
-  - `AMS_BP.motion`
-  - `AMS_BP.optics.camera`
-  - `AMS_BP.sample`
-
-## Usage Example
+### Configuration Loading
 
 ```python
-# Create config loader
-config_loader = ConfigLoader("config.toml")
-
-# Setup microscope
-microscope_config = config_loader.setup_microscope()
-
-# Access components
-vm = microscope_config["microscope"]
-base_config = microscope_config["base_config"]
-psf = microscope_config["psf"]
+load_config(config_path: Union[str, Path]) -> Dict[str, Any]
 ```
 
-## Notes
+Loads and parses a TOML configuration file from the specified path.
 
-- The configuration system expects TOML format for input files
-- All numeric parameters should be provided in SI units unless otherwise specified
-- The system supports multiple types of:
-  - Lasers (Gaussian, Widefield, HiLo)
-  - Detectors (CMOS, EMCCD)
-  - Filters (Bandpass, Tophat, Allow-all)
-  - Experiments (Time-series, Z-stack)
+### Data Model Schema Population
+
+```python
+populate_dataclass_schema(config: Dict[str, Any]) -> Tuple[GlobalParameters, CellParameters, MoleculeParameters, CondensateParameters, OutputParameters]
+```
+
+Populates Pydantic schema models from configuration data, returning structured parameter objects.
+
+### Experiment Configuration
+
+```python
+create_experiment_from_config(config: Dict[str, Any]) -> Tuple[BaseExpConfig, Callable]
+```
+
+Creates an experiment configuration and associated callable function based on the experiment type (time-series or z-stack).
+
+### Fluorophore Configuration
+
+```python
+create_fluorophores_from_config(config: Dict[str, Any]) -> List[Fluorophore]
+```
+
+Creates a list of fluorophore objects from configuration data, including states and transitions.
+
+### PSF (Point Spread Function) Configuration
+
+```python
+create_psf_from_config(config: Dict[str, Any]) -> Tuple[Callable, Dict[str, Any]]
+```
+
+Creates a PSF engine function and additional configuration from the config data.
+
+### Laser Configuration
+
+```python
+create_lasers_from_config(config: Dict[str, Any]) -> Dict[str, LaserProfile]
+```
+
+Creates laser profile instances (Gaussian, Widefield, HiLo) from configuration data.
+
+### Filter Configuration
+
+```python
+create_filter_set_from_config(config: Dict[str, Any]) -> FilterSet
+```
+
+Creates a filter set (excitation, emission, dichroic) from configuration data.
+
+### Channel Configuration
+
+```python
+create_channels(config: Dict[str, Any]) -> Channels
+```
+
+Creates channel objects from configuration data.
+
+### Detector Configuration
+
+```python
+create_detector_from_config(config: Dict[str, Any]) -> Tuple[Detector, QuantumEfficiency]
+```
+
+Creates a detector instance (CMOS or EMCCD) and quantum efficiency from configuration data.
+
+### Cell Creation
+
+```python
+create_cell_from_params(cell_params) -> BaseCell
+```
+
+Creates a cell object based on cell parameters.
+
+### Sample Plane Creation
+
+```python
+create_sample_plane(global_params: GlobalParameters, cell: BaseCell) -> SamplePlane
+```
+
+Creates a sample plane object based on global parameters and cell information.
+
+### Condensate Configuration
+
+```python
+create_condensates_dict(condensate_params: CondensateParameters, cell: BaseCell) -> List[dict]
+```
+
+Creates a list of condensate dictionaries based on condensate parameters.
+
+### Sampling Function Creation
+
+```python
+create_sampling_functions(condensate_params, cell) -> List[Callable]
+```
+
+Creates sampling functions for initial molecule positions.
+
+### Molecule Position Generation
+
+```python
+generate_initial_positions(molecule_params: MoleculeParameters, cell: BaseCell, condensate_params: CondensateParameters, sampling_functions: List[Callable]) -> List
+```
+
+Generates initial positions for molecules.
+
+### Track Generation
+
+```python
+create_track_generator(global_params: GlobalParameters, cell: BaseCell) -> Track_generator
+```
+
+Creates a track generator object for molecule motion.
+
+```python
+get_tracks(molecule_params: MoleculeParameters, global_params: GlobalParameters, initial_positions: List, track_generator: Track_generator) -> Tuple[List, List]
+```
+
+Generates tracks for molecules based on parameters.
+
+### Sample Creation
+
+```python
+add_tracks_to_sample(tracks: List, sample_plane: SamplePlane, fluorophore: List[Fluorophore], ID_counter=0) -> SamplePlane
+```
+
+Adds tracks to the sample plane.
+
+### Microscope Setup
+
+```python
+setup_microscope(config: Dict[str, Any]) -> dict
+```
+
+The main function that orchestrates the entire setup process and returns a dictionary containing all created components including:
+- Virtual microscope instance
+- Base configuration
+- PSF engine and configuration
+- Channels
+- Lasers
+- Sample plane
+- Tracks
+- Points per time
+- Condensate dictionary
+- Cell
+- Experiment configuration
+- Experiment function
+
+## Usage
+
+To use this module, create a TOML configuration file with all necessary parameters and call the `setup_microscope` function:
+
+```python
+config = load_config("path/to/config.toml")
+microscope_setup = setup_microscope(config)
+
+# Access the virtual microscope instance
+vm = microscope_setup["microscope"]
+
+# Run an experiment
+experiment_func = microscope_setup["experiment_func"]
+experiment_config = microscope_setup["experiment_config"]
+results = experiment_func(vm, experiment_config)
+```
+
+## Configuration Structure
+
+The TOML configuration file should contain the following sections:
+- Global_Parameters: General simulation parameters
+- Cell_Parameters: Cell-specific parameters
+- Molecule_Parameters: Molecule-specific parameters
+- Condensate_Parameters: Condensate-specific parameters
+- Output_Parameters: Output and saving parameters
+- experiment: Experiment-specific parameters
+- fluorophores: Fluorophore definitions
+- psf: PSF configuration
+- lasers: Laser configurations
+- channels: Channel configurations
+- camera: Camera and detector configurations

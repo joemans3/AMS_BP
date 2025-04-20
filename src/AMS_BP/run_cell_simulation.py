@@ -38,7 +38,7 @@ from typing_extensions import Annotated
 from . import __version__
 from .configio.convertconfig import ConfigLoader
 from .configio.saving import save_config_frames
-from .gui.main import ConfigEditor
+from .gui.main import MainWindow
 
 cli_help_doc = str(
     """
@@ -74,7 +74,7 @@ def cell_simulation():
 def run_gui() -> None:
     """Start the PyQt GUI"""
     app = QApplication(sys.argv)
-    editor = ConfigEditor()
+    editor = MainWindow()
     editor.show()
     sys.exit(app.exec())
 

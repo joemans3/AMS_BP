@@ -408,7 +408,7 @@ Each channel has its own filter set with the following parameters:
 - **Description**: The type of experiment.
 
 ### `z_position`
-- **Type**: Array of Numbers
+- **Type**: Array of Numbers, or Number ( if "z-stack" or "time-series")
 - **Description**: The z-positions for the experiment.
 
 ### `laser_names_active`

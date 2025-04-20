@@ -14,12 +14,19 @@ from PyQt6.QtWidgets import (
 
 
 class SpectrumEditorDialog(QDialog):
-    def __init__(self, parent=None, wavelengths=None, intensities=None):
+    def __init__(
+        self,
+        parent=None,
+        wavelengths=None,
+        intensities=None,
+        intensity_name="Intensity",
+    ):
         super().__init__(parent)
         self.setWindowTitle("Edit Spectrum")
         self.resize(600, 400)
         self.wavelengths = wavelengths or []
         self.intensities = intensities or []
+        self.intensity_name = intensity_name
 
         self.setup_ui()
         self.populate_table()
@@ -29,7 +36,7 @@ class SpectrumEditorDialog(QDialog):
         layout = QVBoxLayout(self)
 
         self.table = QTableWidget(0, 2)
-        self.table.setHorizontalHeaderLabels(["Wavelength (nm)", "Intensity"])
+        self.table.setHorizontalHeaderLabels(["Wavelength (nm)", self.intensity_name])
         self.table.cellChanged.connect(self.update_plot)
         layout.addWidget(self.table)
 
@@ -95,7 +102,7 @@ class SpectrumEditorDialog(QDialog):
         ax = self.figure.add_subplot(111)
         ax.plot(wavelengths, intensities, marker="o", linestyle="-", color="blue")
         ax.set_xlabel("Wavelength (nm)")
-        ax.set_ylabel("Intensity")
+        ax.set_ylabel(self.intensity_name)
         ax.set_title("Spectrum Preview")
         ax.grid(True)
         self.canvas.draw()

@@ -102,13 +102,14 @@ class CameraConfigWidget(QWidget):
             parent=self,
             wavelengths=[],  # Pass an empty list or preloaded wavelengths
             intensities=[],  # Pass an empty list or preloaded intensities
+            intensity_name="QE",
         )
 
         if dialog.exec():
             # Handle the updated quantum efficiency data (wavelengths, intensities)
             self.quantum_efficiency_data = {
                 "wavelengths": dialog.wavelengths,
-                "intensities": dialog.intensities,
+                "quantum_efficiency": dialog.intensities,
             }
             # You can now use this data wherever needed, e.g., saving or validation
 

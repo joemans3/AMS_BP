@@ -35,6 +35,7 @@ from typing_extensions import Annotated
 
 from . import __version__
 from .gui.main import MainWindow
+from .logging.logutil import cleanup_old_logs
 from .run_sim_util import run_simulation_from_file
 
 cli_help_doc = str(
@@ -63,6 +64,7 @@ typer_app_asms_bp = typer.Typer(
 def cell_simulation():
     # print version
     # find version using the __version__ variable in the __init__.py file
+    cleanup_old_logs(Path.home() / "AMS_runs", max_age_days=7)
     out_string = f"AMS_BP version: [bold]{__version__}[/bold]"
     rich.print(out_string)
 
@@ -70,6 +72,9 @@ def cell_simulation():
 @typer_app_asms_bp.command(name="gui")
 def run_gui() -> None:
     """Start the PyQt GUI"""
+    # Clean old logs
+    log_dir = Path.home() / "AMS_runs"
+    cleanup_old_logs(log_dir, max_age_days=7)
     app = QApplication(sys.argv)
     editor = MainWindow()
     editor.show()

@@ -1,5 +1,6 @@
 import webbrowser
 from pathlib import Path
+from zipfile import ZipFile
 
 import napari
 import tifffile
@@ -10,11 +11,14 @@ from PyQt6.QtWidgets import (
     QFileDialog,
     QLabel,
     QMainWindow,
+    QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
+from ..logging.logutil import LoggerManager
+from ..logging.setup_run_directory import setup_run_directory
 from .configuration_window import ConfigEditor
 from .logging_window import LogWindow
 from .sim_worker import SimulationWorker
@@ -69,6 +73,54 @@ class MainWindow(QMainWindow):
         self.view_button.clicked.connect(self.open_napari_viewer)
         layout.addWidget(self.view_button)
 
+        self.package_logs_button = QPushButton("Package Logs for Sharing")
+        self.package_logs_button.clicked.connect(self.package_logs)
+        layout.addWidget(self.package_logs_button)
+
+    def package_logs(self):
+        log_dir = Path.home() / "AMS_runs"
+
+        # Step 1: Open file dialog to select multiple .log files
+        file_paths, _ = QFileDialog.getOpenFileNames(
+            self,
+            "Select Log Files to Package",
+            str(log_dir),
+            "Log Files (*.log)",
+        )
+
+        if not file_paths:
+            return  # user cancelled
+
+        # Step 2: Ask for save location of the .zip archive
+        zip_path_str, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save Zipped Logs As",
+            str(log_dir / "logs_package.zip"),
+            "Zip Archive (*.zip)",
+        )
+
+        if not zip_path_str:
+            return
+
+        zip_path = Path(zip_path_str)
+        if not zip_path.suffix == ".zip":
+            zip_path = zip_path.with_suffix(".zip")
+
+        try:
+            with ZipFile(zip_path, "w") as archive:
+                for file in file_paths:
+                    file_path = Path(file)
+                    archive.write(file_path, arcname=file_path.name)
+
+            QMessageBox.information(
+                self,
+                "Logs Packaged",
+                f"{len(file_paths)} log file(s) successfully packaged to:\n{zip_path}",
+            )
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to package logs:\n{e}")
+
     def run_simulation_from_config(self):
         config_path_str, _ = QFileDialog.getOpenFileName(
             self,
@@ -80,35 +132,56 @@ class MainWindow(QMainWindow):
         if config_path_str:
             config_path = Path(config_path_str)
 
-            # Create and show log window
+            # Structured run dir setup
+            run_info = setup_run_directory(config_path)
+            log_path = run_info["log_file"]
+
+            # Create logger
+            self.logger_manager = LoggerManager(log_path)
+            self.logger_manager.start()
+
+            # Log window
             self.log_window = LogWindow(self)
             self.log_window.show()
 
-            # Set up thread + worker
+            # Connect logger to GUI window
+            # Get emitter from logger
+            emitter = self.logger_manager.get_emitter()
+
+            # Hook up emitter to the GUI
+            emitter.message.connect(self.log_window.append_text)
+
+            # Create worker using emitter instead of log_window
+            self.sim_worker = SimulationWorker(
+                config_path,
+                emitter,
+                cancel_callback=lambda: self.log_window.cancel_requested,
+            )
+
+            # Set up worker + thread
             self.sim_thread = QThread()
-            self.sim_worker = SimulationWorker(config_path, self.log_window)
             self.sim_worker.moveToThread(self.sim_thread)
 
-            # Connect thread/worker signals
+            # Worker signals
             self.sim_thread.started.connect(self.sim_worker.run)
             self.sim_worker.finished.connect(self.sim_thread.quit)
             self.sim_worker.finished.connect(self.sim_worker.deleteLater)
             self.sim_thread.finished.connect(self.sim_thread.deleteLater)
 
-            self.sim_worker.log_message.connect(self.log_window.append_text)
-            self.sim_worker.error_occurred.connect(self.log_window.append_text)
+            # Forward any manual log output
+            self.sim_worker.finished.connect(lambda: print("Simulation finished."))
+            self.sim_worker.finished.connect(self.logger_manager.stop)
 
-            # Auto-close log window and reset on completion
-            def cleanup():
+            def cleanup_ui():
                 self.log_window.progress.setRange(0, 1)
                 self.log_window.progress.setValue(1)
                 self.log_window.cancel_button.setText("Close")
                 self.log_window.cancel_button.clicked.disconnect()
                 self.log_window.cancel_button.clicked.connect(self.log_window.close)
 
-            self.sim_worker.finished.connect(cleanup)
+            self.sim_worker.finished.connect(cleanup_ui)
+            self.sim_worker.error_occurred.connect(emitter.message.emit)
 
-            # Start the simulation
             self.sim_thread.start()
 
     def open_napari_viewer(self):

@@ -57,6 +57,20 @@ class GlobalParameters(BaseModel):
     def convert_sample_plane_dim(cls, v):
         return np.array(v)
 
+    def model_post_init(self, __context):
+        if self.oversample_motion_time <= 0:
+            raise ValueError("Oversample Motion Time must be larger than 0 ms")
+        if self.exposure_time < self.oversample_motion_time:
+            if self.exposure_time > 0:
+                raise ValueError(
+                    "Exposure time must be equal to or larger than Oversample Motion Time, or 0"
+                )
+        if self.interval_time < self.oversample_motion_time:
+            if self.interval_time > 0:
+                raise ValueError(
+                    "Interval time must be equal to or larger than Oversample Motion Time, or 0"
+                )
+
 
 class CondensateParameters(BaseModel):
     initial_centers: List[List[List[float]]] = Field(

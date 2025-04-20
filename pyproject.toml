@@ -30,6 +30,7 @@ dependencies = [
   "tomli>=2.0.2",
   "pyvista>=0.44.2",
   "boundedfbm>=0.4.0",
+  "pyqt6>=6.9.0",
 ]
 
 [project.urls]

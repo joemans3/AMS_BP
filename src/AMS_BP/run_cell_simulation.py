@@ -6,12 +6,14 @@ This file contains the command-line interface (CLI) for the AMS_BP package.
 The CLI is built using Typer and provides two main commands:
 1. 'config': Generates a sample configuration file.
 2. 'runsim': Runs the cell simulation using a provided configuration file.
+3. 'gui': starts the PyQT GUI
 
 Main Components:
 - typer_app_asms_bp: The main Typer application object.
 - cell_simulation(): Callback function that displays the version information.
 - generate_config(): Command to generate a sample configuration file.
 - run_cell_simulation(): Command to run the cell simulation using a configuration file.
+- run_gui(): runs the GUI
 
 Usage:
 - To generate a config file: python run_cell_simulation.py config [OPTIONS]
@@ -22,18 +24,21 @@ The file uses Rich for enhanced console output and progress tracking.
 
 import os
 import shutil
+import sys
 import time
 from pathlib import Path
 from typing import Optional
 
 import rich
 import typer
+from PyQt6.QtWidgets import QApplication
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from typing_extensions import Annotated
 
 from . import __version__
 from .configio.convertconfig import ConfigLoader
 from .configio.saving import save_config_frames
+from .gui.main import ConfigEditor
 
 cli_help_doc = str(
     """
@@ -63,6 +68,15 @@ def cell_simulation():
     # find version using the __version__ variable in the __init__.py file
     out_string = f"AMS_BP version: [bold]{__version__}[/bold]"
     rich.print(out_string)
+
+
+@typer_app_asms_bp.command(name="gui")
+def run_gui() -> None:
+    """Start the PyQt GUI"""
+    app = QApplication(sys.argv)
+    editor = ConfigEditor()
+    editor.show()
+    sys.exit(app.exec())
 
 
 @typer_app_asms_bp.command(name="config")

@@ -6,6 +6,8 @@ from pydantic import BaseModel, Field, field_validator
 
 CustomNDarray: TypeAlias = NDArray[np.float64]
 
+FILTERS = ["bandpass", "allow_all"]
+
 
 class FilterSpectrum(BaseModel):
     """Represents the spectral characteristics of an optical filter"""

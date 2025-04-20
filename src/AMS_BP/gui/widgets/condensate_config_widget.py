@@ -221,39 +221,36 @@ class CondensateConfigWidget(QWidget):
         container.setLayout(layout)
         return container
 
-    def get_data(self):
-        """Collect all form data and return as a dictionary"""
-        initial_centers = []
-        initial_scale = []
-        diffusion_coefficient = []
-        hurst_exponent = []
+    def get_data(self) -> dict:
+        initial_centers: list[list[list[float]]] = []
+        initial_scale: list[list[float]] = []
+        diffusion_coefficient: list[list[float]] = []
+        hurst_exponent: list[list[float]] = []
 
-        # For each molecule type
+        # For each molecule type (i.e., each tab)
         for molecule_widgets in self.condensate_widgets:
-            # Collect centers for this molecule type
-            molecule_centers = []
-            molecule_scales = []
-            molecule_diffusion = []
-            molecule_hurst = []
+            molecule_centers: list[list[float]] = []
+            molecule_scales: list[float] = []
+            molecule_diffusions: list[float] = []
+            molecule_hursts: list[float] = []
 
-            # For each condensate in this molecule type
+            # For each condensate in that molecule type
             for condensate in molecule_widgets:
-                # Get center coordinates
                 center = [spin.value() for spin in condensate["center"]]
                 molecule_centers.append(center)
-
-                # Get other parameters
                 molecule_scales.append(condensate["scale"].value())
-                molecule_diffusion.append(condensate["diffusion"].value())
-                molecule_hurst.append(condensate["hurst"].value())
+                molecule_diffusions.append(condensate["diffusion"].value())
+                molecule_hursts.append(condensate["hurst"].value())
 
             initial_centers.append(molecule_centers)
             initial_scale.append(molecule_scales)
-            diffusion_coefficient.append(molecule_diffusion)
-            hurst_exponent.append(molecule_hurst)
+            diffusion_coefficient.append(molecule_diffusions)
+            hurst_exponent.append(molecule_hursts)
 
-        # Get density difference
-        density_dif = [self.density_dif_widget.value()]
+        # Replicate density difference per molecule type
+        density_value = self.density_dif_widget.value()
+        num_molecule_types = len(self.condensate_widgets)
+        density_dif = [density_value for _ in range(num_molecule_types)]
 
         return {
             "initial_centers": initial_centers,

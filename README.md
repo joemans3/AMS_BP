@@ -28,6 +28,7 @@ Find detailed API references for the library at: [joemans3/github.io/AMS_BP](htt
 ## Table of Contents
 - [Installation](#installation)
 - [Command Line Interface](#command-line-interface)
+- [GUI](#gui)
 - [Configuration File](#configuration-file)
 - [Running Experiments](#running-experiments)
 - [Advanced Usage](#advanced-usage)
@@ -68,6 +69,9 @@ run_AMS_BP config [OPTIONS]
 
 # Run a simulation using a configuration file
 run_AMS_BP runsim CONFIG_FILE
+
+#start the GUI
+run_AMS_BP gui
 ```
 
 ### Config Command Options
@@ -75,6 +79,40 @@ run_AMS_BP runsim CONFIG_FILE
 - `-o, --output_path PATH`: Specify the output directory for the configuration file
 - `-r, --recursive_o`: Create output directory if it doesn't exist
 
+## GUI
+In addition to the CLI and programmatic API, AMS-BP comes with a graphical interface to guide users through the configuration, simulation, and analysis pipeline.
+
+### Main GUI Features
+The GUI provides the following tools from a single interface:
+
+**Create Configuration File** — Launches the visual configuration builder
+**Run Simulation from Config** — Select a .toml file and run the simulation with logging and progress tracking
+**Visualize Microscopy Data (Napari)** — Open TIFF, PNG, ND2, or Zarr image files and view with the Napari viewer
+**Package Logs for Sharing** — Package run directories (e.g., run_2024_04_20_001) into a .zip file for archival or collaboration
+
+### Launch the GUI
+To start the GUI, run:
+
+```bash
+
+run_AMS_BP gui
+```
+#### Configuration Builder
+Clicking "Create Configuration File" opens a template selector where you can choose a preconfigured simulation (with preview images), and then visually edit all configuration options through dedicated tabs.
+
+Each section of the configuration is editable via structured UI forms, with contextual help and validation. Tabs include:
+
+- Global/Cell/Molecule/Condensate/Fluorophore parameters
+- Laser and optical configuration
+- Camera and channel settings
+- Experiment setup (e.g., z-stack vs time-series)
+Once ready, click "Preview Configuration TOML" to inspect the final file, and "Save" to export.
+
+#### Running Simulations from GUI
+Clicking "Run Simulation from Config" lets you select any .toml configuration file. A real-time log viewer shows progress, and outputs are saved in a structured AMS_runs/run_*/ directory.
+
+#### Sharing Logs
+Run into an issue? Use the packge logs button to select the logs corresponding to the simulation you just ran, save them and send them over to us! It will help you diagnose the issue!
 
 ## Configuration File
 

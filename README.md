@@ -58,7 +58,7 @@ pip install AMS_BP
 
 ## Command Line Interface
 
-AMS-BP provides a command-line interface with two main commands:
+AMS-BP provides a command-line interface with three main commands:
 
 ```bash
 # Generate a default configuration file

@@ -1,3 +1,6 @@
+from pathlib import Path
+
+import tomli
 import tomlkit
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -54,7 +57,7 @@ class ConfigEditor(QWidget):
                 "Cell Parameters",
                 "Molecule Parameters",
                 "Condensate Parameters",
-                "Define Fluorophores",
+                "Define fluorophores",
                 "Camera Parameters",
                 "PSF Parameters",
                 "Laser Parameters",
@@ -158,6 +161,40 @@ class ConfigEditor(QWidget):
 
         # Set initial display
         self.on_dropdown_change(0)  # Show the first tab (index 0)
+
+    def set_data(self, config: dict):
+        if "Cell_Parameters" in config:
+            self.cell_tab.set_data(config["Cell_Parameters"])
+
+        if "Global_Parameters" in config:
+            self.global_tab.set_data(config["Global_Parameters"])
+
+        if "Molecule_Parameters" in config:
+            self.molecule_tab.set_data(config["Molecule_Parameters"])
+
+        if "fluorophores" in config:
+            self.fluorophore_tab.set_data(config["fluorophores"])
+
+        if "Condensate_Parameters" in config:
+            self.condensate_tab.set_data(config["Condensate_Parameters"])
+
+        if "Output_Parameters" in config:
+            self.output_tab.set_data(config["Output_Parameters"])
+
+        if "lasers" in config:
+            self.laser_tab.set_data(config["lasers"])
+
+        if "experiment" in config:
+            self.experiment_tab.set_data(config["experiment"])
+
+        if "channels" in config:
+            self.channel_tab.set_data(config["channels"])
+
+        if "camera" in config:
+            self.detector_tab.set_data(config["camera"])
+
+        if "psf" in config:
+            self.psf_tab.set_data(config["psf"])
 
     def preview_config(self):
         """Preview the full TOML config in a dialog before saving."""
@@ -289,3 +326,8 @@ class ConfigEditor(QWidget):
             QMessageBox.critical(
                 self, "Error", f"An error occurred while saving: {str(e)}"
             )
+
+    def load_config_from_toml(self, path: Path):
+        with open(path, "rb") as f:
+            config = tomli.load(f)
+        self.set_data(config)

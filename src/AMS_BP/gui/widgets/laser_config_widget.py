@@ -178,6 +178,43 @@ class LaserConfigWidget(QWidget):
         else:
             inclination_angle.setEnabled(False)
 
+    def set_data(self, data: dict):
+        # Determine how many lasers we need to configure
+        active_names = data.get("active", [])
+        self.num_lasers.setValue(len(active_names))
+        self.update_laser_tabs()
+
+        for i, name in enumerate(active_names):
+            if i >= len(self.laser_widgets):
+                break  # Extra safety
+
+            widgets = self.laser_widgets[i]
+            widgets["name"].setText(name)
+
+            laser_info = data.get(name, {})
+            widgets["type"].setCurrentText(laser_info.get("type", "widefield"))
+            widgets["preset"].setText(laser_info.get("preset", ""))
+
+            params = laser_info.get("parameters", {})
+
+            widgets["power"].setValue(params.get("power", 0.0))
+            widgets["wavelength"].setValue(params.get("wavelength", 488))
+            widgets["beam_width"].setValue(params.get("beam_width", 1.0))
+            widgets["numerical_aperture"].setValue(
+                params.get("numerical_aperture", 1.4)
+            )
+            widgets["refractive_index"].setValue(params.get("refractive_index", 1.518))
+
+            if laser_info.get("type") == "hilo":
+                widgets["inclination_angle"].setValue(
+                    params.get("inclination_angle", 45.0)
+                )
+                widgets["inclination_angle"].setEnabled(True)
+            else:
+                widgets["inclination_angle"].setEnabled(False)
+
+        self.emit_active_lasers()
+
     def get_data(self) -> dict:
         lasers_section = {}
         active_names = []

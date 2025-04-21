@@ -80,6 +80,26 @@ class GlobalConfigWidget(QWidget):
         self.interval_time.setValue(0)  # 50 ms
         self.oversample_motion_time.setValue(1)  # 10 ms
 
+    def set_data(self, data: dict):
+        """
+        Populate the global parameter fields using data from a config dictionary.
+        """
+        try:
+            # Sample plane dimensions
+            dims = data.get("sample_plane_dim", [50, 50])
+            if isinstance(dims, list) and len(dims) == 2:
+                self.sample_plane_width.setValue(dims[0])
+                self.sample_plane_height.setValue(dims[1])
+
+            # Other scalar fields
+            self.cycle_count.setValue(data.get("cycle_count", 5))
+            self.exposure_time.setValue(data.get("exposure_time", 100))
+            self.interval_time.setValue(data.get("interval_time", 0))
+            self.oversample_motion_time.setValue(data.get("oversample_motion_time", 1))
+
+        except Exception as e:
+            print(f"[GlobalConfigWidget] Failed to load config: {e}")
+
     def get_data(self):
         """Collect all form data and return as a dictionary"""
         return {

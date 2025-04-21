@@ -168,6 +168,37 @@ class CameraConfigWidget(QWidget):
         }
         return camera_data
 
+    def set_data(self, data: dict):
+        # Camera type
+        camera_type = data.get("type", "CMOS")
+        idx = self.camera_type.findText(camera_type)
+        if idx >= 0:
+            self.camera_type.setCurrentIndex(idx)
+
+        # Pixel count
+        pixel_count = data.get("pixel_count", [512, 512])
+        if len(pixel_count) == 2:
+            self.pixel_width.setValue(pixel_count[0])
+            self.pixel_height.setValue(pixel_count[1])
+
+        self.pixel_detector_size.setValue(data.get("pixel_detector_size", 6.5))
+        self.magnification.setValue(data.get("magnification", 60))
+        self.dark_current.setValue(data.get("dark_current", 1.0))
+        self.readout_noise.setValue(data.get("readout_noise", 1.0))
+        self.bit_depth.setValue(data.get("bit_depth", 16))
+        self.sensitivity.setValue(data.get("sensitivity", 0.5))
+        self.base_adu.setValue(data.get("base_adu", 100))
+        self.binning_size.setValue(data.get("binning_size", 1))
+
+        # Quantum efficiency
+        raw_qe = data.get("quantum_efficiency", [])
+        wavelengths = [pair[0] for pair in raw_qe]
+        efficiencies = [pair[1] for pair in raw_qe]
+        self.quantum_efficiency_data = {
+            "wavelengths": wavelengths,
+            "quantum_efficiency": efficiencies,
+        }
+
     def get_help_path(self) -> Path:
         return Path(__file__).parent.parent / "help_docs" / "detector_help.md"
 

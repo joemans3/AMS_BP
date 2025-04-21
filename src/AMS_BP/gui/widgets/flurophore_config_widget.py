@@ -404,6 +404,90 @@ class FluorophoreConfigWidget(QWidget):
 
         return data
 
+    def set_data(self, data: dict):
+        """Populate the UI from TOML-based fluorophore config data."""
+        fluor_names = data.get("fluorophore_names", [])
+        self.set_mfluorophore_count(len(fluor_names))
+
+        for i, name in enumerate(fluor_names):
+            fluor_data = data.get(name, {})
+            widget_refs = self.fluorophore_widgets[i]
+            widget_refs["name"].setText(name)
+
+            widget_refs["initial_state"].setText(fluor_data.get("initial_state", {}))
+
+            # === Load States ===
+            widget_refs["group"] = []
+            states = fluor_data.get("states", {})
+            for j, (state_name, state_data) in enumerate(states.items()):
+                if j >= len(widget_refs["states"]):
+                    self.add_state_group(widget_refs)
+                state_widget = widget_refs["states"][j]
+
+                state_widget["name"].setText(state_data["name"])
+                idx = state_widget["type"].findText(state_data["state_type"])
+                if idx != -1:
+                    state_widget["type"].setCurrentIndex(idx)
+
+                if state_data["state_type"] == "fluorescent":
+                    state_widget["quantum_yield"].setText(
+                        str(state_data.get("quantum_yield", 0.0))
+                    )
+                    state_widget["extinction"].setText(
+                        str(state_data.get("extinction_coefficient", 0.0))
+                    )
+                    state_widget["lifetime"].setText(
+                        str(state_data.get("fluorescent_lifetime", 0.0))
+                    )
+
+                    # Spectra
+                    state_widget["excitation_spectrum_data"]["wavelengths"] = (
+                        state_data.get("excitation_spectrum", {}).get("wavelengths", [])
+                    )
+                    state_widget["excitation_spectrum_data"]["intensities"] = (
+                        state_data.get("excitation_spectrum", {}).get("intensities", [])
+                    )
+
+                    state_widget["emission_spectrum_data"]["wavelengths"] = (
+                        state_data.get("emission_spectrum", {}).get("wavelengths", [])
+                    )
+                    state_widget["emission_spectrum_data"]["intensities"] = (
+                        state_data.get("emission_spectrum", {}).get("intensities", [])
+                    )
+
+            # === Load Transitions ===
+            transitions = fluor_data.get("transitions", {})
+            for j, (key, trans_data) in enumerate(transitions.items()):
+                if j >= len(widget_refs["transitions"]):
+                    self.add_transition_group(widget_refs)
+                trans_widget = widget_refs["transitions"][j]
+
+                trans_widget["from_state"].setText(trans_data["from_state"])
+                trans_widget["to_state"].setText(trans_data["to_state"])
+                is_photon = trans_data.get("photon_dependent", False)
+                idx = trans_widget["photon_dependent"].findText(str(is_photon))
+                if idx != -1:
+                    trans_widget["photon_dependent"].setCurrentIndex(idx)
+
+                if is_photon:
+                    spectrum = trans_data.get("spectrum", {})
+                    trans_widget["activation_spectrum_data"]["wavelengths"] = (
+                        spectrum.get("wavelengths", [])
+                    )
+                    trans_widget["activation_spectrum_data"]["intensities"] = (
+                        spectrum.get("intensities", [])
+                    )
+                    trans_widget["extinction_coefficient"].setText(
+                        str(spectrum.get("extinction_coefficient", 0.0))
+                    )
+                    trans_widget["quantum_yield"].setText(
+                        str(spectrum.get("quantum_yield", 0.0))
+                    )
+                else:
+                    trans_widget["base_rate"].setText(
+                        str(trans_data.get("base_rate", 0.0))
+                    )
+
     def validate(self) -> bool:
         try:
             from ...configio.convertconfig import create_fluorophores_from_config

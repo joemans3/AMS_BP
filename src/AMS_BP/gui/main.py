@@ -19,9 +19,9 @@ from PyQt6.QtWidgets import (
 
 from ..logging.logutil import LoggerManager
 from ..logging.setup_run_directory import setup_run_directory
-from .configuration_window import ConfigEditor
 from .logging_window import LogWindow
 from .sim_worker import SimulationWorker
+from .template_window_selection import TemplateSelectionWindow
 
 LOGO_PATH = str(Path(__file__).parent / "assets" / "drawing.svg")
 
@@ -246,9 +246,9 @@ class MainWindow(QMainWindow):
             print("Failed to load SVG file.")
 
     def open_config_editor(self):
-        """Open the ConfigEditor window."""
-        self.config_editor_window = ConfigEditor()
-        self.config_editor_window.show()  # Open the ConfigEditor window as a new window
+        """Launch template selection first, then open ConfigEditor."""
+        self.template_window = TemplateSelectionWindow()
+        self.template_window.show()
 
     def on_link_activated(self, url):
         """Handle the link activation (clicking the hyperlink)."""

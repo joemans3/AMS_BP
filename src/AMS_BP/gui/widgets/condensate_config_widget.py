@@ -222,6 +222,37 @@ class CondensateConfigWidget(QWidget):
         container.setLayout(layout)
         return container
 
+    def set_data(self, data: dict):
+        num_molecule_types = len(data["initial_centers"])
+        self.set_molecule_count(num_molecule_types)
+
+        for i in range(num_molecule_types):
+            molecule_group = self.condensate_widgets[i]
+
+            centers = data["initial_centers"][i]
+            scales = data["initial_scale"][i]
+            diffusions = data["diffusion_coefficient"][i]
+            hursts = data["hurst_exponent"][i]
+            density = data["density_dif"][i]
+
+            num_condensates = len(centers)
+            molecule_group_layout = self.tab_widget.widget(i).widget().layout()
+            self.update_condensate_count(
+                num_condensates,
+                molecule_group["condensates"],
+                molecule_group_layout,
+            )
+
+            for j in range(num_condensates):
+                condensate = molecule_group["condensates"][j]
+                for k in range(3):
+                    condensate["center"][k].setValue(centers[j][k])
+                condensate["scale"].setValue(scales[j])
+                condensate["diffusion"].setValue(diffusions[j])
+                condensate["hurst"].setValue(hursts[j])
+
+            molecule_group["density_widget"].setValue(density)
+
     def get_data(self) -> dict:
         initial_centers: list[list[list[float]]] = []
         initial_scale: list[list[float]] = []

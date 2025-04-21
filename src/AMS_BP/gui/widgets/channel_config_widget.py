@@ -246,5 +246,62 @@ class ChannelConfigWidget(QWidget):
 
         return data
 
+    def set_data(self, data: dict):
+        num_channels = data.get("num_of_channels", 0)
+        self.num_channels.setValue(num_channels)
+        self.update_channel_tabs()
+
+        channel_names = data.get("channel_names", [])
+        split_efficiencies = data.get("split_efficiency", [])
+        filters = data.get("filters", {})
+
+        for i, widgets in enumerate(self.channel_widgets):
+            if i >= len(channel_names):
+                break
+
+            name = channel_names[i]
+            widgets["channel_name"].setText(name)
+
+            if i < len(split_efficiencies):
+                widgets["split_efficiency"].setValue(split_efficiencies[i])
+
+            filter_data = filters.get(name, {})
+
+            # Excitation
+            excitation = filter_data.get("excitation", {})
+            widgets["exc_name"].setText(excitation.get("name", ""))
+            widgets["exc_type"].setCurrentText(excitation.get("type", "bandpass"))
+
+            widgets["exc_center"].setValue(excitation.get("center_wavelength", 0))
+            widgets["exc_bandwidth"].setValue(excitation.get("bandwidth", 0))
+            widgets["exc_trans"].setValue(excitation.get("transmission_peak", 0.0))
+            widgets["exc_points"].setValue(excitation.get("points", 1))
+
+            # Emission
+            emission = filter_data.get("emission", {})
+            widgets["em_name"].setText(emission.get("name", ""))
+            widgets["em_type"].setCurrentText(emission.get("type", "bandpass"))
+
+            widgets["em_center"].setValue(emission.get("center_wavelength", 0))
+            widgets["em_bandwidth"].setValue(emission.get("bandwidth", 0))
+            widgets["em_trans"].setValue(emission.get("transmission_peak", 0.0))
+            widgets["em_points"].setValue(emission.get("points", 1))
+
+            # Apply visibility logic
+            self.toggle_filter_fields(
+                widgets["exc_type"].currentText(),
+                widgets["exc_center"],
+                widgets["exc_bandwidth"],
+                widgets["exc_trans"],
+                widgets["exc_points"],
+            )
+            self.toggle_filter_fields(
+                widgets["em_type"].currentText(),
+                widgets["em_center"],
+                widgets["em_bandwidth"],
+                widgets["em_trans"],
+                widgets["em_points"],
+            )
+
     def get_help_path(self) -> Path:
         return Path(__file__).parent.parent / "help_docs" / "channels_help.md"

@@ -134,24 +134,31 @@ class ExperimentConfigWidget(QWidget):
         container.setLayout(box)
         return container
 
-    def set_active_lasers(self, laser_names: List[str]):
+    def set_active_lasers(self, laser_names: List[str], powers=None, positions=None):
         self.laser_tabs.clear()
         self.laser_power_widgets.clear()
         self.laser_position_widgets.clear()
 
-        for name in laser_names:
+        powers = powers or [0.0] * len(laser_names)
+        positions = positions or [[0.0, 0.0, 0.0] for _ in laser_names]
+
+        for i, name in enumerate(laser_names):
             tab = QWidget()
             form = QFormLayout()
 
             # Power
             power = QDoubleSpinBox()
-            power.setRange(0, 1e5)
+            power.setValue(powers[i] if i < len(powers) else 0.0)
             form.addRow("Power (W):", power)
 
             # Position
             pos_spins = [QDoubleSpinBox() for _ in range(3)]
-            for s in pos_spins:
-                s.setRange(-1e5, 1e5)
+            for j, s in enumerate(pos_spins):
+                s.setValue(
+                    positions[i][j]
+                    if i < len(positions) and j < len(positions[i])
+                    else 0.0
+                )
             form.addRow("Position (x, y, z):", self._hbox(pos_spins))
 
             tab.setLayout(form)
@@ -178,6 +185,40 @@ class ExperimentConfigWidget(QWidget):
             "exposure_time": self.exposure.value(),
             "interval_time": self.interval.value(),
         }
+
+    def set_data(self, data: dict):
+        self.name_field.setText(data.get("name", ""))
+        self.desc_field.setText(data.get("description", ""))
+
+        experiment_type = data.get("experiment_type", "time-series")
+        idx = self.type_field.findText(experiment_type)
+        if idx >= 0:
+            self.type_field.setCurrentIndex(idx)
+
+        self.update_z_position_mode(experiment_type)
+        z_positions = data.get("z_position", [])
+        if experiment_type == "time-series" and z_positions:
+            self.z_position_inputs[0].setValue(z_positions[0])
+        elif experiment_type == "z-stack":
+            for i in range(len(self.z_position_inputs), len(z_positions)):
+                self.add_z_position_field()
+            for i, val in enumerate(z_positions):
+                if i < len(self.z_position_inputs):
+                    self.z_position_inputs[i].setValue(val)
+
+        # XY Offset
+        xyoffset = data.get("xyoffset", [0, 0])
+        for i in range(min(2, len(xyoffset))):
+            self.xyoffset[i].setValue(xyoffset[i])
+
+        self.exposure.setValue(data.get("exposure_time", 100))
+        self.interval.setValue(data.get("interval_time", 0))
+
+        # Laser data in one call
+        laser_names = data.get("laser_names_active", [])
+        powers = data.get("laser_powers_active", [])
+        positions = data.get("laser_positions_active", [])
+        self.set_active_lasers(laser_names, powers=powers, positions=positions)
 
     def validate(self) -> bool:
         try:

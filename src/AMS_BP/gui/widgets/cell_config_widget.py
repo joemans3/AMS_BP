@@ -176,5 +176,50 @@ class CellConfigWidget(QWidget):
         else:
             return {"cell_type": ctype, "params": {}}
 
+    def set_data(self, data: dict):
+        try:
+            cell_type = data.get("cell_type", "RodCell")
+            self.cell_type.setCurrentText(cell_type)
+
+            params = data.get("params", {})
+
+            if cell_type == "SphericalCell":
+                center = params.get("center", [0, 0, 0])
+                radius = params.get("radius", 1.0)
+                for i, val in enumerate(center):
+                    self.center_s[i].setValue(val)
+                self.radius_s.setValue(radius)
+
+            elif cell_type == "RodCell":
+                center = params.get("center", [0, 0, 0])
+                direction = params.get("direction", [1, 0, 0])
+                height = params.get("height", 1.0)
+                radius = params.get("radius", 0.5)
+                for i, val in enumerate(center):
+                    self.center_r[i].setValue(val)
+                for i, val in enumerate(direction):
+                    self.direction_r[i].setValue(val)
+                self.height_r.setValue(height)
+                self.radius_r.setValue(radius)
+
+            elif cell_type == "RectangularCell":
+                bounds = params.get("bounds", [0, 10, 0, 10, 0, 10])
+                for i, val in enumerate(bounds):
+                    self.bounds[i].setValue(val)
+
+            elif cell_type == "OvoidCell":
+                center = params.get("center", [0, 0, 0])
+                xr = params.get("xradius", 1.0)
+                yr = params.get("yradius", 1.0)
+                zr = params.get("zradius", 1.0)
+                for i, val in enumerate(center):
+                    self.center_o[i].setValue(val)
+                self.xradius.setValue(xr)
+                self.yradius.setValue(yr)
+                self.zradius.setValue(zr)
+
+        except Exception as e:
+            print(f"[CellConfigWidget] Failed to load data: {e}")
+
     def get_help_path(self) -> Path:
         return Path(__file__).parent.parent / "help_docs" / "cell_help.md"

@@ -131,7 +131,9 @@ def generate_config(
         # find the parent dir
         project_directory = Path(__file__).parent
         # find the config file
-        config_file = project_directory / "sim_config.toml"
+        config_file = (
+            project_directory / "resources" / "template_configs" / "sim_config.toml"
+        )
         output_path = output_path / "sim_config.toml"
         # copy the config file to the output path
 

@@ -86,7 +86,7 @@ class MoleculeConfigWidget(QWidget):
 
         # Restore data only if tab count matches current data
         if current_data and len(current_data["num_molecules"]) == num_types:
-            self.set_data(current_data)
+            self.set_data_from_widget_selection(current_data)
 
     def validate(self) -> bool:
         try:
@@ -108,6 +108,40 @@ class MoleculeConfigWidget(QWidget):
         except ValueError as e:
             QMessageBox.critical(self, "Validation Error", str(e))
             return False
+
+    def set_data(self, config: dict):
+        """
+        Load molecule configuration from TOML config format.
+        """
+        try:
+            # Validate format first
+            from ...configio.configmodels import MoleculeParameters
+            from ...configio.convertconfig import create_dataclass_schema
+
+            validated = create_dataclass_schema(MoleculeParameters, config)
+
+            # Determine number of types
+            num_types = len(validated.num_molecules)
+            self.set_molecule_count(num_types)
+
+            # Build compatible format to use set_data_from_widget_state()
+            parsed = {
+                "num_molecules": validated.num_molecules,
+                "track_type": validated.track_type,
+                "diffusion_coefficient": validated.diffusion_coefficient,
+                "hurst_exponent": validated.hurst_exponent,
+                "allow_transition_probability": validated.allow_transition_probability,
+                "transition_matrix_time_step": validated.transition_matrix_time_step,
+                "diffusion_transition_matrix": validated.diffusion_transition_matrix,
+                "hurst_transition_matrix": validated.hurst_transition_matrix,
+                "state_probability_diffusion": validated.state_probability_diffusion,
+                "state_probability_hurst": validated.state_probability_hurst,
+            }
+
+            self.set_data_from_widget_selection(parsed)
+
+        except Exception as e:
+            print(f"[MoleculeConfigWidget] Failed to load from config: {e}")
 
     def get_data(self):
         num_molecules = []
@@ -182,7 +216,7 @@ class MoleculeConfigWidget(QWidget):
             "state_probability_hurst": state_probability_hurst,
         }
 
-    def set_data(self, data):
+    def set_data_from_widget_selection(self, data):
         num_types = min(len(data["num_molecules"]), len(self.molecule_type_widgets))
         self.num_types_spinner.setValue(num_types)
 

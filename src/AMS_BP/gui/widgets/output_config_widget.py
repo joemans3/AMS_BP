@@ -47,5 +47,15 @@ class OutputConfigWidget(QWidget):
             "subsegment_number": self.subsegment_number.value(),  # Optional, disabled for now
         }
 
+    def set_data(self, data: dict):
+        if "output_path" in data:
+            self.output_path.setText(data["output_path"])
+        if "output_name" in data:
+            self.output_name.setText(data["output_name"])
+        if "subsegment_type" in data:
+            self.subsegment_type.setText(data["subsegment_type"])
+        if "subsegment_number" in data:
+            self.subsegment_number.setValue(data["subsegment_number"])
+
     def get_help_path(self) -> Path:
         return Path(__file__).parent.parent / "help_docs" / "output_help.md"

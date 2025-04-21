@@ -14,6 +14,7 @@ class SimulationWorker(QObject):
         self.config_path = config_path
         self.emitter = emitter
         self.cancel_callback = cancel_callback or (lambda: False)
+        self.failed = False
 
     def run(self):
         try:
@@ -51,4 +52,7 @@ class SimulationWorker(QObject):
             self.finished.emit()
 
         except Exception as e:
+            self.failed = True
             self.error_occurred.emit(f"Simulation failed: {e}")
+        finally:
+            self.finished.emit()

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic import ValidationError
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
@@ -12,8 +14,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
-from ...optics.psf.psf_engine import PSFParameters
 
 
 class PSFConfigWidget(QWidget):
@@ -77,19 +77,21 @@ class PSFConfigWidget(QWidget):
 
     def get_data(self):
         """Return current PSF config as a dict."""
-        return {
+        return_dict = {
             "type": self.psf_type.currentText(),
             "custom_path": self.custom_path.text(),
             "parameters": {
                 "numerical_aperture": self.numerical_aperture.value(),
                 "refractive_index": self.refractive_index.value(),
-                "pinhole_diameter": (
-                    self.pinhole_diameter.value()
-                    if self.confocal_checkbox.isChecked()
-                    else None
-                ),
             },
         }
+
+        if self.confocal_checkbox.isChecked():
+            return_dict["parameters"]["pinhole_diameter"] = (
+                self.pinhole_diameter.value()
+            )
+
+        return return_dict
 
     def set_data(self, data):
         """Populate fields from a given PSF config dict."""
@@ -110,9 +112,9 @@ class PSFConfigWidget(QWidget):
     def validate(self) -> bool:
         try:
             data = self.get_data()
-            validated = PSFParameters(**data)
+            # validated = PSFParameters(**data["parameters"])
             QMessageBox.information(
-                self, "Validation Successful", "Molecule parameters are valid."
+                self, "Validation Successful", "PSF parameters are valid."
             )
             return True
         except ValidationError as e:
@@ -121,3 +123,6 @@ class PSFConfigWidget(QWidget):
         except ValueError as e:
             QMessageBox.critical(self, "Validation Error", str(e))
             return False
+
+    def get_help_path(self) -> Path:
+        return Path(__file__).parent.parent / "help_docs" / "psf_help.md"

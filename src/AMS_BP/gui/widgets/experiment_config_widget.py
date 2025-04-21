@@ -1,6 +1,6 @@
+from pathlib import Path
 from typing import List
 
-from pydantic import ValidationError
 from PyQt6.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
@@ -181,15 +181,22 @@ class ExperimentConfigWidget(QWidget):
 
     def validate(self) -> bool:
         try:
+            from ...configio.convertconfig import create_experiment_from_config
+
             data = self.get_data()
-            # validated = ExperimentParameters(**data)
+            config_dict = {"experiment": data}
+
+            # This function will raise if the dataclass constructor or __post_init__ fails
+            configEXP, funcEXP = create_experiment_from_config(config_dict)
+
             QMessageBox.information(
                 self, "Validation Successful", "Experiment parameters are valid."
             )
             return True
-        except ValidationError as e:
+
+        except Exception as e:
             QMessageBox.critical(self, "Validation Error", str(e))
             return False
-        except ValueError as e:
-            QMessageBox.critical(self, "Validation Error", str(e))
-            return False
+
+    def get_help_path(self) -> Path:
+        return Path(__file__).parent.parent / "help_docs" / "experiment_help.md"

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic import ValidationError
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -11,8 +13,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
-from ...optics.filters.channels.channelschema import Channels
 
 
 class ChannelConfigWidget(QWidget):
@@ -42,14 +42,27 @@ class ChannelConfigWidget(QWidget):
 
     def validate(self) -> bool:
         try:
+            from ...configio.convertconfig import create_channels
+
             data = self.get_data()
-            validated = Channels(**data)
+
+            # Full simulation-level validation
+            channels = create_channels({"channels": data})
+
+            # Optional: Validate shape consistency
+            if len(channels.names) != channels.num_channels:
+                raise ValueError("Channel count does not match number of names.")
+
             QMessageBox.information(
                 self, "Validation Successful", "Channel parameters are valid."
             )
             return True
-        except (ValidationError, ValueError) as e:
+
+        except (ValidationError, ValueError, KeyError) as e:
             QMessageBox.critical(self, "Validation Error", str(e))
+            return False
+        except Exception as e:
+            QMessageBox.critical(self, "Unexpected Error", str(e))
             return False
 
     def update_channel_tabs(self):
@@ -231,4 +244,7 @@ class ChannelConfigWidget(QWidget):
                 "emission": emission,
             }
 
-        return {"channels": data}
+        return data
+
+    def get_help_path(self) -> Path:
+        return Path(__file__).parent.parent / "help_docs" / "channels_help.md"

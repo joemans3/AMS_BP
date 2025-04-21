@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic import ValidationError
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
@@ -16,8 +18,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
-from ...configio.configmodels import MoleculeParameters
 
 
 class MoleculeConfigWidget(QWidget):
@@ -91,7 +91,13 @@ class MoleculeConfigWidget(QWidget):
     def validate(self) -> bool:
         try:
             data = self.get_data()
-            validated = MoleculeParameters(**data)
+
+            # This will validate the schema using the backend logic
+            from ...configio.configmodels import MoleculeParameters
+            from ...configio.convertconfig import create_dataclass_schema
+
+            _ = create_dataclass_schema(MoleculeParameters, data)
+
             QMessageBox.information(
                 self, "Validation Successful", "Molecule parameters are valid."
             )
@@ -131,6 +137,38 @@ class MoleculeConfigWidget(QWidget):
             state_probability_diffusion.append(type_data["state_probability_diffusion"])
             state_probability_hurst.append(type_data["state_probability_hurst"])
 
+        # Normalize shapes: make sure every list has the same shape
+        def ensure_nested_list_shape(lst, expected_len, default_val):
+            return [x if len(x) > 0 else [default_val] for x in lst]
+
+        def pad_matrix_list(mat_list, expected_size):
+            result = []
+            for mat in mat_list:
+                if len(mat) == 0:
+                    result.append([[1.0]])
+                else:
+                    result.append(mat)
+            return result
+
+        diffusion_coefficient = ensure_nested_list_shape(
+            diffusion_coefficient, len(num_molecules), 1.0
+        )
+        hurst_exponent = ensure_nested_list_shape(
+            hurst_exponent, len(num_molecules), 0.5
+        )
+        state_probability_diffusion = ensure_nested_list_shape(
+            state_probability_diffusion, len(num_molecules), 1.0
+        )
+        state_probability_hurst = ensure_nested_list_shape(
+            state_probability_hurst, len(num_molecules), 1.0
+        )
+
+        diffusion_transition_matrix = pad_matrix_list(
+            diffusion_transition_matrix, len(num_molecules)
+        )
+        hurst_transition_matrix = pad_matrix_list(
+            hurst_transition_matrix, len(num_molecules)
+        )
         return {
             "num_molecules": num_molecules,
             "track_type": track_type,
@@ -249,6 +287,7 @@ class MoleculeTypeWidget(QWidget):
         self.hurst_header = QHBoxLayout()
         self.hurst_label = QLabel("<b>Hurst Exponents</b>")
         self.hurst_count = QSpinBox()
+        self.hurst_count.setRange(1, 10)  # set minimum to 1
         self.hurst_count.setValue(1)
         self.hurst_count.valueChanged.connect(self.update_hurst_exponents)
         self.hurst_header.addWidget(self.hurst_label)
@@ -293,18 +332,27 @@ class MoleculeTypeWidget(QWidget):
         self.update_visibility()
 
     def update_visibility(self):
-        # Show/hide Hurst exponent section based on track type
-        self.hurst_group.setVisible(self.track_type.currentText() == "fbm")
+        track = self.track_type.currentText()
+        is_fbm = track == "fbm"
+        is_constant = track == "constant"
+        allow_transitions = self.allow_transition.isChecked()
 
-        # Show/hide transition matrices based on transition probability checkbox
-        transition_visible = self.allow_transition.isChecked()
-        self.diffusion_matrix_widget.setVisible(transition_visible)
+        # Hide/show all motion-related groups
+        self.diffusion_group.setVisible(not is_constant)
+        self.hurst_group.setVisible(is_fbm and not is_constant)
+
+        # Hide/show allow_transition checkbox and transition step field
+        self.allow_transition.setVisible(not is_constant)
+        label = self.form_layout.labelForField(self.transition_time_step)
+        if label:
+            label.setVisible(not is_constant and allow_transitions)
+        self.transition_time_step.setVisible(not is_constant and allow_transitions)
+
+        # Transition matrices visibility
+        self.diffusion_matrix_widget.setVisible(not is_constant and allow_transitions)
         self.hurst_matrix_widget.setVisible(
-            transition_visible and self.track_type.currentText() == "fbm"
+            not is_constant and is_fbm and allow_transitions
         )
-
-        # Update transition time step visibility
-        self.transition_time_step.setEnabled(transition_visible)
 
     def update_diffusion_coefficients(self, count):
         # Store current total amount
@@ -544,7 +592,7 @@ class MoleculeTypeWidget(QWidget):
 
         # Hurst Exponents (only if track_type == "fbm")
         if data["track_type"] == "fbm":
-            hurst_count = len(data["hurst_exponent"])
+            hurst_count = max(1, len(data["hurst_exponent"]))  # ensure at least 1
             self.hurst_count.setValue(hurst_count)
             for i in range(hurst_count):
                 if i < len(self.hurst_exponents):
@@ -627,3 +675,6 @@ class TransitionMatrixWidget(QWidget):
         for i in range(size):
             for j in range(min(size, len(matrix[i]))):
                 self.spinboxes[i][j].setValue(matrix[i][j])
+
+    def get_help_path(self) -> Path:
+        return Path(__file__).parent.parent / "help_docs" / "molecule_help.md"

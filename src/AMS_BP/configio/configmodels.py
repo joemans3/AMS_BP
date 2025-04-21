@@ -32,18 +32,18 @@ class MoleculeParameters(BaseModel):
     state_probability_diffusion: List[List[float]]
     state_probability_hurst: List[List[float]]
 
-    @field_validator(
-        "diffusion_coefficient",
-        "hurst_exponent",
-        "state_probability_diffusion",
-        "state_probability_hurst",
-    )
-    def convert_to_array(cls, v):
-        return np.array(v)
-
-    @field_validator("diffusion_transition_matrix", "hurst_transition_matrix")
-    def convert_matrix_to_array(cls, v):
-        return np.array(v)
+    # @field_validator(
+    #     "diffusion_coefficient",
+    #     "hurst_exponent",
+    #     "state_probability_diffusion",
+    #     "state_probability_hurst",
+    # )
+    # def convert_to_array(cls, v):
+    #     return np.array(v)
+    #
+    # @field_validator("diffusion_transition_matrix", "hurst_transition_matrix")
+    # def convert_matrix_to_array(cls, v):
+    #     return np.array(v)
 
 
 class GlobalParameters(BaseModel):

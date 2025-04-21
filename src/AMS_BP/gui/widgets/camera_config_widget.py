@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic import ValidationError
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -11,7 +13,6 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ...optics.camera.detectors import CMOSDetector
 from .utility_widgets.spectrum_widget import SpectrumEditorDialog
 
 
@@ -114,17 +115,38 @@ class CameraConfigWidget(QWidget):
             # You can now use this data wherever needed, e.g., saving or validation
 
     def validate(self) -> bool:
+        from ...configio.convertconfig import create_quantum_efficiency_from_config
+        from ...optics.camera.detectors import (
+            CMOSDetector,
+        )
+
         try:
             data = self.get_data()
-            validated = CMOSDetector(**data)
+
+            # Convert QE before passing
+            qe = create_quantum_efficiency_from_config(data["quantum_efficiency"])
+
+            # Prepare CMOS-specific parameters only (drop "type" and "quantum_efficiency")
+            camera_data = {
+                k: v for k, v in data.items() if k not in {"type", "quantum_efficiency"}
+            }
+            camera_data["pixel_size"] = (
+                camera_data["pixel_detector_size"] / camera_data["magnification"]
+            )
+
+            # Attempt to construct the detector
+            detector = CMOSDetector(**camera_data)
+
+            # If no exception, validation is successful
             QMessageBox.information(
                 self, "Validation Successful", "Camera parameters are valid."
             )
             return True
+
         except ValidationError as e:
             QMessageBox.critical(self, "Validation Error", str(e))
             return False
-        except ValueError as e:
+        except Exception as e:
             QMessageBox.critical(self, "Validation Error", str(e))
             return False
 
@@ -145,6 +167,9 @@ class CameraConfigWidget(QWidget):
             ),  # Use edited data here
         }
         return camera_data
+
+    def get_help_path(self) -> Path:
+        return Path(__file__).parent.parent / "help_docs" / "detector_help.md"
 
 
 def convert_dict_to_2_list(dict_c):

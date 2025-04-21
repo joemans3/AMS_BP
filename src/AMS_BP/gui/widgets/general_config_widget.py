@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -41,3 +42,6 @@ class GeneralConfigWidget(QWidget):
             "time_unit": self.time_unit.currentText(),
             "diffusion_unit": self.diffusion_unit.currentText(),
         }
+
+    def get_help_path(self) -> Path:
+        return Path(__file__).parent.parent / "help_docs" / "general_help.md"

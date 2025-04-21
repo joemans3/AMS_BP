@@ -2,6 +2,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
+import numpy as np
 import tomli
 from pydantic import BaseModel
 
@@ -662,12 +663,12 @@ def get_tracks(
                 diffusion_parameters=molecule_params.diffusion_coefficient[i],
                 hurst_parameters=molecule_params.hurst_exponent[i],
                 diffusion_transition_matrix=change_prob_time(
-                    molecule_params.diffusion_transition_matrix[i],
+                    np.array(molecule_params.diffusion_transition_matrix[i]),
                     molecule_params.transition_matrix_time_step[i],
                     global_params.oversample_motion_time,
                 ),
                 hurst_transition_matrix=change_prob_time(
-                    molecule_params.hurst_transition_matrix[i],
+                    np.array(molecule_params.hurst_transition_matrix[i]),
                     molecule_params.transition_matrix_time_step[i],
                     global_params.oversample_motion_time,
                 ),

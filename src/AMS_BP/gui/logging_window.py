@@ -1,4 +1,4 @@
-from PyQt6.QtCore import QTimer
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -51,3 +51,43 @@ class LogWindow(QDialog):
     def on_cancel_clicked(self):
         self.cancel_requested = True
         self.append_text("Cancellation requested by user...")
+
+    def mark_success(self):
+        self.progress.setRange(0, 1)
+        self.progress.setValue(1)
+        self.progress.setStyleSheet("""
+            QProgressBar {
+                border: 1px solid #555;
+                border-radius: 5px;
+                background-color: #2d2d2d;
+                text-align: center;
+                color: white;
+                font-weight: bold;
+                font-size: 14px;
+            }
+            QProgressBar::chunk {
+                background-color: #4CAF50;
+            }
+        """)
+        self.append_text("Simulation completed successfully.")
+
+    def mark_failure(self):
+        self.progress.setRange(0, 1)
+        self.progress.setValue(0)  # No fill
+        self.progress.setFormat("Failed, share logs with developer.")  # Custom text
+        self.progress.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.progress.setStyleSheet("""
+            QProgressBar {
+                border: 1px solid #800000;
+                border-radius: 5px;
+                background-color: #2d2d2d;
+                color: #e53935;
+                font-weight: bold;
+                font-size: 13px;
+                text-align: center;
+            }
+            QProgressBar::chunk {
+                background-color: transparent;  /* no fill */
+            }
+        """)
+        self.append_text("Simulation failed. Please send logs to the developer.")

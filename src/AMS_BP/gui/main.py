@@ -160,35 +160,34 @@ class MainWindow(QMainWindow):
             # Hook up emitter to the GUI
             emitter.message.connect(self.log_window.append_text)
 
-            # Create worker using emitter instead of log_window
             self.sim_worker = SimulationWorker(
                 config_path,
                 emitter,
                 cancel_callback=lambda: self.log_window.cancel_requested,
             )
 
-            # Set up worker + thread
             self.sim_thread = QThread()
             self.sim_worker.moveToThread(self.sim_thread)
 
-            # Worker signals
             self.sim_thread.started.connect(self.sim_worker.run)
             self.sim_worker.finished.connect(self.sim_thread.quit)
             self.sim_worker.finished.connect(self.sim_worker.deleteLater)
             self.sim_thread.finished.connect(self.sim_thread.deleteLater)
 
-            # Forward any manual log output
             self.sim_worker.finished.connect(lambda: print("Simulation finished."))
             self.sim_worker.finished.connect(self.logger_manager.stop)
 
-            def cleanup_ui():
-                self.log_window.progress.setRange(0, 1)
-                self.log_window.progress.setValue(1)
+            def handle_finished():
+                if self.sim_worker.failed:
+                    self.log_window.mark_failure()
+                else:
+                    self.log_window.mark_success()
+
                 self.log_window.cancel_button.setText("Close")
                 self.log_window.cancel_button.clicked.disconnect()
                 self.log_window.cancel_button.clicked.connect(self.log_window.close)
 
-            self.sim_worker.finished.connect(cleanup_ui)
+            self.sim_worker.finished.connect(handle_finished)
             self.sim_worker.error_occurred.connect(emitter.message.emit)
 
             self.sim_thread.start()

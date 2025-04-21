@@ -1,8 +1,8 @@
-from pydantic import ValidationError
+from pathlib import Path
+
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
-    QDoubleSpinBox,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from .utility_widgets.scinotation_widget import scientific_input_field
 from .utility_widgets.spectrum_widget import SpectrumEditorDialog
 
 
@@ -185,19 +186,13 @@ class FluorophoreConfigWidget(QWidget):
         param_container = QWidget()
         param_form = QFormLayout(param_container)
 
-        quantum_yield = QDoubleSpinBox()
-        quantum_yield.setRange(0, 1)
-        quantum_yield.setDecimals(3)
+        quantum_yield = scientific_input_field(0, 1, default=0.8)
         param_form.addRow("Quantum Yield:", quantum_yield)
 
-        extinction = QDoubleSpinBox()
-        extinction.setRange(0, 1e6)
-        extinction.setSuffix(" M⁻¹cm⁻¹")
+        extinction = scientific_input_field(-1e12, 1e12, default=1e5)
         param_form.addRow("Extinction Coefficient:", extinction)
 
-        lifetime = QDoubleSpinBox()
-        lifetime.setRange(0, 100)
-        lifetime.setSuffix(" s")
+        lifetime = scientific_input_field(1e-10, 1, default=1e-8)
         param_form.addRow("Fluorescent Lifetime:", lifetime)
 
         excitation_spectrum_button = QPushButton("Edit Spectrum")
@@ -253,10 +248,7 @@ class FluorophoreConfigWidget(QWidget):
         to_state = QLineEdit()
         photon_dependent = QComboBox()
         photon_dependent.addItems(["True", "False"])
-        base_rate = QDoubleSpinBox()
-        base_rate.setRange(0, 1e6)
-        base_rate.setSuffix(" 1/s")
-
+        base_rate = scientific_input_field(0, 1e6, default=1000.0)
         form.addRow("From State:", from_state)
         form.addRow("To State:", to_state)
         form.addRow("Photon Dependent:", photon_dependent)
@@ -267,23 +259,30 @@ class FluorophoreConfigWidget(QWidget):
         spectrum_form = QFormLayout(spectrum_container)
 
         activation_spectrum_button = QPushButton("Edit Spectrum")
-        spectrum_form.addRow("Activation Spectrum:", activation_spectrum_button)
         activation_spectrum_data = {"wavelengths": [], "intensities": []}
         activation_spectrum_button.clicked.connect(
             lambda: self.edit_spectrum(activation_spectrum_data)
         )
+        spectrum_form.addRow("Activation Spectrum:", activation_spectrum_button)
 
-        # Add to form
+        quantum_yield = scientific_input_field(0, 1, default=0.7)
+        spectrum_form.addRow("Quantum Yield:", quantum_yield)
+
+        extinction_coefficient = scientific_input_field(-1e12, 1e12, default=1e5)
+        spectrum_form.addRow("Extinction Coefficient:", extinction_coefficient)
         form.addRow(spectrum_container)
+
         group.setLayout(form)
         layout.addWidget(group)
 
         # === Visibility logic ===
-        def update_spectrum_visibility(val: str):
-            spectrum_container.setVisible(val == "True")
+        def update_visibility(val: str):
+            is_photon = val == "True"
+            spectrum_container.setVisible(is_photon)
+            base_rate.setVisible(not is_photon)
 
-        photon_dependent.currentTextChanged.connect(update_spectrum_visibility)
-        update_spectrum_visibility(photon_dependent.currentText())
+        photon_dependent.currentTextChanged.connect(update_visibility)
+        update_visibility(photon_dependent.currentText())  # initial state
 
         # === Store everything ===
         widget_refs["transitions"].append(
@@ -296,6 +295,8 @@ class FluorophoreConfigWidget(QWidget):
                 "spectrum_container": spectrum_container,
                 "activation_spectrum_button": activation_spectrum_button,
                 "activation_spectrum_data": activation_spectrum_data,
+                "quantum_yield": quantum_yield,
+                "extinction_coefficient": extinction_coefficient,
             }
         )
 
@@ -348,9 +349,9 @@ class FluorophoreConfigWidget(QWidget):
                 if state_type == "fluorescent":
                     state_data.update(
                         {
-                            "quantum_yield": state["quantum_yield"].value(),
-                            "extinction_coefficient": state["extinction"].value(),
-                            "fluorescent_lifetime": state["lifetime"].value(),
+                            "quantum_yield": float(state["quantum_yield"].text()),
+                            "extinction_coefficient": float(state["extinction"].text()),
+                            "fluorescent_lifetime": float(state["lifetime"].text()),
                             "excitation_spectrum": {
                                 "wavelengths": state["excitation_spectrum_data"][
                                     "wavelengths"
@@ -389,28 +390,40 @@ class FluorophoreConfigWidget(QWidget):
                     transition_data["spectrum"] = {
                         "wavelengths": trans["activation_spectrum_data"]["wavelengths"],
                         "intensities": trans["activation_spectrum_data"]["intensities"],
-                        "extinction_coefficient": trans[
-                            "extinction_coefficient"
-                        ].value(),
-                        "quantum_yield": trans["quantum_yield"].value(),
+                        "extinction_coefficient": float(
+                            trans["extinction_coefficient"].text()
+                        ),
+                        "quantum_yield": float(trans["quantum_yield"].text()),
                     }
                 else:
-                    transition_data["base_rate"] = trans["base_rate"].value()
+                    transition_data["base_rate"] = float(trans["base_rate"].text())
 
                 fluor_data["transitions"][key] = transition_data
 
             data[name] = fluor_data
 
-        return {"fluorophores": data}
+        return data
 
     def validate(self) -> bool:
         try:
+            from ...configio.convertconfig import create_fluorophores_from_config
+
             data = self.get_data()
-            # validated = FluorophoreParameters(**data)
+            # Try to build fluorophores with the backend logic
+
+            create_fluorophores_from_config({"fluorophores": data})
+
             QMessageBox.information(
-                self, "Validation Successful", "Parameters are valid."
+                self, "Validation Successful", "Fluorophore parameters are valid."
             )
             return True
-        except ValidationError as e:
+
+        except ValueError as e:
             QMessageBox.critical(self, "Validation Error", str(e))
             return False
+        except Exception as e:
+            QMessageBox.critical(self, "Unexpected Error", str(e))
+            return False
+
+    def get_help_path(self) -> Path:
+        return Path(__file__).parent.parent / "help_docs" / "fluorophore_help.md"

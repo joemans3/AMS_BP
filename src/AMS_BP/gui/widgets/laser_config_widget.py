@@ -1,4 +1,5 @@
-from pydantic import ValidationError
+from pathlib import Path
+
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -12,8 +13,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
-from ...optics.lasers.laser_profiles import LaserParameters
 
 
 class LaserConfigWidget(QWidget):
@@ -76,27 +75,21 @@ class LaserConfigWidget(QWidget):
 
     def validate(self) -> bool:
         try:
-            confocal_on = any(
-                not tab.findChild(QComboBox).isEnabled()
-                and tab.findChild(QComboBox).currentText() != "gaussian"
-                for tab in [
-                    self.laser_tabs.widget(i) for i in range(self.laser_tabs.count())
-                ]
-            )
-            if confocal_on:
-                raise ValueError("Only Gaussian lasers are allowed in confocal mode.")
+            from ...configio.convertconfig import create_lasers_from_config
 
             data = self.get_data()
-            validated = LaserParameters(**data)
+            create_lasers_from_config({"lasers": data})
+
             QMessageBox.information(
                 self, "Validation Successful", "Laser parameters are valid."
             )
             return True
-        except ValidationError as e:
-            QMessageBox.critical(self, "Validation Error", str(e))
-            return False
+
         except ValueError as e:
             QMessageBox.critical(self, "Validation Error", str(e))
+            return False
+        except Exception as e:
+            QMessageBox.critical(self, "Unexpected Error", str(e))
             return False
 
     def emit_active_lasers(self):
@@ -217,8 +210,9 @@ class LaserConfigWidget(QWidget):
             }
 
         return {
-            "lasers": {
-                "active": active_names,
-                **lasers_section,
-            }
+            "active": active_names,
+            **lasers_section,
         }
+
+    def get_help_path(self) -> Path:
+        return Path(__file__).parent.parent / "help_docs" / "laser_help.md"

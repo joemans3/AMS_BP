@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic import ValidationError
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -10,8 +12,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
-from ...configio.configmodels import CellParameters
 
 
 class CellConfigWidget(QWidget):
@@ -47,17 +47,28 @@ class CellConfigWidget(QWidget):
         self.setLayout(layout)
 
     def validate(self) -> bool:
+        from ...cells import create_cell
+        from ...configio.configmodels import CellParameters
+
         try:
             data = self.get_data()
-            validated = CellParameters(**data)
+
+            # Validate the Pydantic model first
+            cell_params = CellParameters(**data)
+
+            # Try creating the cell with backend logic
+            create_cell(cell_params.cell_type, cell_params.params)
+
+            # Success
             QMessageBox.information(
                 self, "Validation Successful", "Cell parameters are valid."
             )
             return True
+
         except ValidationError as e:
             QMessageBox.critical(self, "Validation Error", str(e))
             return False
-        except ValueError as e:
+        except Exception as e:
             QMessageBox.critical(self, "Validation Error", str(e))
             return False
 
@@ -164,3 +175,6 @@ class CellConfigWidget(QWidget):
             }
         else:
             return {"cell_type": ctype, "params": {}}
+
+    def get_help_path(self) -> Path:
+        return Path(__file__).parent.parent / "help_docs" / "cell_help.md"

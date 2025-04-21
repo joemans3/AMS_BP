@@ -1,4 +1,5 @@
-from pydantic import ValidationError
+from pathlib import Path
+
 from PyQt6.QtWidgets import (
     QFormLayout,
     QHBoxLayout,
@@ -8,8 +9,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
-from ...configio.configmodels import GlobalParameters
 
 
 class GlobalConfigWidget(QWidget):
@@ -95,17 +94,29 @@ class GlobalConfigWidget(QWidget):
         }
 
     def validate(self) -> bool:
-        """Validate the form data against the GlobalParameters model"""
         try:
+            from ...configio.configmodels import GlobalParameters
+
             data = self.get_data()
-            validated = GlobalParameters(**data)
+
+            GlobalParameters(**data)
+
             QMessageBox.information(
                 self, "Validation Successful", "Global parameters are valid."
             )
             return True
-        except ValidationError as e:
-            QMessageBox.critical(self, "Validation Error", str(e))
+
+        except TypeError as e:
+            QMessageBox.critical(
+                self, "Validation Error", f"Missing or invalid fields: {str(e)}"
+            )
             return False
         except ValueError as e:
             QMessageBox.critical(self, "Validation Error", str(e))
             return False
+        except Exception as e:
+            QMessageBox.critical(self, "Unexpected Error", str(e))
+            return False
+
+    def get_help_path(self) -> Path:
+        return Path(__file__).parent.parent / "help_docs" / "global_help.md"

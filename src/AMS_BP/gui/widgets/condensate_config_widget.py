@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic import ValidationError
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
@@ -14,8 +16,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
-from ...configio.configmodels import CondensateParameters
 
 
 class CondensateConfigWidget(QWidget):
@@ -55,18 +55,6 @@ class CondensateConfigWidget(QWidget):
         # Tab widget for molecule types
         self.tab_widget = QTabWidget()
         layout.addWidget(self.tab_widget)
-
-        # Density difference
-        density_layout = QHBoxLayout()
-        density_layout.addWidget(QLabel("Density Difference:"))
-
-        self.density_dif_widget = QDoubleSpinBox()
-        self.density_dif_widget.setRange(0, 100)
-        self.density_dif_widget.setValue(1.0)
-        self.density_dif_widget.setDecimals(3)
-        density_layout.addWidget(self.density_dif_widget)
-
-        layout.addLayout(density_layout)
 
         # Validation button
         self.validate_button = QPushButton("Validate Parameters")
@@ -138,9 +126,22 @@ class CondensateConfigWidget(QWidget):
             )
         )
 
-        # Store the condensate widgets for this molecule
-        self.condensate_widgets.append(condensate_widgets)
+        # Density Difference per molecule type
+        density_layout = QHBoxLayout()
+        density_layout.addWidget(QLabel("Density Difference:"))
 
+        density_spin = QDoubleSpinBox()
+        density_spin.setRange(0, 100)
+        density_spin.setValue(1.0)
+        density_spin.setDecimals(3)
+        density_layout.addWidget(density_spin)
+        layout.addLayout(density_layout)
+        self.condensate_widgets.append(
+            {
+                "condensates": condensate_widgets,
+                "density_widget": density_spin,
+            }
+        )
         molecule_widget.setLayout(layout)
         scroll_area.setWidget(molecule_widget)
 
@@ -226,15 +227,17 @@ class CondensateConfigWidget(QWidget):
         initial_scale: list[list[float]] = []
         diffusion_coefficient: list[list[float]] = []
         hurst_exponent: list[list[float]] = []
+        density_dif: list[float] = []
 
-        # For each molecule type (i.e., each tab)
-        for molecule_widgets in self.condensate_widgets:
+        for molecule_group in self.condensate_widgets:
+            molecule_widgets = molecule_group["condensates"]
+            density_spin = molecule_group["density_widget"]
+
             molecule_centers: list[list[float]] = []
             molecule_scales: list[float] = []
             molecule_diffusions: list[float] = []
             molecule_hursts: list[float] = []
 
-            # For each condensate in that molecule type
             for condensate in molecule_widgets:
                 center = [spin.value() for spin in condensate["center"]]
                 molecule_centers.append(center)
@@ -242,15 +245,11 @@ class CondensateConfigWidget(QWidget):
                 molecule_diffusions.append(condensate["diffusion"].value())
                 molecule_hursts.append(condensate["hurst"].value())
 
-            initial_centers.append(molecule_centers)
-            initial_scale.append(molecule_scales)
-            diffusion_coefficient.append(molecule_diffusions)
-            hurst_exponent.append(molecule_hursts)
-
-        # Replicate density difference per molecule type
-        density_value = self.density_dif_widget.value()
-        num_molecule_types = len(self.condensate_widgets)
-        density_dif = [density_value for _ in range(num_molecule_types)]
+            initial_centers.append(molecule_centers or [[]])
+            initial_scale.append(molecule_scales or [0.0])
+            diffusion_coefficient.append(molecule_diffusions or [0.0])
+            hurst_exponent.append(molecule_hursts or [0.0])
+            density_dif.append(density_spin.value())
 
         return {
             "initial_centers": initial_centers,
@@ -261,17 +260,51 @@ class CondensateConfigWidget(QWidget):
         }
 
     def validate(self) -> bool:
-        """Validate the form data against the CondensateParameters model"""
+        from ...cells import create_cell
+        from ...configio.configmodels import CondensateParameters
+        from ...motion import create_condensate_dict
+
         try:
             data = self.get_data()
+
+            # Step 1: Validate with Pydantic
             validated = CondensateParameters(**data)
+
+            # Step 2: Validate simulation compatibility for each condensate
+            # Create a dummy cell just for validation context
+            dummy_cell = create_cell(
+                "SphericalCell", {"center": [0, 0, 0], "radius": 5.0}
+            )
+
+            num_molecules = len(validated.initial_centers)
+
+            for i in range(num_molecules):
+                centers = validated.initial_centers[i]
+                scales = validated.initial_scale[i]
+                diffs = validated.diffusion_coefficient[i]
+                hursts = validated.hurst_exponent[i]
+
+                if not (len(centers) == len(scales) == len(diffs) == len(hursts)):
+                    raise ValueError(f"Mismatch in lengths for molecule type {i + 1}.")
+                create_condensate_dict(
+                    initial_centers=centers,
+                    initial_scale=scales,
+                    diffusion_coefficient=diffs,
+                    hurst_exponent=hursts,
+                    cell=dummy_cell,
+                )
+
             QMessageBox.information(
                 self, "Validation Successful", "Condensate parameters are valid."
             )
             return True
+
         except ValidationError as e:
             QMessageBox.critical(self, "Validation Error", str(e))
             return False
-        except ValueError as e:
+        except Exception as e:
             QMessageBox.critical(self, "Validation Error", str(e))
             return False
+
+    def get_help_path(self) -> Path:
+        return Path(__file__).parent.parent / "help_docs" / "condensate_help.md"

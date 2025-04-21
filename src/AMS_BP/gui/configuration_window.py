@@ -1,12 +1,14 @@
 import tomlkit
 from PyQt6.QtWidgets import (
     QComboBox,
+    QDialog,
     QFileDialog,
     QHBoxLayout,
     QLabel,
     QMessageBox,
     QPushButton,
     QStackedWidget,
+    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -143,6 +145,10 @@ class ConfigEditor(QWidget):
         self.save_button.clicked.connect(self.save_config)
         layout.addWidget(self.save_button)
 
+        self.preview_button = QPushButton("Preview Configuration TOML")
+        self.preview_button.clicked.connect(self.preview_config)
+        layout.addWidget(self.preview_button)
+
         self.help_button = QPushButton("Get Help on this section")
         self.help_button.clicked.connect(self.show_help)
         layout.addWidget(self.help_button)
@@ -153,6 +159,46 @@ class ConfigEditor(QWidget):
         # Set initial display
         self.on_dropdown_change(0)  # Show the first tab (index 0)
 
+    def preview_config(self):
+        """Preview the full TOML config in a dialog before saving."""
+        try:
+            # Step 1: Validate tabs
+            if not self.validate_all_tabs():
+                QMessageBox.warning(
+                    self, "Validation Error", "Fix errors before preview."
+                )
+                return
+
+            # Step 2: Collect config data
+            config = self.collect_all_config()
+
+            # Step 3: Convert to TOML string
+            toml_doc = tomlkit.document()
+            for key, value in config.items():
+                toml_doc[key] = value
+            toml_str = tomlkit.dumps(toml_doc)
+
+            # Step 4: Show preview dialog
+            preview_dialog = QDialog(self)
+            preview_dialog.setWindowTitle("Preview TOML Configuration")
+            layout = QVBoxLayout(preview_dialog)
+            text_edit = QTextEdit()
+            text_edit.setPlainText(toml_str)
+            text_edit.setReadOnly(True)
+            layout.addWidget(text_edit)
+            preview_dialog.resize(800, 600)
+            preview_dialog.exec()
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Preview failed: {str(e)}")
+
+    def build_toml_doc(self, config: dict) -> tomlkit.TOMLDocument:
+        """Build a TOML document from the configuration dictionary."""
+        doc = tomlkit.document()
+        for key, val in config.items():
+            doc[key] = val
+        return doc
+
     def on_dropdown_change(self, index):
         """Change the displayed widget based on the dropdown selection."""
         self.stacked_widget.setCurrentIndex(index)
@@ -161,6 +207,38 @@ class ConfigEditor(QWidget):
             self.dropdown.count()
         )  # Corrected way to get the total number of items
         self.tab_index_label.setText(f"{index + 1}/{total_tabs}")
+
+    def validate_all_tabs(self) -> bool:
+        return all(
+            [
+                self.global_tab.validate(),
+                self.cell_tab.validate(),
+                self.molecule_tab.validate(),
+                self.condensate_tab.validate(),
+                self.fluorophore_tab.validate(),
+                self.psf_tab.validate(),
+                self.laser_tab.validate(),
+                self.channel_tab.validate(),
+                self.detector_tab.validate(),
+                self.experiment_tab.validate(),
+            ]
+        )
+
+    def collect_all_config(self) -> dict:
+        return {
+            **self.general_tab.get_data(),
+            "Global_Parameters": self.global_tab.get_data(),
+            "Cell_Parameters": self.cell_tab.get_data(),
+            "Molecule_Parameters": self.molecule_tab.get_data(),
+            "Condensate_Parameters": self.condensate_tab.get_data(),
+            "Output_Parameters": self.output_tab.get_data(),
+            "fluorophores": self.fluorophore_tab.get_data(),
+            "psf": self.psf_tab.get_data(),
+            "lasers": self.laser_tab.get_data(),
+            "channels": self.channel_tab.get_data(),
+            "camera": self.detector_tab.get_data(),
+            "experiment": self.experiment_tab.get_data(),
+        }
 
     def show_help(self):
         current_widget = self.stacked_widget.currentWidget()
@@ -176,46 +254,21 @@ class ConfigEditor(QWidget):
     def save_config(self):
         """Collect data from all tabs and save the configuration."""
         try:
-            # Validate all tabs first
-            global_valid = self.global_tab.validate()
-            cell_valid = self.cell_tab.validate()
-            molecule_valid = self.molecule_tab.validate()
-            condensate_valid = self.condensate_tab.validate()
+            # Validate all required tabs
 
-            if all([global_valid, cell_valid, molecule_valid, condensate_valid]):
-                # If all validations pass, collect the data
-                general_data = self.general_tab.get_data()
-                global_data = self.global_tab.get_data()
-                cell_data = self.cell_tab.get_data()
-                molecule_data = self.molecule_tab.get_data()
-                condensate_data = self.condensate_tab.get_data()
+            if self.validate_all_tabs:
+                config = self.collect_all_config()
+                toml_doc = self.build_toml_doc(config)
 
-                # Combine into a complete configuration
-                config = {
-                    **general_data,
-                    "global_params": global_data,
-                    "cell": cell_data,
-                    "molecule": molecule_data,
-                    "condensate": condensate_data,
-                }
-
-                # Open the file dialog to select where to save the file
+                # Ask user where to save
                 file_path, _ = QFileDialog.getSaveFileName(
                     self, "Save Configuration", "", "TOML Files (*.toml);;All Files (*)"
                 )
 
                 if file_path:
-                    # Ensure the file has a .toml extension
                     if not file_path.endswith(".toml"):
                         file_path += ".toml"
 
-                    # Use tomlkit to write the configuration to the file
-                    # Create a TOML document with the provided configuration
-                    toml_doc = tomlkit.document()
-                    for key, value in config.items():
-                        toml_doc[key] = value
-
-                    # Write to the file
                     with open(file_path, "w") as f:
                         tomlkit.dump(toml_doc, f)
 
@@ -224,9 +277,7 @@ class ConfigEditor(QWidget):
                     )
                 else:
                     QMessageBox.warning(
-                        self,
-                        "Save Error",
-                        "No file selected. The configuration was not saved.",
+                        self, "Save Cancelled", "No file selected. Save was aborted."
                     )
             else:
                 QMessageBox.warning(

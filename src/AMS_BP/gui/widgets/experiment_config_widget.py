@@ -51,7 +51,6 @@ class ExperimentConfigWidget(QWidget):
         self.remove_z_button.clicked.connect(self.remove_z_position_field)
         self.add_z_button.clicked.connect(self.add_z_position_field)
         self.type_field.currentTextChanged.connect(self.update_z_position_mode)
-        self.update_z_position_mode(self.type_field.currentText())
         z_button_row = QHBoxLayout()
         z_button_row.addWidget(self.add_z_button)
         z_button_row.addWidget(self.remove_z_button)
@@ -62,15 +61,21 @@ class ExperimentConfigWidget(QWidget):
             box.setRange(-1e5, 1e5)
         form.addRow("XY Offset (x, y):", self._hbox(self.xyoffset))
 
-        # Exposure and Interval
+        # Exposure and Interval wrapped in a QWidget
+        self.timing_widget = QWidget()
+        timing_layout = QFormLayout(self.timing_widget)
+
         self.exposure = QSpinBox()
-        self.exposure.setRange(0, 10000)
-        form.addRow("Exposure Time (ms):", self.exposure)
+        self.exposure.setRange(0, 100000000)
+        timing_layout.addRow("Exposure Time (ms):", self.exposure)
 
         self.interval = QSpinBox()
-        self.interval.setRange(0, 10000)
-        form.addRow("Interval Time (ms):", self.interval)
+        self.interval.setRange(0, 100000000)
+        timing_layout.addRow("Interval Time (ms):", self.interval)
 
+        form.addRow(self.timing_widget)
+
+        self.update_z_position_mode(self.type_field.currentText())
         layout.addLayout(form)
 
         # Laser Tabs
@@ -102,6 +107,7 @@ class ExperimentConfigWidget(QWidget):
             self.add_z_button.setVisible(False)
             self.add_z_button.setVisible(False)
             self.remove_z_button.setVisible(False)
+            self.timing_widget.setVisible(False)
         else:
             # Start with two for z-stack
             for _ in range(2):
@@ -109,6 +115,7 @@ class ExperimentConfigWidget(QWidget):
             self.add_z_button.setVisible(True)
             self.add_z_button.setVisible(True)
             self.remove_z_button.setVisible(True)
+            self.timing_widget.setVisible(True)
 
     def remove_z_position_field(self):
         if len(self.z_position_inputs) > 1:
@@ -168,7 +175,7 @@ class ExperimentConfigWidget(QWidget):
             self.laser_position_widgets[name] = pos_spins
 
     def get_data(self):
-        return {
+        data = {
             "name": self.name_field.text(),
             "description": self.desc_field.text(),
             "experiment_type": self.type_field.currentText(),
@@ -182,9 +189,13 @@ class ExperimentConfigWidget(QWidget):
                 for name in self.laser_position_widgets
             ],
             "xyoffset": [w.value() for w in self.xyoffset],
-            "exposure_time": self.exposure.value(),
-            "interval_time": self.interval.value(),
         }
+
+        if data["experiment_type"] == "z-stack":
+            data["exposure_time"] = self.exposure.value()
+            data["interval_time"] = self.interval.value()
+
+        return data
 
     def set_data(self, data: dict):
         self.name_field.setText(data.get("name", ""))
@@ -211,8 +222,13 @@ class ExperimentConfigWidget(QWidget):
         for i in range(min(2, len(xyoffset))):
             self.xyoffset[i].setValue(xyoffset[i])
 
-        self.exposure.setValue(data.get("exposure_time", 100))
-        self.interval.setValue(data.get("interval_time", 0))
+        # Exposure and Interval only for z-stack
+        if experiment_type == "z-stack":
+            self.exposure.setValue(data.get("exposure_time", 100))
+            self.interval.setValue(data.get("interval_time", 0))
+        else:
+            self.exposure.setValue(0)
+            self.interval.setValue(0)
 
         # Laser data in one call
         laser_names = data.get("laser_names_active", [])

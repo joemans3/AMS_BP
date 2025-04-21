@@ -63,12 +63,15 @@ class TemplateSelectionWindow(QWidget):
             )
             img_label.setPixmap(pixmap)
         else:
-            img_label.setText("[Missing image]")
+            img_label.setText("[Missing image assets]")
         layout.addWidget(img_label)
 
         # Description + Button
         vbox = QVBoxLayout()
-        vbox.addWidget(QLabel(entry.get("description", "")))
+
+        description_label = QLabel(entry.get("description", ""))
+        description_label.setWordWrap(True)  # <--- this is the key!
+        vbox.addWidget(description_label)
 
         btn = QPushButton("Use This Template")
         btn.clicked.connect(

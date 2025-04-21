@@ -1,19 +1,19 @@
 {
   "PAmCherry_EGFP_Widefield_Zstack_Fixed": {
     "label": "PAmCherry with EGFP (Fixed)",
-    "description": "PAmCherry_EGFP_Widefield_Zstack_Fixed",
+    "description": "Two-Color Widefield Microscopy of a RodCell with PAmCherry and EGFP as molecules. Cell is fixed and the experiment protocol is a Z-Stack.",
     "image": "palm_egfp.png",
     "config": "twocolor_widefield_zstack_fixed.toml"
   },
   "PAmCherry_EGFP_Widefield_Zstack_Live": {
     "label": "PAmCherry with EGFP (Live)",
-    "description": "PAmCherry_EGFP_Widefield_Zstack_Live",
+    "description": "Two-Color Widefield Microscopy of a RodCell with PAmCherry and EGFP as molecules. Cell is live (with motion described by bounded FBM models (differently for each molecule) and the experiment protocol is a Z-Stack.",
     "image": "palm_egfp.png",
     "config": "twocolor_widefield_zstack_live.toml"
   },
   "PAmCherry_EGFP_Widefield_Timeseries_Live": {
     "label": "PAmCherry with EGFP (Live timeseries)",
-    "description": "PAmCherry_EGFP_Widefield_Timeseries_Live",
+    "description": "Two-Color Widefield Microscopy of a RodCell with PAmCherry and EGFP as molecules. Cell is live (with motion described by bounded FBM models (differently for each molecule) and the experiment protocol is a time-series.",
     "image": "palm_egfp.png",
     "config": "twocolor_widefield_timeseries_live.toml"
   }

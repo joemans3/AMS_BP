@@ -83,12 +83,12 @@ initial_centers = [
 			-0.15,
 		],
 		[
+			4,
 			5,
-			6,
 			-0.15,
 		],
 		[
-			5,
+			6,
 			5.5,
 			-0.15,
 		],
@@ -100,13 +100,13 @@ initial_centers = [
 	],
 	[
 		[
-			5.5,
+			4,
 			5,
 			0.05,
 		],
 		[
+			3,
 			5,
-			7,
 			-0.15,
 		],
 	],
@@ -117,10 +117,10 @@ hurst_exponent = [[0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2]]
 density_dif = [10, 10] # density of the condensate vs the background.
 
 [Output_Parameters]
-output_path = "<YOUR-PATH-HERE-CAN-BE-ABSOLUTE-OR-RELATIVE>"
-output_name = "Cell_Movie_Test_001"
-subsegment_type = "mean"                                     # not implemented yet, use any string
-subsegment_number = 5                                        # not implemented yet, use any integer
+output_path = "Output"
+output_name = "Cell_Movie_001"
+subsegment_type = "mean"       # not implemented yet, use any string
+subsegment_number = 5          # not implemented yet, use any integer
 
 
 [fluorophores]
@@ -389,7 +389,7 @@ quantum_efficiency = [
 
 
 [experiment]
-name = "PAmCherry_EGFP_Test"
+name = "PAmCherry_EGFP_Live_Widefield"
 description = "Sample experiment configuration"
 # experiment_type = "time-series"                 # "time-series" or "z-stack"
 # z_position = 0.0

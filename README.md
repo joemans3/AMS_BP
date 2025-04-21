@@ -37,10 +37,6 @@ Find detailed API references for the library at: [joemans3/github.io/AMS_BP](htt
 
 
 ### ***Installing the CLI tool using UV***
-
-
-
-
 1. [Install UV](https://docs.astral.sh/uv/getting-started/installation/).
 2. Run the command:
 ```bash
@@ -49,6 +45,7 @@ uv tool install AMS_BP
 3. You will have access to two CLI commands (using the uv interface):
     - `run_AMS_BP runsim` : This is the main entry point for the simulation. (see `run_AMS_BP runsim --help` for more details)
     - `run_AMS_BP config` : This is a helper tool to generate a template config file for the simulation. (see `run_AMS_BP config --help` for more details)
+    - `run_AMS_BP gui` : to start the GUI. See [GUI Documentation](./src/AMS_BP/gui/README.md)
     - Note: using `run_AMS_BP --help` will show you all the available commands.
 4. You can now use these tools (they are isolated in their own env created by uv, which is cool).
 
@@ -85,10 +82,10 @@ In addition to the CLI and programmatic API, AMS-BP comes with a graphical inter
 ### Main GUI Features
 The GUI provides the following tools from a single interface:
 
-**Create Configuration File** — Launches the visual configuration builder
-**Run Simulation from Config** — Select a .toml file and run the simulation with logging and progress tracking
-**Visualize Microscopy Data (Napari)** — Open TIFF, PNG, ND2, or Zarr image files and view with the Napari viewer
-**Package Logs for Sharing** — Package run directories (e.g., run_2024_04_20_001) into a .zip file for archival or collaboration
+- **Create Configuration File** — Launches the visual configuration builder
+- **Run Simulation from Config** — Select a .toml file and run the simulation with logging and progress tracking
+- **Visualize Microscopy Data (Napari)** — Open TIFF, PNG, ND2, or Zarr image files and view with the Napari viewer
+- **Package Logs for Sharing** — Package run directories (e.g., run_2024_04_20_001) into a .zip file for archival or collaboration
 
 ### Launch the GUI
 To start the GUI, run:
@@ -97,23 +94,7 @@ To start the GUI, run:
 
 run_AMS_BP gui
 ```
-#### Configuration Builder
-Clicking "Create Configuration File" opens a template selector where you can choose a preconfigured simulation (with preview images), and then visually edit all configuration options through dedicated tabs.
-
-Each section of the configuration is editable via structured UI forms, with contextual help and validation. Tabs include:
-
-- Global/Cell/Molecule/Condensate/Fluorophore parameters
-- Laser and optical configuration
-- Camera and channel settings
-- Experiment setup (e.g., z-stack vs time-series)
-Once ready, click "Preview Configuration TOML" to inspect the final file, and "Save" to export.
-
-#### Running Simulations from GUI
-Clicking "Run Simulation from Config" lets you select any .toml configuration file. A real-time log viewer shows progress, and outputs are saved in a structured AMS_runs/run_*/ directory.
-
-#### Sharing Logs
-Run into an issue? Use the packge logs button to select the logs corresponding to the simulation you just ran, save them and send them over to us! It will help you diagnose the issue!
-
+For detailed walkthrough see the [GUI Documentation](./src/AMS_BP/gui/README.md).
 ## Configuration File
 
 The configuration file (sim_config.toml) is divided into several key sections:

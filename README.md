@@ -51,7 +51,8 @@ uv tool install AMS_BP
 
 ### ***PyPi***
 
-1. Run:
+1. If using pip, make sure the environment is python >= 3.12
+2. Run:
 ```bash
 pip install AMS_BP
 ```

@@ -42,7 +42,7 @@ Find detailed API references for the library at: [joemans3/github.io/AMS_BP](htt
 ```bash
 uv tool install AMS_BP
 ```
-3. You will have access to two CLI commands (using the uv interface):
+3. You will have access to three CLI commands (using the uv interface):
     - `run_AMS_BP runsim` : This is the main entry point for the simulation. (see `run_AMS_BP runsim --help` for more details)
     - `run_AMS_BP config` : This is a helper tool to generate a template config file for the simulation. (see `run_AMS_BP config --help` for more details)
     - `run_AMS_BP gui` : to start the GUI. See [GUI Documentation](./src/AMS_BP/gui/README.md)

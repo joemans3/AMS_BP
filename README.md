@@ -20,7 +20,7 @@ Find detailed API references for the library at: [joemans3/github.io/AMS_BP](htt
 
 > !!ATTENTION!! - Please note that you NEED to install the developmental dependencies to run the examples in full. This is mainly for installing the Jupyter notebook extensions, matplotlib and other visualization packages.
 
-[<img src="./docs/assets/buttons/ButtonFigure_FRAP.svg" width="300" height="120"/>](./examples/QuantitativeExperiments/FRAP/FRAP_methods.ipynb) [<img src="./docs/assets/buttons/ButtonFigure_fPALM_NPC.svg" width="300"/>](./examples/QuantitativeExperiments/FRAP/FRAP_methods.ipynb)
+[<img src="./docs/assets/buttons/ButtonFigure_FRAP.svg" width="300" height="120"/>](./examples/QuantitativeExperiments/FRAP/FRAP_methods.ipynb) [<img src="./docs/assets/buttons/ButtonFigure_fPALM_NPC.svg" width="300"/>](./examples/QuantitativeExperiments/PALM/fPALM/npc_palm.ipynb)
 
 [<img src="./docs/assets/buttons/ButtonFigure_zstack_twocolor_widefield.svg" width="300"/>](./examples/QuantitativeExperiments/TwoColor/Widefield/widefield_twocolor.ipynb) [<img src="./docs/assets/buttons/ButtonFigure_zstack_twocolor_confocal.svg" width="300"/>](./examples/QuantitativeExperiments/TwoColor/Confocal/confocal_twocolor.ipynb)
 

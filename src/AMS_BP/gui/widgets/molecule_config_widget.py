@@ -235,6 +235,9 @@ class MoleculeConfigWidget(QWidget):
             }
             self.molecule_type_widgets[i].set_data(type_data)
 
+    def get_help_path(self) -> Path:
+        return Path(__file__).parent.parent / "help_docs" / "molecule_help.md"
+
 
 class MoleculeTypeWidget(QWidget):
     def __init__(self, type_index):
@@ -709,6 +712,3 @@ class TransitionMatrixWidget(QWidget):
         for i in range(size):
             for j in range(min(size, len(matrix[i]))):
                 self.spinboxes[i][j].setValue(matrix[i][j])
-
-    def get_help_path(self) -> Path:
-        return Path(__file__).parent.parent / "help_docs" / "molecule_help.md"

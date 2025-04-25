@@ -4,10 +4,11 @@ from zipfile import ZipFile
 
 import napari
 import tifffile
-from PyQt6.QtCore import Qt, QThread
+from PyQt6.QtCore import QSettings, Qt, QThread
 from PyQt6.QtGui import QPainter, QPixmap
 from PyQt6.QtSvg import QSvgRenderer
 from PyQt6.QtWidgets import (
+    QApplication,
     QFileDialog,
     QLabel,
     QMainWindow,
@@ -22,6 +23,7 @@ from ..logging.setup_run_directory import setup_run_directory
 from .logging_window import LogWindow
 from .sim_worker import SimulationWorker
 from .template_window_selection import TemplateSelectionWindow
+from .widgets.utility_widgets.toggleswitch_widget import ToggleSwitch
 
 LOGO_PATH = str(Path(__file__).parent / "assets" / "drawing.svg")
 
@@ -76,6 +78,20 @@ class MainWindow(QMainWindow):
         self.package_logs_button = QPushButton("Package Logs for Sharing")
         self.package_logs_button.clicked.connect(self.package_logs)
         layout.addWidget(self.package_logs_button)
+
+        # Load theme preference
+        self.settings = QSettings("AMS", "AMSConfig")
+        theme_pref = self.settings.value("theme", "light")
+
+        # Add toggle switch with label
+        self.theme_toggle = ToggleSwitch(checked=(theme_pref == "dark"))
+        self.theme_toggle.toggled.connect(self.toggle_theme)
+        self.theme_label = QLabel("Dark Mode" if theme_pref == "dark" else "Light Mode")
+        layout.addWidget(self.theme_label)
+        layout.addWidget(self.theme_toggle, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        # Apply initial theme
+        self.apply_theme(theme_pref)
 
     def package_logs(self):
         log_dir = Path.home() / "AMS_runs"
@@ -244,6 +260,21 @@ class MainWindow(QMainWindow):
             self.logo_label.setPixmap(scaled_pixmap)
         else:
             print("Failed to load SVG file.")
+
+    def toggle_theme(self, is_dark: bool):
+        theme = "dark" if is_dark else "light"
+        self.settings.setValue("theme", theme)
+        self.apply_theme(theme)
+        self.theme_label.setText("Dark Mode" if is_dark else "Light Mode")
+
+    def apply_theme(self, theme: str):
+        theme_file = Path(__file__).parent / "themes" / f"{theme}_theme.qss"
+        try:
+            with open(theme_file, "r") as f:
+                stylesheet = f.read()
+                QApplication.instance().setStyleSheet(stylesheet)
+        except Exception as e:
+            QMessageBox.warning(self, "Theme Error", f"Failed to load theme:\n{e}")
 
     def open_config_editor(self):
         """Launch template selection first, then open ConfigEditor."""

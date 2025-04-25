@@ -1,0 +1,70 @@
+/* Dark Theme */
+* {
+    font-family: "Segoe UI", "Arial", sans-serif;
+    font-size: 14px;
+    color: #e0e0e0;
+}
+
+QWidget {
+    background-color: #2b2b2b;
+}
+
+QLabel {
+    color: #dddddd;
+}
+
+QPushButton {
+    background-color: #3daee9;
+    color: #ffffff;
+    border-radius: 6px;
+    padding: 6px 12px;
+}
+QPushButton:hover {
+    background-color: #5dbff0;
+}
+QPushButton:pressed {
+    background-color: #2a97cc;
+}
+
+QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QTextEdit {
+    background-color: #3c3f41;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 4px;
+    color: #eeeeee;
+}
+
+QGroupBox {
+    border: 1px solid #444;
+    border-radius: 6px;
+    margin-top: 10px;
+}
+QGroupBox:title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 6px;
+    font-weight: bold;
+    color: #aaaaaa;
+}
+
+QTabWidget::pane {
+    border: 1px solid #444;
+    background: #3c3f41;
+    border-radius: 6px;
+}
+
+QTabBar::tab {
+    background: #444;
+    border: 1px solid #555;
+    padding: 6px 12px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+}
+QTabBar::tab:selected {
+    background: #2b2b2b;
+    border-bottom-color: #2b2b2b;
+}
+
+QScrollArea {
+    border: none;
+}

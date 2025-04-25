@@ -68,3 +68,19 @@ QTabBar::tab:selected {
 QScrollArea {
     border: none;
 }
+
+QListWidget {
+    background-color: #2f2f2f;
+    border-right: 1px solid #444;
+}
+
+QListWidget::item {
+    padding: 6px;
+    border-radius: 4px;
+    color: #dddddd;
+}
+
+QListWidget::item:selected {
+    background-color: #3daee9;
+    color: #ffffff;
+}

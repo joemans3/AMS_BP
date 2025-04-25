@@ -2,12 +2,13 @@ from pathlib import Path
 
 import tomli
 import tomlkit
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
-    QComboBox,
     QDialog,
     QFileDialog,
     QHBoxLayout,
     QLabel,
+    QListWidget,
     QMessageBox,
     QPushButton,
     QSizePolicy,
@@ -37,58 +38,63 @@ class ConfigEditor(QWidget):
         super().__init__()
         self.setWindowTitle("Simulation Configuration Editor")
 
-        # Create the main layout for the window
-        layout = QVBoxLayout()
+        # === Main horizontal layout: [Side Navigation | Content Area] ===
+        main_layout = QHBoxLayout(self)
 
-        # Create a horizontal layout for the dropdown and the tab index label
-        dropdown_layout = QHBoxLayout()
+        # === Sidebar: Section Navigation ===
+        self.nav_list = QListWidget()
+        self.sections = [
+            "General",
+            "Global Parameters",
+            "Cell Parameters",
+            "Molecule Parameters",
+            "Condensate Parameters",
+            "Define fluorophores",
+            "Camera Parameters",
+            "PSF Parameters",
+            "Laser Parameters",
+            "Channels Parameters",
+            "Saving Instructions",
+            "Experiment Builder",
+        ]
+        self.nav_list.addItems(self.sections)
+        self.nav_list.setFixedWidth(220)
+        self.nav_list.setSpacing(4)
+        self.nav_list.setCurrentRow(0)
+        self.nav_list.currentRowChanged.connect(self.on_tab_selected)
+        main_layout.addWidget(self.nav_list)
 
-        # Add a QLabel for the instruction/title about the dropdown
-        dropdown_title = QLabel(
-            "Use the dropdown below to set the parameters for each tab:"
-        )
-        dropdown_layout.addWidget(dropdown_title)
+        # === Right panel layout ===
+        right_panel = QVBoxLayout()
 
-        # Create a QComboBox (dropdown menu) for selecting tabs
-        self.dropdown = QComboBox()
-        self.dropdown.addItems(
-            [
-                "General",
-                "Global Parameters",
-                "Cell Parameters",
-                "Molecule Parameters",
-                "Condensate Parameters",
-                "Define fluorophores",
-                "Camera Parameters",
-                "PSF Parameters",
-                "Laser Parameters",
-                "Channels Parameters",
-                "Saving Instructions",
-                "Experiment Builder",
-            ]
-        )
-        self.dropdown.currentIndexChanged.connect(
-            self.on_dropdown_change
-        )  # Connect to the change event
+        # Step/breadcrumb label
+        self.step_label = QLabel()
+        self.step_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        right_panel.addWidget(self.step_label)
 
-        # Create a QLabel for displaying the current tab index
-        self.tab_index_label = QLabel("1/10")
-
-        # Add the dropdown and label to the layout
-        dropdown_layout.addWidget(self.dropdown)
-        dropdown_layout.addWidget(self.tab_index_label)
-
-        # Add the dropdown layout to the main layout
-        layout.addLayout(dropdown_layout)
-
-        # Create a QStackedWidget to hold the content for each "tab"
+        # === Stack of config widgets ===
         self.stacked_widget = QStackedWidget()
-
         self.stacked_widget.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
+        right_panel.addWidget(self.stacked_widget)
 
-        # Initialize the widgets for each "tab"
+        # === Buttons at the bottom ===
+        self.save_button = QPushButton("Ready to save configuration?")
+        self.save_button.clicked.connect(self.save_config)
+        right_panel.addWidget(self.save_button)
+
+        self.preview_button = QPushButton("Preview Configuration TOML")
+        self.preview_button.clicked.connect(self.preview_config)
+        right_panel.addWidget(self.preview_button)
+
+        self.help_button = QPushButton("Get Help on this section")
+        self.help_button.clicked.connect(self.show_help)
+        right_panel.addWidget(self.help_button)
+
+        main_layout.addLayout(right_panel)
+
+        # === Create tab content widgets ===
         self.general_tab = GeneralConfigWidget()
         self.global_tab = GlobalConfigWidget()
         self.cell_tab = CellConfigWidget()
@@ -102,36 +108,35 @@ class ConfigEditor(QWidget):
         self.detector_tab = CameraConfigWidget()
         self.experiment_tab = ExperimentConfigWidget()
 
-        # connections
-        # PSF -> confocal -> lasers
+        # === Widget interconnections ===
         self.psf_tab.confocal_mode_changed.connect(self.laser_tab.set_confocal_mode)
-        # === Molecule -> Fluorophore & Condensate ===
+
         self.molecule_tab.molecule_count_changed.connect(
             self.fluorophore_tab.set_mfluorophore_count
         )
         self.molecule_tab.molecule_count_changed.connect(
             self.condensate_tab.set_molecule_count
         )
-        # === Fluorophore -> Molecule & Condensate ===
+
         self.fluorophore_tab.mfluorophore_count_changed.connect(
             self.molecule_tab.set_molecule_count
         )
         self.fluorophore_tab.mfluorophore_count_changed.connect(
             self.condensate_tab.set_molecule_count
         )
-        # === Condensate -> Molecule & Fluorophore ===
+
         self.condensate_tab.molecule_count_changed.connect(
             self.molecule_tab.set_molecule_count
         )
         self.condensate_tab.molecule_count_changed.connect(
             self.fluorophore_tab.set_mfluorophore_count
         )
-        # === Laser -> Experiment
+
         self.laser_tab.laser_names_updated.connect(
             self.experiment_tab.set_active_lasers
         )
 
-        # Add each tab's widget to the stacked widget
+        # === Add tab widgets to the stack ===
         self.stacked_widget.addWidget(self.general_tab)
         self.stacked_widget.addWidget(self.global_tab)
         self.stacked_widget.addWidget(self.cell_tab)
@@ -145,31 +150,13 @@ class ConfigEditor(QWidget):
         self.stacked_widget.addWidget(self.output_tab)
         self.stacked_widget.addWidget(self.experiment_tab)
 
-        # Set the stacked widget as the central widget
-        layout.addWidget(self.stacked_widget)
+        # Final layout and window size
+        self.setLayout(main_layout)
+        self.setMinimumSize(1100, 750)
+        self.resize(1250, 850)
 
-        # Create and add the save and help buttons at the bottom
-        self.save_button = QPushButton("Ready to save configuration?")
-        self.save_button.clicked.connect(self.save_config)
-        layout.addWidget(self.save_button)
-
-        self.preview_button = QPushButton("Preview Configuration TOML")
-        self.preview_button.clicked.connect(self.preview_config)
-        layout.addWidget(self.preview_button)
-
-        self.help_button = QPushButton("Get Help on this section")
-        self.help_button.clicked.connect(self.show_help)
-        layout.addWidget(self.help_button)
-
-        # Set the layout for the main window
-        self.setLayout(layout)
-
-        # Set initial display
-        self.on_dropdown_change(0)  # Show the first tab (index 0)
-
-        self.setMinimumSize(1000, 700)  # or any default reasonable size
-        self.resize(1200, 800)  # initial size
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        # Initial tab display
+        self.on_tab_selected(0)
 
     def set_data(self, config: dict):
         if "Cell_Parameters" in config:
@@ -245,14 +232,12 @@ class ConfigEditor(QWidget):
             doc[key] = val
         return doc
 
-    def on_dropdown_change(self, index):
-        """Change the displayed widget based on the dropdown selection."""
+    def on_tab_selected(self, index: int):
+        """Change the displayed widget and update breadcrumb/step label."""
         self.stacked_widget.setCurrentIndex(index)
-        # Update the tab index label (1-based index)
-        total_tabs = (
-            self.dropdown.count()
-        )  # Corrected way to get the total number of items
-        self.tab_index_label.setText(f"{index + 1}/{total_tabs}")
+        total = self.nav_list.count()
+        current = self.nav_list.item(index).text()
+        self.step_label.setText(f"Step {index + 1}/{total} — {current}")
 
     def validate_all_tabs(self) -> bool:
         return all(

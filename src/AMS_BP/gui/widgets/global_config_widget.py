@@ -25,10 +25,6 @@ class GlobalConfigWidget(QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
         form = QFormLayout()
-        # Validation button
-        self.validate_button = QPushButton("Validate Parameters")
-        self.validate_button.clicked.connect(self.validate)
-        layout.addWidget(self.validate_button)
 
         # Sample plane dimensions
         self.sample_plane_width = QSpinBox()
@@ -76,6 +72,11 @@ class GlobalConfigWidget(QWidget):
         self.set_defaults()
 
         self.setLayout(layout)
+
+        # Validation button
+        self.validate_button = QPushButton("Validate Parameters")
+        self.validate_button.clicked.connect(self.validate)
+        layout.addWidget(self.validate_button)
 
     def set_defaults(self):
         """Set default values for the form fields"""

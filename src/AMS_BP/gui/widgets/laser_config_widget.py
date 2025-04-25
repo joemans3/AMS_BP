@@ -30,10 +30,6 @@ class LaserConfigWidget(QWidget):
 
         form = QFormLayout()
 
-        self.validate_button = QPushButton("Validate")
-        self.validate_button.clicked.connect(self.validate)
-        layout.addWidget(self.validate_button)
-
         self.num_lasers = QSpinBox()
         self.num_lasers.setRange(1, 10)
         self.num_lasers.setValue(2)
@@ -49,6 +45,10 @@ class LaserConfigWidget(QWidget):
         layout.addLayout(form)
         layout.addWidget(self.laser_tabs)
         self.setLayout(layout)
+
+        self.validate_button = QPushButton("Validate Parameters")
+        self.validate_button.clicked.connect(self.validate)
+        layout.addWidget(self.validate_button)
 
     def set_confocal_mode(self, enabled: bool):
         for i in range(self.laser_tabs.count()):

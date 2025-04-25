@@ -96,12 +96,12 @@ class ExperimentConfigWidget(QWidget):
         layout.addWidget(QLabel("Active Laser Parameters:"))
         layout.addWidget(self.laser_tabs)
 
+        self.setLayout(layout)
+
         # Validate Button
-        self.validate_button = QPushButton("Validate")
+        self.validate_button = QPushButton("Validate Parameters")
         self.validate_button.clicked.connect(self.validate)
         layout.addWidget(self.validate_button)
-
-        self.setLayout(layout)
 
     def update_z_position_mode(self, mode: str):
         # Clear existing

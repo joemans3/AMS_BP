@@ -29,10 +29,6 @@ class ChannelConfigWidget(QWidget):
 
         form = QFormLayout()
 
-        self.validate_button = QPushButton("Validate")
-        self.validate_button.clicked.connect(self.validate)
-        layout.addWidget(self.validate_button)
-
         self.num_channels = QSpinBox()
         self.num_channels.setRange(1, 10)
         self.num_channels.setValue(2)
@@ -45,6 +41,10 @@ class ChannelConfigWidget(QWidget):
         layout.addLayout(form)
         layout.addWidget(self.channel_tabs)
         self.setLayout(layout)
+
+        self.validate_button = QPushButton("Validate Parameters")
+        self.validate_button.clicked.connect(self.validate)
+        layout.addWidget(self.validate_button)
 
     def validate(self) -> bool:
         try:

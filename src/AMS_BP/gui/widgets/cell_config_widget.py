@@ -26,10 +26,6 @@ class CellConfigWidget(QWidget):
 
         form = QFormLayout()
 
-        self.validate_button = QPushButton("Validate")
-        self.validate_button.clicked.connect(self.validate)
-        layout.addWidget(self.validate_button)
-
         self.cell_type = QComboBox()
         self.cell_type.addItems(
             ["SphericalCell", "RodCell", "RectangularCell", "OvoidCell"]
@@ -51,6 +47,10 @@ class CellConfigWidget(QWidget):
         layout.addLayout(form)
         layout.addWidget(self.param_stack)
         self.setLayout(layout)
+
+        self.validate_button = QPushButton("Validate Parameters")
+        self.validate_button.clicked.connect(self.validate)
+        layout.addWidget(self.validate_button)
 
     def validate(self) -> bool:
         from ...cells import create_cell

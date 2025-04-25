@@ -47,11 +47,6 @@ class MoleculeConfigWidget(QWidget):
         self.num_types_layout.addWidget(self.num_types_spinner)
         self.num_types_layout.addStretch()
 
-        # Validate button
-        self.validate_button = QPushButton("Validate")
-        self.validate_button.clicked.connect(self.validate)
-        self.num_types_layout.addWidget(self.validate_button)
-
         self.main_layout.addLayout(self.num_types_layout)
 
         # Create tab widget to hold molecule type configs
@@ -61,6 +56,11 @@ class MoleculeConfigWidget(QWidget):
         # Initialize with one molecule type
         self.molecule_type_widgets = []
         self.update_molecule_types(1)
+
+        # Add the validate button at the bottom
+        self.validate_button = QPushButton("Validate Parameters")
+        self.validate_button.clicked.connect(self.validate)
+        self.main_layout.addWidget(self.validate_button)
 
     def _on_molecule_count_changed(self, count):
         self.update_molecule_types(count)

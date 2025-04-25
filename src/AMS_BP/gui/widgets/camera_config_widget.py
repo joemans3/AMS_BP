@@ -29,10 +29,6 @@ class CameraConfigWidget(QWidget):
 
         form = QFormLayout()
 
-        self.validate_button = QPushButton("Validate")
-        self.validate_button.clicked.connect(self.validate)
-        layout.addWidget(self.validate_button)
-
         # Camera type (Only "CMOS" is available)
         self.camera_type = QComboBox()
         self.camera_type.addItems(["CMOS"])
@@ -95,6 +91,10 @@ class CameraConfigWidget(QWidget):
 
         layout.addLayout(form)
         self.setLayout(layout)
+
+        self.validate_button = QPushButton("Validate Parameters")
+        self.validate_button.clicked.connect(self.validate)
+        layout.addWidget(self.validate_button)
 
     def _hbox(self, widgets):
         box = QHBoxLayout()

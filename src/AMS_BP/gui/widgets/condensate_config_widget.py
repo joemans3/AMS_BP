@@ -118,6 +118,18 @@ class CondensateConfigWidget(QWidget):
         condensate_controls.addWidget(condensate_count)
         layout.addLayout(condensate_controls)
 
+        # === Density Difference field RIGHT AFTER the condensate count ===
+        density_layout = QHBoxLayout()
+        density_layout.addWidget(QLabel("Density Difference:"))
+
+        density_spin = QDoubleSpinBox()
+        density_spin.setRange(0, 100)
+        density_spin.setValue(1.0)
+        density_spin.setDecimals(3)
+        density_layout.addWidget(density_spin)
+        layout.addLayout(density_layout)
+
+        # === Condensate containers BELOW this point ===
         condensate_container = QVBoxLayout()
         layout.addLayout(condensate_container)
 
@@ -131,25 +143,16 @@ class CondensateConfigWidget(QWidget):
             )
         )
 
-        # Density Difference per molecule type
-        density_layout = QHBoxLayout()
-        density_layout.addWidget(QLabel("Density Difference:"))
-
-        density_spin = QDoubleSpinBox()
-        density_spin.setRange(0, 100)
-        density_spin.setValue(1.0)
-        density_spin.setDecimals(3)
-        density_layout.addWidget(density_spin)
-        layout.addLayout(density_layout)
         self.condensate_widgets.append(
             {
                 "condensates": condensate_widgets,
                 "density_widget": density_spin,
+                "condensate_count_spinner": condensate_count,
             }
         )
+
         molecule_widget.setLayout(layout)
         scroll_area.setWidget(molecule_widget)
-
         self.tab_widget.addTab(scroll_area, f"Molecule Type {index + 1}")
 
     def add_condensate_group(self, index, condensate_widgets, condensate_container):
@@ -247,6 +250,7 @@ class CondensateConfigWidget(QWidget):
                 molecule_group["condensates"],
                 molecule_group_layout,
             )
+            molecule_group["condensate_count_spinner"].setValue(num_condensates)
 
             for j in range(num_condensates):
                 condensate = molecule_group["condensates"][j]

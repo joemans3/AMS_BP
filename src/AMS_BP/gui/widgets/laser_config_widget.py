@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QSizePolicy,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
@@ -22,6 +23,11 @@ class LaserConfigWidget(QWidget):
         super().__init__()
         self.laser_name_widgets = []
         layout = QVBoxLayout()
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(10)
+        self.setLayout(layout)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
         form = QFormLayout()
 
         self.validate_button = QPushButton("Validate")

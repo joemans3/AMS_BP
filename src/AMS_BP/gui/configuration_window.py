@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QMessageBox,
     QPushButton,
+    QSizePolicy,
     QStackedWidget,
     QTextEdit,
     QVBoxLayout,
@@ -82,6 +83,10 @@ class ConfigEditor(QWidget):
 
         # Create a QStackedWidget to hold the content for each "tab"
         self.stacked_widget = QStackedWidget()
+
+        self.stacked_widget.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
 
         # Initialize the widgets for each "tab"
         self.general_tab = GeneralConfigWidget()
@@ -161,6 +166,10 @@ class ConfigEditor(QWidget):
 
         # Set initial display
         self.on_dropdown_change(0)  # Show the first tab (index 0)
+
+        self.setMinimumSize(1000, 700)  # or any default reasonable size
+        self.resize(1200, 800)  # initial size
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
     def set_data(self, config: dict):
         if "Cell_Parameters" in config:

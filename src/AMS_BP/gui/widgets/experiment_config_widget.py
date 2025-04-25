@@ -10,6 +10,8 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QScrollArea,
+    QSizePolicy,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
@@ -25,6 +27,10 @@ class ExperimentConfigWidget(QWidget):
         self.laser_position_widgets = {}
 
         layout = QVBoxLayout()
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(10)
+        self.setLayout(layout)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         form = QFormLayout()
 
         # Experiment Info
@@ -38,13 +44,20 @@ class ExperimentConfigWidget(QWidget):
         self.type_field.addItems(["time-series", "z-stack"])
         form.addRow("Experiment Type:", self.type_field)
 
-        # Z Position (just one for time-series)
+        # Z Position inputs
         self.z_position_inputs: List[QDoubleSpinBox] = []
 
+        # Scrollable container for z-position inputs
+        self.z_scroll_area = QScrollArea()
+        self.z_scroll_area.setWidgetResizable(True)
+        self.z_scroll_area.setFixedHeight(150)  # Adjust height as needed
+
         self.z_position_container = QWidget()
-        self.z_position_layout = QVBoxLayout()
+        self.z_position_layout = QVBoxLayout(self.z_position_container)
         self.z_position_container.setLayout(self.z_position_layout)
-        form.addRow("Z Position(s):", self.z_position_container)
+
+        self.z_scroll_area.setWidget(self.z_position_container)
+        form.addRow("Z Position(s):", self.z_scroll_area)
 
         self.add_z_button = QPushButton("Add Z-Position")
         self.remove_z_button = QPushButton("Remove Z-Position")

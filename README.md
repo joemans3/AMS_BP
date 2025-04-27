@@ -99,6 +99,7 @@ To start the GUI, run:
 
 run_AMS_BP gui
 ```
+Please note, the first time the package is used it will take a minute to start.
 For detailed walkthrough see the [GUI Documentation](./src/AMS_BP/gui/README.md).
 ## Configuration File
 

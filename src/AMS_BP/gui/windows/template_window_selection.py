@@ -11,13 +11,14 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QScrollArea,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
 
 from .configuration_window import ConfigEditor
 
-TEMPLATE_DIR = Path(__file__).parent.parent / "resources" / "template_configs"
+TEMPLATE_DIR = Path(__file__).parent.parent.parent / "resources" / "template_configs"
 METADATA_PATH = TEMPLATE_DIR / "metadata_configs.json"
 
 
@@ -52,32 +53,61 @@ class TemplateSelectionWindow(QWidget):
 
     def create_template_card(self, entry: dict) -> QWidget:
         group = QGroupBox(entry["label"])
+        group.setMinimumHeight(150)
+        group.setMaximumHeight(200)
         layout = QHBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        layout.setSpacing(15)
 
         # Image
         img_label = QLabel()
         img_path = TEMPLATE_DIR / entry["image"]
         if img_path.exists():
             pixmap = QPixmap(str(img_path)).scaled(
-                200, 200, Qt.AspectRatioMode.KeepAspectRatio
+                150,
+                150,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
             )
             img_label.setPixmap(pixmap)
         else:
             img_label.setText("[Missing image assets]")
+        img_label.setFixedSize(150, 150)
+        img_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(img_label)
 
-        # Description + Button
+        # Description + Button (in a VBox)
         vbox = QVBoxLayout()
+        vbox.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        # Scrollable description
+        desc_scroll = QScrollArea()
+        desc_scroll.setFixedHeight(100)  # Height for the scroll area
+        desc_scroll.setWidgetResizable(True)
+
+        desc_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        desc_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
         description_label = QLabel(entry.get("description", ""))
-        description_label.setWordWrap(True)  # <--- this is the key!
-        vbox.addWidget(description_label)
+        description_label.setWordWrap(True)
+        description_label.setAlignment(
+            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
+        )
+        description_label.setContentsMargins(5, 5, 5, 5)
+        description_label.setSizePolicy(
+            description_label.sizePolicy().horizontalPolicy(),
+            QSizePolicy.Policy.Maximum,
+        )
+
+        desc_scroll.setWidget(description_label)
+        vbox.addWidget(desc_scroll)
 
         btn = QPushButton("Use This Template")
         btn.clicked.connect(
             lambda _, config=entry["config"]: self.load_template(config)
         )
         vbox.addWidget(btn)
+
         layout.addLayout(vbox)
 
         group.setLayout(layout)

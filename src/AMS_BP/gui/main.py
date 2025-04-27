@@ -18,12 +18,12 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ..logging.logutil import LoggerManager
-from ..logging.setup_run_directory import setup_run_directory
-from .logging_window import LogWindow
+from ..tools.logging.logutil import LoggerManager
+from ..tools.logging.setup_run_directory import setup_run_directory
 from .sim_worker import SimulationWorker
-from .template_window_selection import TemplateSelectionWindow
 from .widgets.utility_widgets.toggleswitch_widget import ToggleSwitch
+from .windows.logging_window import LogWindow
+from .windows.template_window_selection import TemplateSelectionWindow
 
 LOGO_PATH = str(Path(__file__).parent / "assets" / "drawing.svg")
 

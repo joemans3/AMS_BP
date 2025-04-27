@@ -1,20 +1,38 @@
 {
   "PAmCherry_EGFP_Widefield_Zstack_Fixed": {
-    "label": "PAmCherry with EGFP (Fixed)",
+    "label": "PAmCherry with EGFP (Widefield Fixed)",
     "description": "Two-Color Widefield Microscopy of a RodCell with PAmCherry and EGFP as molecules. Cell is fixed and the experiment protocol is a Z-Stack.",
     "image": "palm_egfp.png",
     "config": "twocolor_widefield_zstack_fixed.toml"
   },
   "PAmCherry_EGFP_Widefield_Zstack_Live": {
-    "label": "PAmCherry with EGFP (Live)",
+    "label": "PAmCherry with EGFP (Widefield Live)",
     "description": "Two-Color Widefield Microscopy of a RodCell with PAmCherry and EGFP as molecules. Cell is live (with motion described by bounded FBM models (differently for each molecule) and the experiment protocol is a Z-Stack.",
     "image": "palm_egfp.png",
     "config": "twocolor_widefield_zstack_live.toml"
   },
   "PAmCherry_EGFP_Widefield_Timeseries_Live": {
-    "label": "PAmCherry with EGFP (Live timeseries)",
+    "label": "PAmCherry with EGFP (Widefield Live timeseries)",
     "description": "Two-Color Widefield Microscopy of a RodCell with PAmCherry and EGFP as molecules. Cell is live (with motion described by bounded FBM models (differently for each molecule) and the experiment protocol is a time-series.",
     "image": "palm_egfp.png",
     "config": "twocolor_widefield_timeseries_live.toml"
+  },
+  "PAmCherry_EGFP_Confocal_Timeseries_Live": {
+    "label": "PAmCherry with EGFP (Confocal Live timeseries)",
+    "description": "Two-Color Confocal (1 AU pinhole diameter) Microscopy of a RodCell with PAmCherry and EGFP as molecules. Cell is live (with motion described by bounded FBM models (differently for each molecule) and the experiment protocol is a time-series.",
+    "image": "palm_egfp.png",
+    "config": "twocolor_confocal_timeseries_live.toml"
+  },
+  "PAmCherry_EGFP_Confocal_Zstack_Live": {
+    "label": "PAmCherry with EGFP (Confocal Live)",
+    "description": "Two-Color Confocal (1 AU pinhole diameter) Microscopy of a RodCell with PAmCherry and EGFP as molecules. Cell is live (with motion described by bounded FBM models (differently for each molecule) and the experiment protocol is a Z-Stack.",
+    "image": "palm_egfp.png",
+    "config": "twocolor_confocal_zstack_live.toml"
+  },
+  "PAmCherry_EGFP_Confocal_Zstack_Fixed": {
+    "label": "PAmCherry with EGFP (Confocal Fixed)",
+    "description": "Two-Color Confocal (1 AU pinhole diameter) Microscopy of a RodCell with PAmCherry and EGFP as molecules. Cell is fixed and the experiment protocol is a Z-Stack.",
+    "image": "palm_egfp.png",
+    "config": "twocolor_confocal_zstack_fixed.toml"
   }
 }

@@ -15,6 +15,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ...core.configio.convertconfig import create_channels
+
 
 class ChannelConfigWidget(QWidget):
     def __init__(self):
@@ -48,8 +50,6 @@ class ChannelConfigWidget(QWidget):
 
     def validate(self) -> bool:
         try:
-            from ...configio.convertconfig import create_channels
-
             data = self.get_data()
 
             # Full simulation-level validation

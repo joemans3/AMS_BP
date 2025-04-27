@@ -5,7 +5,7 @@ Removal Time: NDY (not determined yet)
 
 import numpy as np
 
-from ...utils.decorators import _catch_recursion_error, deprecated
+from ....utils.decorators import _catch_recursion_error, deprecated
 
 # Reflecting boundary condition which is a recursive function so that even if the first candidate
 # is out of the space limit, the function will keep calling itself until the candidate is within the space limit

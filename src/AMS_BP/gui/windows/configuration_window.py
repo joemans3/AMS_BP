@@ -18,19 +18,19 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ..widgets.camera_config_widget import CameraConfigWidget
+from ..widgets.cell_config_widget import CellConfigWidget
+from ..widgets.channel_config_widget import ChannelConfigWidget
+from ..widgets.condensate_config_widget import CondensateConfigWidget
+from ..widgets.experiment_config_widget import ExperimentConfigWidget
+from ..widgets.flurophore_config_widget import FluorophoreConfigWidget
+from ..widgets.general_config_widget import GeneralConfigWidget
+from ..widgets.global_config_widget import GlobalConfigWidget
+from ..widgets.laser_config_widget import LaserConfigWidget
+from ..widgets.molecule_config_widget import MoleculeConfigWidget
+from ..widgets.output_config_widget import OutputConfigWidget
+from ..widgets.psf_config_widget import PSFConfigWidget
 from .help_window import HelpWindow
-from .widgets.camera_config_widget import CameraConfigWidget
-from .widgets.cell_config_widget import CellConfigWidget
-from .widgets.channel_config_widget import ChannelConfigWidget
-from .widgets.condensate_config_widget import CondensateConfigWidget
-from .widgets.experiment_config_widget import ExperimentConfigWidget
-from .widgets.flurophore_config_widget import FluorophoreConfigWidget
-from .widgets.general_config_widget import GeneralConfigWidget
-from .widgets.global_config_widget import GlobalConfigWidget
-from .widgets.laser_config_widget import LaserConfigWidget
-from .widgets.molecule_config_widget import MoleculeConfigWidget
-from .widgets.output_config_widget import OutputConfigWidget
-from .widgets.psf_config_widget import PSFConfigWidget
 
 
 class ConfigEditor(QWidget):
@@ -110,6 +110,9 @@ class ConfigEditor(QWidget):
 
         # === Widget interconnections ===
         self.psf_tab.confocal_mode_changed.connect(self.laser_tab.set_confocal_mode)
+        self.psf_tab.confocal_mode_changed.connect(
+            self.experiment_tab.set_scanning_mode
+        )
 
         self.molecule_tab.molecule_count_changed.connect(
             self.fluorophore_tab.set_mfluorophore_count

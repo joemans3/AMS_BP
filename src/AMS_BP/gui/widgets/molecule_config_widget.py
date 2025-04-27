@@ -20,6 +20,9 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ...core.configio.configmodels import MoleculeParameters
+from ...core.configio.convertconfig import create_dataclass_schema
+
 
 class MoleculeConfigWidget(QWidget):
     # Signal to notify when molecule count changes
@@ -99,8 +102,6 @@ class MoleculeConfigWidget(QWidget):
             data = self.get_data()
 
             # This will validate the schema using the backend logic
-            from ...configio.configmodels import MoleculeParameters
-            from ...configio.convertconfig import create_dataclass_schema
 
             _ = create_dataclass_schema(MoleculeParameters, data)
 
@@ -120,10 +121,6 @@ class MoleculeConfigWidget(QWidget):
         Load molecule configuration from TOML config format.
         """
         try:
-            # Validate format first
-            from ...configio.configmodels import MoleculeParameters
-            from ...configio.convertconfig import create_dataclass_schema
-
             validated = create_dataclass_schema(MoleculeParameters, config)
 
             # Determine number of types

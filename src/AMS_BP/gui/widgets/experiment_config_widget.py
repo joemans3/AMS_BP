@@ -1,10 +1,12 @@
 from pathlib import Path
 from typing import List
 
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
     QFormLayout,
+    QGraphicsOpacityEffect,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -17,6 +19,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+from ...core.configio.convertconfig import create_experiment_from_config
 
 
 class ExperimentConfigWidget(QWidget):
@@ -31,6 +35,32 @@ class ExperimentConfigWidget(QWidget):
         layout.setSpacing(10)
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+        self.scanning_area = QWidget()
+        self.scanning_area_layout = QVBoxLayout()
+        self.scanning_area_layout.setContentsMargins(0, 0, 0, 0)
+        self.scanning_area_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.scanning_area.setLayout(self.scanning_area_layout)
+        layout.addWidget(self.scanning_area)
+        # Setup scanning label
+        self.scanning_label = QLabel("Scanning Confocal Selected")
+        self.scanning_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.scanning_label.setStyleSheet(
+            "color: green; font-weight: bold; font-size: 16px;"
+        )
+        layout.addWidget(self.scanning_label)
+        # Reserve space by always having label active, even if invisible
+        self.opacity_effect = QGraphicsOpacityEffect(self.scanning_label)
+        self.scanning_label.setGraphicsEffect(self.opacity_effect)
+        self.opacity_effect.setOpacity(0.0)  # start invisible but reserved
+
+        # Blinking mode control
+        self._scanning_mode = False
+        self._blinking = False
+        self.blink_timer = QTimer(self)
+        self.blink_timer.setInterval(500)  # ms
+        self.blink_timer.timeout.connect(self._toggle_scanning_label_visibility)
+
         form = QFormLayout()
 
         # Experiment Info
@@ -102,6 +132,24 @@ class ExperimentConfigWidget(QWidget):
         self.validate_button = QPushButton("Validate Parameters")
         self.validate_button.clicked.connect(self.validate)
         layout.addWidget(self.validate_button)
+
+    def set_scanning_mode(self, enabled: bool):
+        self._scanning_mode = enabled
+        if enabled:
+            self.opacity_effect.setOpacity(1.0)
+            self.blink_timer.start()
+        else:
+            self.opacity_effect.setOpacity(0.0)
+            self.blink_timer.stop()
+
+    def _toggle_scanning_label_visibility(self):
+        """Toggles label opacity to create blinking without layout shifting."""
+        if self._scanning_mode:
+            current_opacity = self.opacity_effect.opacity()
+            new_opacity = 0.0 if current_opacity > 0.5 else 1.0
+            self.opacity_effect.setOpacity(new_opacity)
+        else:
+            self.opacity_effect.setOpacity(0.0)
 
     def update_z_position_mode(self, mode: str):
         # Clear existing
@@ -202,6 +250,7 @@ class ExperimentConfigWidget(QWidget):
                 for name in self.laser_position_widgets
             ],
             "xyoffset": [w.value() for w in self.xyoffset],
+            "scanning": self._scanning_mode,
         }
 
         if data["experiment_type"] == "z-stack":
@@ -249,10 +298,12 @@ class ExperimentConfigWidget(QWidget):
         positions = data.get("laser_positions_active", [])
         self.set_active_lasers(laser_names, powers=powers, positions=positions)
 
+        # Scanning Confocal
+        scanning_mode = data.get("scanning", False)
+        self.set_scanning_mode(scanning_mode)
+
     def validate(self) -> bool:
         try:
-            from ...configio.convertconfig import create_experiment_from_config
-
             data = self.get_data()
             config_dict = {"experiment": data}
 

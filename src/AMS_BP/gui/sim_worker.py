@@ -2,7 +2,9 @@ from pathlib import Path
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
-from ..logging.logutil import LogEmitter
+from ..core.configio.convertconfig import load_config, setup_microscope
+from ..core.configio.saving import save_config_frames
+from ..tools.logging.logutil import LogEmitter
 
 
 class SimulationWorker(QObject):
@@ -19,9 +21,6 @@ class SimulationWorker(QObject):
     def run(self):
         try:
             self.emitter.message.emit(f"Starting simulation for {self.config_path}")
-
-            from ..configio.convertconfig import load_config, setup_microscope
-            from ..configio.saving import save_config_frames
 
             loadedconfig = load_config(self.config_path)
 

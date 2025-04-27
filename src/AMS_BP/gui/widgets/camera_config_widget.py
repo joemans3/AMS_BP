@@ -14,6 +14,10 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ...core.configio.convertconfig import create_quantum_efficiency_from_config
+from ...core.optics.camera.detectors import (
+    CMOSDetector,
+)
 from .utility_widgets.spectrum_widget import SpectrumEditorDialog
 
 
@@ -122,11 +126,6 @@ class CameraConfigWidget(QWidget):
             # You can now use this data wherever needed, e.g., saving or validation
 
     def validate(self) -> bool:
-        from ...configio.convertconfig import create_quantum_efficiency_from_config
-        from ...optics.camera.detectors import (
-            CMOSDetector,
-        )
-
         try:
             data = self.get_data()
 

@@ -11,6 +11,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ...core.configio.configmodels import GlobalParameters
+
 
 class GlobalConfigWidget(QWidget):
     def __init__(self):
@@ -122,8 +124,6 @@ class GlobalConfigWidget(QWidget):
 
     def validate(self) -> bool:
         try:
-            from ...configio.configmodels import GlobalParameters
-
             data = self.get_data()
 
             GlobalParameters(**data)

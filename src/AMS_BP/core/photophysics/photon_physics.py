@@ -3,6 +3,7 @@ from typing import Callable, List, Optional, Tuple
 
 import numpy as np
 
+from ...utils.constants import H_C_COM
 from ..optics.camera.detectors import photon_noise
 from ..optics.camera.quantum_eff import QuantumEfficiency
 from ..optics.filters.filters import FilterSpectrum
@@ -11,7 +12,6 @@ from ..sample.flurophores.flurophore_schema import (
     SpectralData,
     WavelengthDependentProperty,
 )
-from ..utils.constants import H_C_COM
 
 
 @dataclass

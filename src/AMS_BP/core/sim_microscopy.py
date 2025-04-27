@@ -3,6 +3,7 @@ from typing import Callable, Dict, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 
+from ..utils.util_functions import ms_to_seconds
 from .configio.configmodels import ConfigList
 from .metadata.metadata import MetaData
 from .optics.camera.detectors import Detector
@@ -18,7 +19,6 @@ from .photophysics.photon_physics import (
 from .photophysics.state_kinetics import StateTransitionCalculator
 from .sample.flurophores.flurophore_schema import StateType, WavelengthDependentProperty
 from .sample.sim_sampleplane import EMPTY_STATE_HISTORY_DICT, SamplePlane
-from .utils.util_functions import ms_to_seconds
 
 
 class VirtualMicroscope:

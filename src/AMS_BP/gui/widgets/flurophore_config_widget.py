@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ...core.configio.convertconfig import create_fluorophores_from_config
 from .utility_widgets.scinotation_widget import scientific_input_field
 from .utility_widgets.spectrum_widget import SpectrumEditorDialog
 
@@ -495,8 +496,6 @@ class FluorophoreConfigWidget(QWidget):
 
     def validate(self) -> bool:
         try:
-            from ...configio.convertconfig import create_fluorophores_from_config
-
             data = self.get_data()
             # Try to build fluorophores with the backend logic
 

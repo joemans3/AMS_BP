@@ -25,8 +25,8 @@ from typing import Optional
 
 import numpy as np
 
+from ...utils.decorators import cache
 from ..cells import BaseCell
-from ..utils.decorators import cache
 from .track_gen import Track_generator
 
 

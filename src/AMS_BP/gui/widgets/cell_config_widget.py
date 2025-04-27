@@ -14,6 +14,9 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ...core.cells import create_cell
+from ...core.configio.configmodels import CellParameters
+
 
 class CellConfigWidget(QWidget):
     def __init__(self):
@@ -53,9 +56,6 @@ class CellConfigWidget(QWidget):
         layout.addWidget(self.validate_button)
 
     def validate(self) -> bool:
-        from ...cells import create_cell
-        from ...configio.configmodels import CellParameters
-
         try:
             data = self.get_data()
 

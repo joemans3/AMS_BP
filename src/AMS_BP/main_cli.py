@@ -34,9 +34,9 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from typing_extensions import Annotated
 
 from . import __version__
+from .core.run_sim_util import run_simulation_from_file
 from .gui.main import MainWindow
-from .logging.logutil import cleanup_old_logs
-from .run_sim_util import run_simulation_from_file
+from .tools.logging.logutil import cleanup_old_logs
 
 cli_help_doc = str(
     """

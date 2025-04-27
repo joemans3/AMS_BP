@@ -15,6 +15,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ...core.configio.convertconfig import create_lasers_from_config
+
 
 class LaserConfigWidget(QWidget):
     laser_names_updated = pyqtSignal(list)
@@ -81,8 +83,6 @@ class LaserConfigWidget(QWidget):
 
     def validate(self) -> bool:
         try:
-            from ...configio.convertconfig import create_lasers_from_config
-
             data = self.get_data()
             create_lasers_from_config({"lasers": data})
 

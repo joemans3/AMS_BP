@@ -14,48 +14,46 @@ height = 4.0
 
 [Molecule_Parameters]
 num_molecules = [
-    5000,
-    5000,
+	5000,
+	5000,
 ] # size of array tells the types of molecules (must be same as num_of_fluorophores below). All of the Molecule_Parameters are of the same first dimension as this.
-track_type = ["fbm", "fbm"] # "constant", "fbm"
+track_type = ["constant", "constant"] # "constant", "fbm"
 diffusion_coefficient = [
-    [
-        0.2,
-        0.4,
-    ],
-    [
-        0.2,
-        0.4,
-    ],
+	[
+		0,
+	],
+	[
+		0,
+	],
 ] # um^2/s, size of each index (eg. len(...[0]) is the # of diffusion coefficients the system can explore.
 
 hurst_exponent = [[0.5], [0.5]]
-allow_transition_probability = [true, true] # bool
+allow_transition_probability = [false, false] # bool
 transition_matrix_time_step = [
-    20,
-    20,
+	20,
+	20,
 ] # ms, the time at which the probabilities in the below are presented.
 diffusion_transition_matrix = [
-    [
-        [
-            0.992,
-            0.008,
-        ],
-        [
-            0.0273,
-            0.9727,
-        ],
-    ],
-    [
-        [
-            0.992,
-            0.008,
-        ],
-        [
-            0.0273,
-            0.9727,
-        ],
-    ],
+	[
+		[
+			0.992,
+			0.008,
+		],
+		[
+			0.0273,
+			0.9727,
+		],
+	],
+	[
+		[
+			0.992,
+			0.008,
+		],
+		[
+			0.0273,
+			0.9727,
+		],
+	],
 ]
 hurst_transition_matrix = [[[0.1]], [[0.1]]]
 state_probability_diffusion = [[0.5, 0.5], [0.5, 0.5]]
@@ -71,45 +69,45 @@ oversample_motion_time = 20 # ms
 
 [Condensate_Parameters]
 initial_centers = [
-    [
-        [
-            5.5,
-            5,
-            0.05,
-        ],
-        [
-            5,
-            5,
-            -0.15,
-        ],
-        [
-            5,
-            6,
-            -0.15,
-        ],
-        [
-            5,
-            5.5,
-            -0.15,
-        ],
-        [
-            6,
-            5.5,
-            -0.15,
-        ],
-    ],
-    [
-        [
-            5.5,
-            5,
-            0.05,
-        ],
-        [
-            5,
-            7,
-            -0.15,
-        ],
-    ],
+	[
+		[
+			5.5,
+			5,
+			0.05,
+		],
+		[
+			5,
+			5,
+			-0.15,
+		],
+		[
+			4,
+			5,
+			-0.15,
+		],
+		[
+			6,
+			5.5,
+			-0.15,
+		],
+		[
+			6,
+			5.5,
+			-0.15,
+		],
+	],
+	[
+		[
+			4,
+			5,
+			0.05,
+		],
+		[
+			3,
+			5,
+			-0.15,
+		],
+	],
 ] # um. First dimension is the types of molecules as in Molecule Parameters.num_molecules. second dimension is the # of condentates. center = [x,y,z]
 initial_scale = [[0.26, 0.26, 0.13, 0.13, 0.26], [0.26, 0.26]] # um
 diffusion_coefficient = [[0, 0, 0, 0, 0], [0, 0]] # um^2/s
@@ -117,10 +115,10 @@ hurst_exponent = [[0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2]]
 density_dif = [10, 10] # density of the condensate vs the background.
 
 [Output_Parameters]
-output_path = "<YOUR-PATH-HERE-CAN-BE-ABSOLUTE-OR-RELATIVE>"
-output_name = "Cell_Movie_Test_001"
-subsegment_type = "mean"                                     # not implemented yet, use any string
-subsegment_number = 5                                        # not implemented yet, use any integer
+output_path = "Output"
+output_name = "Cell_Movie_001"
+subsegment_type = "mean"       # not implemented yet, use any string
+subsegment_number = 5          # not implemented yet, use any integer
 
 
 [fluorophores]
@@ -264,7 +262,7 @@ custom_path = ""
 [psf.parameters]
 numerical_aperture = 1.4 # typical range: 0.1 - 1.5
 refractive_index = 1.0   # default is air (1.0)
-#pinhole_diameter = 1.0  # Do not include for no pinhole else float in um units
+pinhole_diameter = 1.0   # Do not include for no pinhole else float in um units
 
 # Multiple Laser Configuration File
 
@@ -299,8 +297,8 @@ refractive_index = 1.518
 num_of_channels = 2
 channel_names = ["red", "green"]
 split_efficiency = [
-    1.0,
-    1.0,
+	1.0,
+	1.0,
 ] # 1.0 is 100% efficiency. Physically represents the efficiency of the channel splitter for each channel. max: 1.0 = equal to the original emission light.
 # Filter Set Configuration
 [channels.filters]
@@ -353,43 +351,43 @@ binning_size = 1          # 1x1 , if 2 then 2x2
 # Quantum efficiency curve (wavelength in nm : efficiency 0-1)
 # extrapotation for wavelengths not included uses edge values
 quantum_efficiency = [
-    [
-        399,
-        0.00,
-    ],
-    [
-        400,
-        0.80,
-    ],
-    [
-        500,
-        0.90,
-    ],
-    [
-        600,
-        0.95,
-    ],
-    [
-        700,
-        0.90,
-    ],
-    [
-        800,
-        0.70,
-    ],
-    [
-        900,
-        0.40,
-    ],
-    [
-        901,
-        0.00,
-    ],
+	[
+		399,
+		0.00,
+	],
+	[
+		400,
+		0.80,
+	],
+	[
+		500,
+		0.90,
+	],
+	[
+		600,
+		0.95,
+	],
+	[
+		700,
+		0.90,
+	],
+	[
+		800,
+		0.70,
+	],
+	[
+		900,
+		0.40,
+	],
+	[
+		901,
+		0.00,
+	],
 ]
 
 
 [experiment]
-name = "PAmCherry_EGFP_Test"
+name = "PAmCherry_EGFP_Fixed_Widefield"
 description = "Sample experiment configuration"
 # experiment_type = "time-series"                 # "time-series" or "z-stack"
 # z_position = 0.0

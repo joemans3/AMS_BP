@@ -20,6 +20,7 @@ class TimeSeriesExpConfig(BaseExpConfig):
     laser_powers_active: List[float]
     laser_positions_active: List
     xyoffset: Tuple[float, float]
+    scanning: bool = False
 
     exposure_time: Optional[int] = None
     interval_time: Optional[int] = None
@@ -61,6 +62,8 @@ class zStackExpConfig(BaseExpConfig):
     exposure_time: int
     interval_time: int
 
+    scanning: bool = False
+
     def __post_init__(self):
         len_ln = len(self.laser_names_active)
         len_lpow = len(self.laser_powers_active)
@@ -94,6 +97,7 @@ def timeseriesEXP(
         duration_total=config.duration_time,
         exposure_time=config.exposure_time,
         interval_time=config.interval_time,
+        scanning=config.scanning,
     )
     return np.array([frames]), metadata
 
@@ -112,6 +116,7 @@ def zseriesEXP(
             duration_total=config.exposure_time + config.interval_time,
             exposure_time=config.exposure_time,
             interval_time=config.interval_time,
+            scanning=config.scanning,
         )
         frames.append(f)
     # m.Channel = {"name": microscope.channels.names}

@@ -18,6 +18,10 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ...core.cells import create_cell
+from ...core.configio.configmodels import CondensateParameters
+from ...core.motion import create_condensate_dict
+
 
 class CondensateConfigWidget(QWidget):
     # Signal to notify when molecule count changes
@@ -300,10 +304,6 @@ class CondensateConfigWidget(QWidget):
         }
 
     def validate(self) -> bool:
-        from ...cells import create_cell
-        from ...configio.configmodels import CondensateParameters
-        from ...motion import create_condensate_dict
-
         try:
             data = self.get_data()
 

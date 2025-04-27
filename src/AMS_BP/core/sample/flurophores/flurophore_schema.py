@@ -4,7 +4,7 @@ from typing import Any, Callable, Dict, List, Optional, TypeVar
 import numpy as np
 from pydantic import BaseModel, Field, field_validator
 
-from ...utils.constants import H_C_COM, N_A
+from ....utils.constants import H_C_COM, N_A
 
 NumericType = TypeVar("NumericType", float, np.ndarray, List[float])
 

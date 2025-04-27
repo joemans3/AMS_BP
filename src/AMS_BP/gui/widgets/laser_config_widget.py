@@ -1,10 +1,12 @@
 from pathlib import Path
 
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
     QFormLayout,
+    QGraphicsOpacityEffect,
+    QLabel,
     QLineEdit,
     QMessageBox,
     QPushButton,
@@ -23,12 +25,32 @@ class LaserConfigWidget(QWidget):
 
     def __init__(self):
         super().__init__()
+        self._confocal_mode = False
         self.laser_name_widgets = []
         layout = QVBoxLayout()
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(10)
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+        self.scanning_label = QLabel(
+            "Scanning Confocal Selected \n Only Gaussian Laser Allowed"
+        )
+        self.scanning_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.scanning_label.setStyleSheet(
+            "color: green; font-weight: bold; font-size: 14px;"
+        )
+        self.scanning_label.setVisible(
+            True
+        )  # Always visible — will control opacity instead
+        # blinking effect
+        self.opacity_effect = QGraphicsOpacityEffect(self.scanning_label)
+        self.scanning_label.setGraphicsEffect(self.opacity_effect)
+        self.opacity_effect.setOpacity(0.0)
+        self.blink_timer = QTimer(self)
+        self.blink_timer.setInterval(500)
+        self.blink_timer.timeout.connect(self._toggle_scanning_label_opacity)
+        layout.addWidget(self.scanning_label)
 
         form = QFormLayout()
 
@@ -52,34 +74,48 @@ class LaserConfigWidget(QWidget):
         self.validate_button.clicked.connect(self.validate)
         layout.addWidget(self.validate_button)
 
+    def _toggle_scanning_label_opacity(self):
+        if self._confocal_mode:
+            current_opacity = self.opacity_effect.opacity()
+            new_opacity = 0.0 if current_opacity > 0.5 else 1.0
+            self.opacity_effect.setOpacity(new_opacity)
+        else:
+            self.opacity_effect.setOpacity(0.0)
+
     def set_confocal_mode(self, enabled: bool):
+        self._confocal_mode = enabled
+
         for i in range(self.laser_tabs.count()):
             tab = self.laser_tabs.widget(i)
 
             laser_type: QComboBox = tab.findChild(QComboBox)
             beam_width: QDoubleSpinBox = tab.findChildren(QDoubleSpinBox)[
                 1
-            ]  # Assumes 2nd spinbox is beam_width
+            ]  # second spinbox is beam_width
 
             if enabled:
-                # Force laser type to "gaussian" and disable editing
                 laser_type.setCurrentText("gaussian")
                 laser_type.setEnabled(False)
 
-                # Hide beam width
                 beam_width.hide()
                 label = tab.layout().labelForField(beam_width)
                 if label:
                     label.hide()
             else:
-                # Enable laser type editing
                 laser_type.setEnabled(True)
 
-                # Show beam width
                 beam_width.show()
                 label = tab.layout().labelForField(beam_width)
                 if label:
                     label.show()
+
+        # Handle blinking label
+        if enabled:
+            self.scanning_label.setVisible(True)
+            self.blink_timer.start()
+        else:
+            self.scanning_label.setVisible(False)
+            self.blink_timer.stop()
 
     def validate(self) -> bool:
         try:
@@ -148,13 +184,22 @@ class LaserConfigWidget(QWidget):
         layout.addRow(f"Laser {index + 1} Beam Width (µm):", beam_width)
         layout.addRow(f"Laser {index + 1} Numerical Aperture:", numerical_aperture)
         layout.addRow(f"Laser {index + 1} Refractive Index:", refractive_index)
-        layout.addRow(f"Laser {index + 1} Inclination Angle (°):", inclination_angle)
+        inclination_label = QLabel(f"Laser {index + 1} Inclination Angle (°):")
+        layout.addRow(inclination_label, inclination_angle)
 
         # Logic for hilo
-        laser_type.currentTextChanged.connect(
-            lambda val: inclination_angle.setEnabled(val == "hilo")
-        )
-        inclination_angle.setEnabled(laser_type.currentText() == "hilo")
+        def handle_inclination_visibility(selected_type):
+            if selected_type == "hilo":
+                inclination_angle.show()
+                inclination_label.show()
+            else:
+                inclination_angle.hide()
+                inclination_label.hide()
+
+        laser_type.currentTextChanged.connect(handle_inclination_visibility)
+
+        # Initial state
+        handle_inclination_visibility(laser_type.currentText())
 
         tab.setLayout(layout)
         self.laser_tabs.addTab(tab, f"Laser {index + 1}")

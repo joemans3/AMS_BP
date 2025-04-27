@@ -12,7 +12,7 @@ wheels = [
 
 [[package]]
 name = "ams-bp"
-version = "0.4.31"
+version = "0.4.40"
 source = { editable = "." }
 dependencies = [
     { name = "boundedfbm" },

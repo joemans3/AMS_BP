@@ -1,1 +1,1 @@
-::: AMS_BP.groundtruth_generators.nuclearporecomplexes
+::: AMS_BP.core.groundtruth_generators.nuclearporecomplexes

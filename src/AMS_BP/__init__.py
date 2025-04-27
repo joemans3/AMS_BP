@@ -10,4 +10,4 @@ Last updated: 2024-12-16
 
 """
 
-__version__ = "0.4.40"
+__version__ = "0.4.41"

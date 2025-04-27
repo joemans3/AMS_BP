@@ -16,15 +16,15 @@ AMS-BP is a powerful simulation tool for advanced fluorescence microscopy experi
 Find detailed API references for the library at: [joemans3/github.io/AMS_BP](https://joemans3.github.io/AMS_BP/)
 > A more detailed example is provided in the jupyter notebook in the examples. For starters refer to the [VisualizingIndividualModules](../examples/VisualizingIndividualModules/modules_explained.ipynb). Then head over to the [laser modulation module](../examples/VisualizingIndividualModules/laser_modulation.ipynb) which will show how to change the laser power over time in the simulations. Then view an example of a complex experiment setup for [FRAP](../examples/QuantitativeExperiments/FRAP/FRAP_methods.ipynb) which is possible by the use of compositions of modules in this simulation library.
 
-## Examples (Click on the image buttons to be taken to the Jupyter notebooks):
-
-> !!ATTENTION!! - Please note that you NEED to install the developmental dependencies to run the examples in full. This is mainly for installing the Jupyter notebook extensions, matplotlib and other visualization packages.
-
-[<img src="./assets/buttons/ButtonFigure_FRAP.svg" width="300" height="120"/>](../examples/QuantitativeExperiments/FRAP/FRAP_methods.ipynb) [<img src="./assets/buttons/ButtonFigure_fPALM_NPC.svg" width="300"/>](../examples/QuantitativeExperiments/PALM/fPALM/npc_palm.ipynb)
-
-[<img src="./assets/buttons/ButtonFigure_zstack_twocolor_widefield.svg" width="300"/>](../examples/QuantitativeExperiments/TwoColor/Widefield/widefield_twocolor.ipynb) [<img src="./assets/buttons/ButtonFigure_zstack_twocolor_confocal.svg" width="300"/>](../examples/QuantitativeExperiments/TwoColor/Confocal/confocal_twocolor.ipynb)
-
-[<img align="middle" src="./assets/buttons/ButtonFigure_sptPALM_mmaple.svg" width="300"/>](../examples/QuantitativeExperiments/PALM/sptPALM/motionmodels_sptmmaple.ipynb)
+<!-- ## Examples (Click on the image buttons to be taken to the Jupyter notebooks): -->
+<!---->
+<!-- > !!ATTENTION!! - Please note that you NEED to install the developmental dependencies to run the examples in full. This is mainly for installing the Jupyter notebook extensions, matplotlib and other visualization packages. -->
+<!---->
+<!-- [<img src="./assets/buttons/ButtonFigure_FRAP.svg" width="300" height="120"/>](../examples/QuantitativeExperiments/FRAP/FRAP_methods.ipynb) [<img src="./assets/buttons/ButtonFigure_fPALM_NPC.svg" width="300"/>](../examples/QuantitativeExperiments/PALM/fPALM/npc_palm.ipynb) -->
+<!---->
+<!-- [<img src="./assets/buttons/ButtonFigure_zstack_twocolor_widefield.svg" width="300"/>](../examples/QuantitativeExperiments/TwoColor/Widefield/widefield_twocolor.ipynb) [<img src="./assets/buttons/ButtonFigure_zstack_twocolor_confocal.svg" width="300"/>](../examples/QuantitativeExperiments/TwoColor/Confocal/confocal_twocolor.ipynb) -->
+<!---->
+<!-- [<img align="middle" src="./assets/buttons/ButtonFigure_sptPALM_mmaple.svg" width="300"/>](../examples/QuantitativeExperiments/PALM/sptPALM/motionmodels_sptmmaple.ipynb) -->
 ## Table of Contents
 - [Installation](#installation)
 - [Command Line Interface](#command-line-interface)
@@ -45,7 +45,7 @@ uv tool install AMS_BP
 3. You will have access to three CLI commands (using the uv interface):
     - `run_AMS_BP runsim` : This is the main entry point for the simulation. (see `run_AMS_BP runsim --help` for more details)
     - `run_AMS_BP config` : This is a helper tool to generate a template config file for the simulation. (see `run_AMS_BP config --help` for more details)
-    - `run_AMS_BP gui` : to start the GUI. See [GUI Documentation](../src/AMS_BP/gui/README.md)
+    - `run_AMS_BP gui` : to start the GUI.<!--  See [GUI Documentation](../src/AMS_BP/gui/README.md) -->
     - Note: using `run_AMS_BP --help` will show you all the available commands.
 4. You can now use these tools (they are isolated in their own env created by uv, which is cool).
 
@@ -95,7 +95,7 @@ To start the GUI, run:
 
 run_AMS_BP gui
 ```
-For detailed walkthrough see the [GUI Documentation](../src/AMS_BP/gui/README.md).
+<!-- For detailed walkthrough see the [GUI Documentation](../src/AMS_BP/gui/README.md). -->
 ## Configuration File
 
 The configuration file (sim_config.toml) is divided into several key sections:

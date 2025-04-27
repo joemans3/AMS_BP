@@ -18,7 +18,7 @@ Find detailed API references for the library at: [joemans3/github.io/AMS_BP](htt
 
 ## Examples (Click on the image buttons to be taken to the Jupyter notebooks):
 
-> !!ATTENTION!! - Please note that you NEED to install the developmental dependencies to run the examples in full. This is mainly for installing the Jupyter notebook extensions, matplotlib and other visualization packages. In whatever environment you install this package, make sure to install with all dependencies. As an example, for UV this would be evoking: 
+> !!ATTENTION!! - Please note that you NEED to install the optional dependencies to run the examples in full. This is mainly for installing the Jupyter notebook extensions, matplotlib and other visualization packages. In whatever environment you install this package, make sure to install with all dependencies. As an example, for UV this would be evoking: 
 ```bash
 uv sync --all-extras
 ```

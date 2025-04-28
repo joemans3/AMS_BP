@@ -54,12 +54,12 @@ jobs:
       Sign the Python 🐍 distribution 📦 with Sigstore
       and upload them to GitHub Release
     needs:
-    - publish-to-pypi
+      - publish-to-pypi
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write  # IMPORTANT: mandatory for making GitHub Releases
-      id-token: write  # IMPORTANT: mandatory for sigstore
+      contents: write  # mandatory for making GitHub Releases
+      id-token: write  # mandatory for sigstore
 
     steps:
     - name: Download all the dists
@@ -67,26 +67,42 @@ jobs:
       with:
         name: python-package-distributions
         path: dist/
+
     - name: Sign the dists with Sigstore
       uses: sigstore/gh-action-sigstore-python@v3.0.0
       with:
         inputs: >-
           ./dist/*.tar.gz
           ./dist/*.whl
+
+    - name: Generate Changelog
+      id: changelog
+      run: |
+        git fetch --tags
+        PREV_TAG=$(git describe --tags --abbrev=0 HEAD^)
+        CURRENT_TAG=$(git describe --tags --abbrev=0 HEAD)
+        echo "Previous tag: $PREV_TAG"
+        echo "Current tag: $CURRENT_TAG"
+        echo "## Changes" > changelog.txt
+        echo "" >> changelog.txt
+        git log $PREV_TAG..$CURRENT_TAG --pretty=format:"- %s (%h)" >> changelog.txt
+        echo 'changelog<<EOF' >> $GITHUB_ENV
+        cat changelog.txt >> $GITHUB_ENV
+        echo 'EOF' >> $GITHUB_ENV
+
     - name: Create GitHub Release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        changelog: ${{ env.changelog }}
       run: >-
         gh release create
         '${{ github.ref_name }}'
         --repo '${{ github.repository }}'
-        --notes ""
+        --notes "${changelog}"
+
     - name: Upload artifact signatures to GitHub Release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # Upload to GitHub Release using the `gh` CLI.
-      # `dist/` contains the built packages, and the
-      # sigstore-produced signatures and certificates.
       run: >-
         gh release upload
         '${{ github.ref_name }}' dist/**

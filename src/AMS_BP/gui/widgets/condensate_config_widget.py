@@ -122,7 +122,6 @@ class CondensateConfigWidget(QWidget):
         condensate_controls.addWidget(condensate_count)
         layout.addLayout(condensate_controls)
 
-        # === Density Difference field RIGHT AFTER the condensate count ===
         density_layout = QHBoxLayout()
         density_layout.addWidget(QLabel("Density Difference:"))
 
@@ -133,7 +132,6 @@ class CondensateConfigWidget(QWidget):
         density_layout.addWidget(density_spin)
         layout.addLayout(density_layout)
 
-        # === Condensate containers BELOW this point ===
         condensate_container = QVBoxLayout()
         layout.addLayout(condensate_container)
 
@@ -307,10 +305,8 @@ class CondensateConfigWidget(QWidget):
         try:
             data = self.get_data()
 
-            # Step 1: Validate with Pydantic
             validated = CondensateParameters(**data)
 
-            # Step 2: Validate simulation compatibility for each condensate
             # Create a dummy cell just for validation context
             dummy_cell = create_cell(
                 "SphericalCell", {"center": [0, 0, 0], "radius": 5.0}

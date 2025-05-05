@@ -55,7 +55,6 @@ class ChannelConfigWidget(QWidget):
             # Full simulation-level validation
             channels = create_channels({"channels": data})
 
-            # Optional: Validate shape consistency
             if len(channels.names) != channels.num_channels:
                 raise ValueError("Channel count does not match number of names.")
 

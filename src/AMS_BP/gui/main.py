@@ -36,12 +36,10 @@ class MainWindow(QMainWindow):
         # Set up the main layout
         layout = QVBoxLayout()
 
-        # Add logo as a placeholder (SVG format)
         self.logo_label = QLabel()  # Label to hold the logo
         self.set_svg_logo(LOGO_PATH)  # Set the SVG logo
         layout.addWidget(self.logo_label, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        # Add the maintainer's name under the image
         self.maintainer_label = QLabel(
             "Maintainer: Baljyot Parmar \n baljyotparmar@hotmail.com"
         )
@@ -96,7 +94,6 @@ class MainWindow(QMainWindow):
     def package_logs(self):
         log_dir = Path.home() / "AMS_runs"
 
-        # Step 1: Open dialog to select folders
         folder_paths = QFileDialog.getExistingDirectory(
             self,
             "Select Folder Containing Run Logs",
@@ -107,7 +104,6 @@ class MainWindow(QMainWindow):
         if not folder_paths:
             return
 
-        # QFileDialog.getExistingDirectory() returns a single path.
         # For now, let's treat this as a single run_* folder being selected.
 
         run_dir = Path(folder_paths)
@@ -117,7 +113,6 @@ class MainWindow(QMainWindow):
             )
             return
 
-        # Step 2: Ask for destination .zip archive
         zip_path_str, _ = QFileDialog.getSaveFileName(
             self,
             "Save Zipped Folder As",
@@ -220,7 +215,6 @@ class MainWindow(QMainWindow):
 
         if file_path:
             try:
-                # Load the image (expand here if you want ND2 or Zarr support)
                 image = tifffile.imread(file_path)
 
                 # Open Napari viewer and display the image
@@ -233,7 +227,6 @@ class MainWindow(QMainWindow):
 
     def set_svg_logo(self, svg_path):
         """Set an SVG logo to the QLabel, maintaining the aspect ratio."""
-        # Create a QSvgRenderer to render the SVG
         renderer = QSvgRenderer(svg_path)
         if renderer.isValid():
             # Get the size of the SVG image

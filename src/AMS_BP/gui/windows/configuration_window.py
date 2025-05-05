@@ -198,23 +198,19 @@ class ConfigEditor(QWidget):
     def preview_config(self):
         """Preview the full TOML config in a dialog before saving."""
         try:
-            # Step 1: Validate tabs
             if not self.validate_all_tabs():
                 QMessageBox.warning(
                     self, "Validation Error", "Fix errors before preview."
                 )
                 return
 
-            # Step 2: Collect config data
             config = self.collect_all_config()
 
-            # Step 3: Convert to TOML string
             toml_doc = tomlkit.document()
             for key, value in config.items():
                 toml_doc[key] = value
             toml_str = tomlkit.dumps(toml_doc)
 
-            # Step 4: Show preview dialog
             preview_dialog = QDialog(self)
             preview_dialog.setWindowTitle("Preview TOML Configuration")
             layout = QVBoxLayout(preview_dialog)

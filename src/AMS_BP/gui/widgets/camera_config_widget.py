@@ -123,7 +123,6 @@ class CameraConfigWidget(QWidget):
                 "wavelengths": dialog.wavelengths,
                 "quantum_efficiency": dialog.intensities,
             }
-            # You can now use this data wherever needed, e.g., saving or validation
 
     def validate(self) -> bool:
         try:
@@ -132,7 +131,6 @@ class CameraConfigWidget(QWidget):
             # Convert QE before passing
             qe = create_quantum_efficiency_from_config(data["quantum_efficiency"])
 
-            # Prepare CMOS-specific parameters only (drop "type" and "quantum_efficiency")
             camera_data = {
                 k: v for k, v in data.items() if k not in {"type", "quantum_efficiency"}
             }
@@ -168,9 +166,7 @@ class CameraConfigWidget(QWidget):
             "sensitivity": self.sensitivity.value(),
             "base_adu": self.base_adu.value(),
             "binning_size": self.binning_size.value(),
-            "quantum_efficiency": convert_dict_to_2_list(
-                self.quantum_efficiency_data
-            ),  # Use edited data here
+            "quantum_efficiency": convert_dict_to_2_list(self.quantum_efficiency_data),
         }
         return camera_data
 

@@ -41,13 +41,11 @@ class ToggleSwitch(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        # NEW: Background indicates *next* theme
         bg_color = QColor("#dddddd") if self._checked else QColor("#333333")
         painter.setBrush(QBrush(bg_color))
         painter.setPen(Qt.PenStyle.NoPen)
         painter.drawRoundedRect(0, 0, self.width(), self.height(), 14, 14)
 
-        # Handle (always green)
         painter.setBrush(QBrush(QColor("#008000")))
         painter.drawEllipse(int(self._circle_position), 2, 24, 24)
 

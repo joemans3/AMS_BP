@@ -6,6 +6,9 @@ import numpy as np
 import tomli
 from pydantic import BaseModel
 
+from ...core.optics.collection_efficiency import (
+    collection_efficiency_isotropic_emission,
+)
 from ..cells import BaseCell, create_cell
 from ..motion import Track_generator, create_condensate_dict
 from ..motion.track_gen import (
@@ -274,9 +277,17 @@ def create_psf_from_config(config: Dict[str, Any]) -> Tuple[Callable, Dict[str, 
     additional_config = {
         "type": psf_config.get("type", "gaussian"),
         "custom_path": psf_config.get("custom_path", ""),
+        "psf_config": psf_config,
     }
 
     return Partial_PSFengine, additional_config
+
+
+def create_collection_efficiency(config: Dict[str, Any]) -> float:
+    na = config.get("psf").get("parameters").get("numerical_aperture")
+    n = config.get("psf").get("parameters").get("refractive_index")
+    col_eff = collection_efficiency_isotropic_emission(na=na, n=n)
+    return col_eff
 
 
 # Helper function to find pixel size
@@ -728,6 +739,7 @@ def setup_microscope(config: Dict[str, Any]) -> dict:
     fluorophores = create_fluorophores_from_config(config)
     # psf config
     psf, psf_config = create_psf_from_config(config)
+    collection_efficiency = create_collection_efficiency(config)
     # lasers config
     lasers = create_lasers_from_config(config)
     # channels config
@@ -776,6 +788,7 @@ def setup_microscope(config: Dict[str, Any]) -> dict:
         channels=channels,
         psf=psf,
         config=base_config,
+        collection_efficiency=collection_efficiency,
     )
 
     return {

@@ -157,7 +157,9 @@ class incident_photons:
             else:
                 self.generator.append(0)
 
-    def incident_photons_calc(self, dt: float) -> Tuple[float, List]:
+    def incident_photons_calc(
+        self, dt: float, collection_efficiency: float = 1
+    ) -> Tuple[float, List]:
         photons = 0
         psf_hold = []
         for i in range(len(self.transmission_photon_rate.wavelengths)):
@@ -165,7 +167,9 @@ class incident_photons:
                 qe_lam = self.quantumEff.get_qe(
                     self.transmission_photon_rate.wavelengths[i]
                 )
-                photons_n = self.transmission_photon_rate.values[i] * dt
+                photons_n = (
+                    self.transmission_photon_rate.values[i] * dt * collection_efficiency
+                )
                 photons += photons_n
                 psf_gen = (
                     self.generator[i].psf_z(

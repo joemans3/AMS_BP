@@ -30,6 +30,7 @@ class VirtualMicroscope:
         channels: Channels,
         psf: Callable[[float | int, Optional[float | int]], PSFEngine],
         config: ConfigList,
+        collection_efficiency: float = 1,
         start_time: int = 0,
     ):
         # Core components
@@ -41,6 +42,7 @@ class VirtualMicroscope:
         self.psf = psf
         self._time = start_time  # ms
         self.config = config
+        self.collection_efficiency = collection_efficiency
 
         # Cached initial configuration
         self._cached_initial_config()
@@ -271,7 +273,9 @@ class VirtualMicroscope:
                                 self.psf,
                                 florPos,
                             )
-                            _, psfs = inc.incident_photons_calc(deltaTime)
+                            _, psfs = inc.incident_photons_calc(
+                                deltaTime, self.collection_efficiency
+                            )
                             for ipsf in psfs:
                                 mapSC[self.channels.names[channel_num]].add_psf_frame(
                                     ipsf, florPos[:2], frame_list[time_index]
